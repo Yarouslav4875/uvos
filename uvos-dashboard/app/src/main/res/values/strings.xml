@@ -4,4 +4,8 @@
     <string name="battery_gauge">BATT</string>
     <string name="temp_gauge">TEMP</string>
     <string name="prototype_status">UVOS prototype — данные только от системы, без разрешений</string>
+    <string name="open_shield">ЩИТОК ДОСТУПА</string>
+    <string name="shield_demo_note">ДЕМО: каналы фиктивные — иллюстрация дизайна щитка. В UVOS все каналы закрыты по умолчанию.</string>
+    <string name="channel_closed">ЗАКРЫТО</string>
+    <string name="channel_open">ОТКРЫТО</string>
 </resources>

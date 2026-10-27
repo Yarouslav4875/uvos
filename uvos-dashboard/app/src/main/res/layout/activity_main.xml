@@ -35,4 +35,14 @@
         android:textColor="@color/uvos_text_dim"
         android:textSize="14sp"
         android:text="@string/prototype_status" />
+
+    <Button
+        android:id="@+id/open_shield"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:layout_marginTop="16dp"
+        android:background="@color/uvos_tile"
+        android:textColor="@color/uvos_text"
+        android:textSize="14sp"
+        android:text="@string/open_shield" />
 </LinearLayout>

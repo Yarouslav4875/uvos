@@ -7,7 +7,9 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.os.BatteryManager
 import android.os.Bundle
+import android.widget.Button
 import android.widget.TextView
+import android.content.Intent
 
 /**
  * UVOS Dashboard - прототип приборной панели.
@@ -42,6 +44,10 @@ class MainActivity : Activity() {
 
         // Первичное значение из sticky-броадкаста (без регистрации)
         batteryIntent()?.let { updateFrom(it) }
+
+        findViewById<Button>(R.id.open_shield).setOnClickListener {
+            startActivity(Intent(this, ShieldActivity::class.java))
+        }
     }
 
     override fun onResume() {
