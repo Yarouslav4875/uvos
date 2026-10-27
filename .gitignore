@@ -1,0 +1,26 @@
+# --- UVOS / Android ---
+*.apk
+*.aab
+*.keystore
+!debug.keystore
+.gradle/
+build/
+local.properties
+captures/
+.externalNativeBuild/
+.cxx/
+
+# --- IDE ---
+.idea/
+*.iml
+.vscode/
+
+# --- Логи и временные файлы ---
+*.log
+*.tmp
+.DS_Store
+Thumbs.db
+
+# --- Личные данные (никогда не коммитим) ---
+secrets/
+*.env
