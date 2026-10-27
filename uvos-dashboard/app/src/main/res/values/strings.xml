@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">UVOS Dashboard</string>
+    <string name="battery_gauge">BATT</string>
+    <string name="temp_gauge">TEMP</string>
+    <string name="prototype_status">UVOS prototype — данные только от системы, без разрешений</string>
+</resources>

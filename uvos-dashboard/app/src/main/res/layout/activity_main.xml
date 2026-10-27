@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:custom="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@color/uvos_background"
+    android:padding="16dp">
+
+    <!-- Прибор заряда батареи: MIN = 0%, MAX = 100% -->
+    <com.uvos.dashboard.GaugeView
+        android:id="@+id/gauge_battery"
+        android:layout_width="match_parent"
+        android:layout_height="220dp"
+        android:layout_marginBottom="16dp"
+        custom:minLabel="0%"
+        custom:maxLabel="100%"
+        custom:title="BATT" />
+
+    <!-- Прибор температуры: MIN = 20 C, MAX = 50 C -->
+    <com.uvos.dashboard.GaugeView
+        android:id="@+id/gauge_temp"
+        android:layout_width="match_parent"
+        android:layout_height="220dp"
+        custom:minLabel="20°"
+        custom:maxLabel="50°"
+        custom:title="TEMP" />
+
+    <TextView
+        android:id="@+id/status_text"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:gravity="center"
+        android:textColor="@color/uvos_text_dim"
+        android:textSize="14sp"
+        android:text="@string/prototype_status" />
+</LinearLayout>

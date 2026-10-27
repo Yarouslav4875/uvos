@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Кастомные атрибуты прибора GaugeView -->
+    <declare-styleable name="GaugeView">
+        <attr name="title" format="string" />
+        <attr name="minLabel" format="string" />
+        <attr name="maxLabel" format="string" />
+    </declare-styleable>
+</resources>
