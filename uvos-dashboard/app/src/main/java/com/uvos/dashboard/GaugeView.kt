@@ -6,6 +6,7 @@ import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.RectF
+import android.graphics.Typeface
 import android.util.AttributeSet
 import android.view.View
 import android.view.animation.DecelerateInterpolator
@@ -14,12 +15,15 @@ import kotlin.math.min
 import kotlin.math.sin
 
 /**
- * UVOS GaugeView - стрелочный прибор в стиле ретро-VU-метра.
+ * UVOS GaugeView - стрелочный прибор в стиле ретро-VU-метра (DESIGN.md §3.1).
  *
- * Дизайн по референсу: бледный циферблат, чёрные деления,
- * красная зона в конце шкалы, тёмная стрелка, «лампочка» сверху.
- *
- * Уровень задаётся числом 0..1 (setLevel) и стрелка плавно едет к нему.
+ * Спецификация:
+ * - Размах шкалы 270°, деления каждые 10%, крупные каждые 50%.
+ * - Красная зона: последние 20% шкалы.
+ * - Плавная инерция стрелки 600 мс с DecelerateInterpolator.
+ * - Лампочка в правом верхнем углу: горит красным (#E02020) при входе в красную зону (>=80%).
+ * - Цифровое значение по центру циферблата (28-34sp).
+ * - Все размеры вычисляются через density (dp/sp), корпус со скруглением 28dp.
  */
 class GaugeView @JvmOverloads constructor(
     context: Context,
@@ -27,10 +31,15 @@ class GaugeView @JvmOverloads constructor(
     defStyleAttr: Int = 0
 ) : View(context, attrs, defStyleAttr) {
 
-    // --- Настройки с XML (минимум для прототипа) ---
+    private val density = context.resources.displayMetrics.density
+    private val scaledDensity = context.resources.displayMetrics.scaledDensity
+
+    // --- Настройки из XML ---
     private var title = "VU"
     private var minLabel = "MIN"
     private var maxLabel = "MAX"
+    private var unit = ""
+    private var isCompact = false
 
     init {
         context.theme.obtainStyledAttributes(attrs, R.styleable.GaugeView, 0, 0).apply {
@@ -38,17 +47,19 @@ class GaugeView @JvmOverloads constructor(
                 title = getString(R.styleable.GaugeView_title) ?: title
                 minLabel = getString(R.styleable.GaugeView_minLabel) ?: minLabel
                 maxLabel = getString(R.styleable.GaugeView_maxLabel) ?: maxLabel
+                unit = getString(R.styleable.GaugeView_unit) ?: unit
+                isCompact = getBoolean(R.styleable.GaugeView_isCompact, false)
             } finally {
                 recycle()
             }
         }
     }
 
-    // --- Цвета (палитра UVOS, продублирована кодом для Canvas) ---
+    // --- Цвета палитры UVOS DESIGN.md §2.1 ---
     private val dialColor = Color.parseColor("#E8E4D8")
     private val inkColor = Color.parseColor("#1A1A1A")
     private val redColor = Color.parseColor("#E02020")
-    private val lampColor = Color.parseColor("#7A1010")
+    private val lampDimColor = Color.parseColor("#7A1010")
 
     // --- Кисти ---
     private val dialPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
@@ -58,40 +69,66 @@ class GaugeView @JvmOverloads constructor(
     private val tickPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         color = inkColor
         style = Paint.Style.STROKE
-        strokeWidth = 4f
+        strokeWidth = 2f * density
+    }
+    private val tickHeavyPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = inkColor
+        style = Paint.Style.STROKE
+        strokeWidth = 3.5f * density
     }
     private val needlePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         color = inkColor
         style = Paint.Style.STROKE
-        strokeWidth = 6f
+        strokeWidth = 3f * density
         strokeCap = Paint.Cap.ROUND
+    }
+    private val pivotPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = inkColor
+        style = Paint.Style.FILL
     }
     private val redZonePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         color = redColor
         style = Paint.Style.STROKE
-        strokeWidth = 14f
+        strokeWidth = 6f * density
+        strokeCap = Paint.Cap.BUTT
     }
-    private val textPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+    private val titlePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         color = inkColor
-        textSize = 40f
+        textSize = 14f * scaledDensity
+        typeface = Typeface.create("sans-serif-condensed", Typeface.BOLD)
+        textAlign = Paint.Align.CENTER
+    }
+    private val labelPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = inkColor
+        textSize = 11f * scaledDensity
+        typeface = Typeface.create("sans-serif-condensed", Typeface.NORMAL)
+    }
+    private val valuePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = inkColor
+        textSize = 28f * scaledDensity
+        typeface = Typeface.create(Typeface.MONOSPACE, Typeface.BOLD)
         textAlign = Paint.Align.CENTER
     }
     private val lampPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = lampColor
         style = Paint.Style.FILL
     }
 
-    // --- Геометрия шкалы ---
-    private val startAngle = 135f   // нижний-левый край шкалы (градусы)
-    private val sweepAngle = 270f   // полный размах 270 градусов
+    // --- Геометрия шкалы (размах 270°) ---
+    private val startAngle = 135f
+    private val sweepAngle = 270f
 
-    // --- Текущее значение стрелки (0..1) ---
+    // --- Уровень (0..1) и форматированное значение ---
     private var needleLevel = 0f
+    private var customValueText: String? = null
     private var animator: ValueAnimator? = null
 
-    /** Плавно перевести стрелку на новый уровень [0..1]. */
-    fun setLevel(newLevel: Float) {
+    /**
+     * Плавно перевести стрелку на новый уровень [0..1].
+     * Инерция стрелки: 600 мс с DecelerateInterpolator.
+     */
+    fun setLevel(newLevel: Float, displayValue: String? = null) {
         val target = newLevel.coerceIn(0f, 1f)
+        customValueText = displayValue
         animator?.cancel()
         animator = ValueAnimator.ofFloat(needleLevel, target).apply {
             duration = 600
@@ -104,58 +141,91 @@ class GaugeView @JvmOverloads constructor(
         }
     }
 
+    fun setTitle(newTitle: String) {
+        title = newTitle
+        invalidate()
+    }
+
+    override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
+        val defaultH = if (isCompact) (160f * density).toInt() else (220f * density).toInt()
+        val defaultW = (320f * density).toInt()
+        val w = getDefaultSize(defaultW, widthMeasureSpec)
+        val h = resolveSize(defaultH, heightMeasureSpec)
+        setMeasuredDimension(w, h)
+    }
+
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
         val w = width.toFloat()
         val h = height.toFloat()
-        val pad = 24f
-        val size = min(w, h) - pad * 2
 
-        // Корпус прибора (бледный циферблат)
-        canvas.drawRoundRect(pad, pad, w - pad, h - pad, 28f, 28f, dialPaint)
+        val corner = 28f * density
+        val pad = 4f * density
+
+        // 1. Корпус прибора (бледный циферблат #E8E4D8)
+        canvas.drawRoundRect(pad, pad, w - pad, h - pad, corner, corner, dialPaint)
 
         val cx = w / 2f
-        val cy = h * 0.62f
-        val radius = size * 0.42f
+        val cy = if (isCompact) h * 0.68f else h * 0.62f
+        val size = min(w, h)
+        val radius = size * (if (isCompact) 0.44f else 0.40f)
 
-        // Красная зона: последние 20% шкалы
+        // 2. Красная зона шкалы (последние 20%: с 80% до 100%)
         val redStart = startAngle + sweepAngle * 0.8f
-        val rect = RectF(cx - radius, cy - radius, cx + radius, cy + radius)
-        canvas.drawArc(rect, redStart, sweepAngle * 0.2f, false, redZonePaint)
+        val arcRect = RectF(cx - radius, cy - radius, cx + radius, cy + radius)
+        canvas.drawArc(arcRect, redStart, sweepAngle * 0.2f, false, redZonePaint)
 
-        // Деления: каждые 10%
+        // 3. Деления шкалы каждые 10% (жирные каждые 50%)
         for (i in 0..10) {
             val a = Math.toRadians((startAngle + sweepAngle * i / 10f).toDouble())
-            val tickOuter = radius - 12f
-            val tickInner = radius - (if (i % 5 == 0) 26f else 18f)
+            val tickOuter = radius - 2f * density
+            val isMajor = (i % 5 == 0)
+            val tickLen = if (isMajor) 10f * density else 6f * density
+            val tickInner = radius - tickLen
+
+            val paint = if (isMajor) tickHeavyPaint else tickPaint
             canvas.drawLine(
                 cx + tickInner * cos(a).toFloat(), cy + tickInner * sin(a).toFloat(),
                 cx + tickOuter * cos(a).toFloat(), cy + tickOuter * sin(a).toFloat(),
-                tickPaint
+                paint
             )
         }
 
-        // Подписи MIN / MAX и название прибора
-        textPaint.textAlign = Paint.Align.LEFT
-        canvas.drawText(minLabel, pad + 18f, h - pad - 14f, textPaint)
-        textPaint.textAlign = Paint.Align.RIGHT
-        canvas.drawText(maxLabel, w - pad - 18f, h - pad - 14f, textPaint)
-        textPaint.textAlign = Paint.Align.CENTER
-        canvas.drawText(title, cx, cy - radius * 0.35f, textPaint)
+        // 4. Подписи MIN / MAX
+        labelPaint.textAlign = Paint.Align.LEFT
+        canvas.drawText(minLabel, pad + 16f * density, h - pad - 12f * density, labelPaint)
+        labelPaint.textAlign = Paint.Align.RIGHT
+        canvas.drawText(maxLabel, w - pad - 16f * density, h - pad - 12f * density, labelPaint)
 
-        // «Лампочка» подсветки
-        canvas.drawCircle(w - pad - 34f, pad + 34f, 10f, lampPaint)
+        // 5. Заголовок прибора сверху
+        canvas.drawText(title, cx, pad + 24f * density, titlePaint)
 
-        // Стрелка
+        // 6. Цифровое значение по центру циферблата (28-34sp)
+        val valStr = customValueText ?: "${(needleLevel * 100).toInt()}$unit"
+        val isCritical = needleLevel >= 0.95f
+        valuePaint.color = if (isCritical) redColor else inkColor
+        val textY = cy - radius * 0.30f
+        canvas.drawText(valStr, cx, textY, valuePaint)
+
+        // 7. Индикаторная лампа в правом верхнем углу корпуса (12dp, радиус 6dp)
+        val inRedZone = needleLevel >= 0.80f
+        lampPaint.color = if (inRedZone) redColor else lampDimColor
+        val lampR = 6f * density
+        val lampX = w - pad - 20f * density
+        val lampY = pad + 20f * density
+        canvas.drawCircle(lampX, lampY, lampR, lampPaint)
+
+        // 8. Стрелка прибора с инерцией
         val angle = Math.toRadians((startAngle + sweepAngle * needleLevel).toDouble())
-        val needleLen = radius - 24f
+        val needleLen = radius - 10f * density
         canvas.drawLine(
             cx, cy,
             cx + needleLen * cos(angle).toFloat(),
             cy + needleLen * sin(angle).toFloat(),
             needlePaint
         )
+
         // Ось стрелки
-        canvas.drawCircle(cx, cy, 8f, needlePaint)
+        canvas.drawCircle(cx, cy, 5f * density, pivotPaint)
     }
 }

@@ -5,7 +5,43 @@
     <string name="temp_gauge">TEMP</string>
     <string name="prototype_status">UVOS prototype — данные только от системы, без разрешений</string>
     <string name="open_shield">ЩИТОК ДОСТУПА</string>
-    <string name="shield_demo_note">ДЕМО: каналы фиктивные — иллюстрация дизайна щитка. В UVOS все каналы закрыты по умолчанию.</string>
+    <string name="shield_demo_note">ДЕМО: иллюстрация дизайна щитка. В реальной UVOS все каналы закрыты по умолчанию.</string>
     <string name="channel_closed">ЗАКРЫТО</string>
     <string name="channel_open">ОТКРЫТО</string>
+    <string name="channel_coarsed">ОГРУБЛЕНО</string>
+
+    <!-- Профили (CONTROL-SCHEME.md §4) -->
+    <string name="profile_title">ПРОФИЛЬ ОГРАНИЧЕНИЙ</string>
+    <string name="profile_sterile">СТЕРИЛЬНО</string>
+    <string name="profile_comm">СВЯЗЬ</string>
+    <string name="profile_custom">СВОЙ</string>
+    <string name="profile_desc_sterile">Все 13 каналов заблокированы</string>
+    <string name="profile_desc_comm">Базовая связь владельцу, приложениям закрыто</string>
+    <string name="profile_desc_custom">Индивидуальная настройка каналов</string>
+
+    <!-- Суточный журнал (DESIGN.md §7.4) -->
+    <string name="log_button">ЖУРНАЛ ПОПЫТОК</string>
+    <string name="log_title">ЖУРНАЛ ОБРАЩЕНИЙ К ЗАКРЫТЫМ КАНАЛАМ</string>
+    <string name="log_counter_today">ПОПЫТКИ ДОСТУПА ЗА СУТКИ</string>
+    <string name="log_empty">Обращений к закрытым каналам не зафиксировано</string>
+    <string name="log_clear">ОЧИСТИТЬ ЖУРНАЛ</string>
+
+    <!-- Диалог отзыва разрешения (DESIGN.md §3.9) -->
+    <string name="revocation_title">ВНИМАНИЕ: ОТЗЫВ ДОСТУПА</string>
+    <string name="revocation_message">Приложение потеряет доступ к каналу «%s» немедленно. Активные сессии будут оборваны.</string>
+    <string name="revocation_confirm">ОТОЗВАТЬ</string>
+    <string name="revocation_cancel">ОТМЕНА</string>
+
+    <!-- Сетевой регулятор (DESIGN.md §7.3, NETWORK-REGULATOR.md) -->
+    <string name="net_regulator_title">СЕТЕВОЙ РЕГУЛЯТОР</string>
+    <string name="net_mode_title">РЕЖИМ ДОСТУПА В СЕТЬ</string>
+    <string name="net_mode_closed">ЗАКРЫТО</string>
+    <string name="net_mode_whitelist">БЕЛЫЙ СПИСОК</string>
+    <string name="net_mode_open">ОТКРЫТО</string>
+    <string name="net_limit_title">ДНЕВНОЙ ЛИМИТ ТРАФИКА</string>
+    <string name="net_whitelist_title">РАЗРЕШЁННЫЕ ДОМЕНЫ</string>
+    <string name="net_add_domain_hint">Добавить домен (example.com)</string>
+    <string name="net_add_button">ДОБАВИТЬ</string>
+    <string name="net_schedule_title">РАСПИСАНИЕ И УСЛОВИЯ</string>
+    <string name="net_charging_only">Только при зарядке</string>
 </resources>

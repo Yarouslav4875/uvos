@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Строка канала щитка: название + статус + лампа (DESIGN.md §6.2, §3.7) -->
+<!-- Строка канала щитка: название + статус + лампа (DESIGN.md §7.2, §3.7) -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="56dp"
-    android:orientation="horizontal"
+    android:background="@drawable/bg_tile_clickable"
     android:gravity="center_vertical"
-    android:paddingStart="12dp"
-    android:paddingEnd="12dp"
-    android:background="@color/uvos_tile">
+    android:orientation="horizontal"
+    android:paddingStart="16dp"
+    android:paddingEnd="16dp">
 
     <TextView
         android:id="@+id/channel_name"
@@ -15,7 +15,8 @@
         android:layout_height="wrap_content"
         android:layout_weight="1"
         android:textColor="@color/uvos_text"
-        android:textSize="16sp" />
+        android:textSize="15sp"
+        android:textStyle="bold" />
 
     <TextView
         android:id="@+id/channel_status"
@@ -23,10 +24,10 @@
         android:layout_height="wrap_content"
         android:layout_marginEnd="12dp"
         android:textColor="@color/uvos_text_dim"
-        android:textSize="14sp" />
+        android:textSize="13sp" />
 
     <com.uvos.dashboard.LampView
         android:id="@+id/channel_lamp"
-        android:layout_width="24dp"
-        android:layout_height="24dp" />
+        android:layout_width="16dp"
+        android:layout_height="16dp" />
 </LinearLayout>

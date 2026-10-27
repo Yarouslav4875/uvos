@@ -1,9 +1,26 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Кастомные атрибуты прибора GaugeView -->
+    <!-- Кастомные атрибуты прибора GaugeView (DESIGN.md §3.1) -->
     <declare-styleable name="GaugeView">
         <attr name="title" format="string" />
         <attr name="minLabel" format="string" />
         <attr name="maxLabel" format="string" />
+        <attr name="unit" format="string" />
+        <attr name="isCompact" format="boolean" />
+    </declare-styleable>
+
+    <!-- Атрибуты индикаторной лампы LampView (DESIGN.md §3.6) -->
+    <declare-styleable name="LampView">
+        <attr name="isLampOn" format="boolean" />
+    </declare-styleable>
+
+    <!-- Атрибуты линейного ползунка SliderView (DESIGN.md §3.5) -->
+    <declare-styleable name="SliderView">
+        <attr name="progress" format="float" />
+    </declare-styleable>
+
+    <!-- Атрибуты тумблера ToggleView (DESIGN.md §3.3) -->
+    <declare-styleable name="ToggleView">
+        <attr name="checked" format="boolean" />
     </declare-styleable>
 </resources>

@@ -13,7 +13,7 @@ captures/
 # --- IDE ---
 .idea/
 *.iml
-.vscode/
+*.vscode/
 
 # --- Логи и временные файлы ---
 *.log
@@ -24,3 +24,7 @@ Thumbs.db
 # --- Личные данные (никогда не коммитим) ---
 secrets/
 *.env
+
+# --- Посторонние планы ---
+arch-linux-install-plan.md
+hackathon26-AIO-plan.md
