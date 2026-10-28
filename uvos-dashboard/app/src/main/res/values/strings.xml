@@ -6,6 +6,10 @@
     <string name="prototype_status">UVOS prototype — данные только от системы, без разрешений</string>
     <string name="open_shield">ЩИТОК ДОСТУПА</string>
     <string name="shield_demo_note">ДЕМО: иллюстрация дизайна щитка. В реальной UVOS все каналы закрыты по умолчанию.</string>
+    <string name="demo_note_log">ДЕМО: записи журнала фиктивные — иллюстрация дизайна журнала попыток.</string>
+    <string name="demo_note_network">ДЕМО: фильтрации нет — иллюстрация регулятора сети (docs/NETWORK-REGULATOR.md).</string>
+    <string name="demo_note_channels">ДЕМО: приложения и каналы фиктивные — иллюстрация дизайна щитка.</string>
+    <string name="demo_note_profiles">ДЕМО: правила хранятся локально в приложении, чужие программы пока не ограничиваются.</string>
     <string name="channel_closed">ЗАКРЫТО</string>
     <string name="channel_open">ОТКРЫТО</string>
     <string name="channel_coarsed">ОГРУБЛЕНО</string>

@@ -47,4 +47,15 @@
             android:textSize="13sp"
             android:textStyle="bold" />
     </LinearLayout>
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp"
+        android:paddingBottom="12dp"
+        android:text="@string/demo_note_log"
+        android:textColor="@color/uvos_text_dim"
+        android:textSize="12sp" />
 </LinearLayout>

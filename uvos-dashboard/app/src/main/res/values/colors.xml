@@ -12,4 +12,5 @@
     <color name="uvos_text">#D8D8DC</color>
     <color name="uvos_text_dim">#8A8A92</color>
     <color name="uvos_divider">#2A2C36</color>
+    <color name="uvos_on_red">#FFFFFF</color>
 </resources>
