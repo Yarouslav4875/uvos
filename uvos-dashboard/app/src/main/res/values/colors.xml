@@ -1,16 +1,24 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Палитра UVOS DESIGN.md §2.1: ретро-приборы + iPhone-минимализм -->
-    <color name="uvos_background">#0E0E12</color>
-    <color name="uvos_tile">#1C1E26</color>
-    <color name="uvos_tile_pressed">#242630</color>
+    <!-- Палитра UVOS: ретро-приборы + iPhone-минимализм (на 2 тона темнее #040406) -->
+    <color name="uvos_background">#040406</color>
+    <color name="uvos_tile">#0C0D13</color>
+    <color name="uvos_tile_pressed">#161822</color>
+    <color name="uvos_case">#08090D</color>
     <color name="uvos_dial">#E8E4D8</color>
+    <color name="uvos_dial_dark">#13151D</color>
     <color name="uvos_ink">#1A1A1A</color>
     <color name="uvos_dial_text">#1A1A1A</color>
+    <color name="uvos_primary">#E02020</color>
     <color name="uvos_red">#E02020</color>
+    <color name="uvos_red_alert">#FF2222</color>
+    <color name="uvos_amber">#F59E0B</color>
+    <color name="uvos_cyan">#06B6D4</color>
+    <color name="uvos_green">#10B981</color>
     <color name="uvos_lamp_dim">#7A1010</color>
-    <color name="uvos_text">#D8D8DC</color>
-    <color name="uvos_text_dim">#8A8A92</color>
-    <color name="uvos_divider">#2A2C36</color>
+    <color name="uvos_lamp_off">#180808</color>
+    <color name="uvos_text">#E2E4EC</color>
+    <color name="uvos_text_dim">#71768E</color>
+    <color name="uvos_divider">#1F2230</color>
     <color name="uvos_on_red">#FFFFFF</color>
 </resources>

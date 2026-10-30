@@ -1,6 +1,7 @@
 package com.uvos.dashboard.repository
 
 import android.content.Context
+import android.content.Intent
 import com.uvos.dashboard.model.*
 import org.json.JSONArray
 import org.json.JSONObject
@@ -20,6 +21,34 @@ class RuleRepositoryImpl private constructor(private val context: Context) : Rul
         if (apps.isEmpty()) {
             initDefaultDemoApps()
             saveToDisk()
+        }
+        syncWithPackageManager()
+    }
+
+    fun syncWithPackageManager() {
+        try {
+            val pm = context.packageManager
+            val intent = Intent(Intent.ACTION_MAIN).apply {
+                addCategory(Intent.CATEGORY_LAUNCHER)
+            }
+            val launchableApps = pm.queryIntentActivities(intent, 0)
+            var changed = false
+            for (resolveInfo in launchableApps) {
+                val pkgName = resolveInfo.activityInfo.packageName
+                if (pkgName == context.packageName) continue
+                val existing = apps.find { it.packageName == pkgName }
+                if (existing == null) {
+                    val label = resolveInfo.loadLabel(pm).toString()
+                    val uid = resolveInfo.activityInfo.applicationInfo.uid
+                    apps.add(AppRule(pkgName, label, uid))
+                    changed = true
+                }
+            }
+            if (changed) {
+                saveToDisk()
+            }
+        } catch (_: Exception) {
+            // Тихо пропускаем при ошибках IPC PackageManager
         }
     }
 
@@ -102,7 +131,10 @@ class RuleRepositoryImpl private constructor(private val context: Context) : Rul
         saveToDisk()
     }
 
-    override fun getAllApps(): List<AppRule> = apps
+    override fun getAllApps(): List<AppRule> {
+        syncWithPackageManager()
+        return apps
+    }
 
     override fun getAppRule(packageName: String): AppRule? =
         apps.find { it.packageName == packageName }
