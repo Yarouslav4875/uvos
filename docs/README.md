@@ -29,6 +29,8 @@
 - [`NETWORK-REGULATOR.md`](NETWORK-REGULATOR.md) — регулятор сети: три
   режима, белый список, лимиты и расписание, реализация (VPN → netfilter),
   честные пределы.
+- [`SECURITY-AUDIT.md`](SECURITY-AUDIT.md) — аудит безопасности: соответствие
+  стандартам ОС, анализ лазеек перехвата контроля и план устранения.
 - [`PROTOTYPE.md`](PROTOTYPE.md) — прототип `uvos-dashboard`: что
   реализовано, как открыть в Android Studio, демо-режим, планы.
 - [`TEST-CHECKLIST.md`](TEST-CHECKLIST.md) — план тестирования (этап E):
