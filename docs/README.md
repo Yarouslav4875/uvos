@@ -41,6 +41,12 @@
 - [`ROADMAP.md`](ROADMAP.md) — дорожная карта этапов A–F со статусами
   и критериями завершения.
 
+## ArchUVOS (UnderVoltOS for Arch Linux)
+
+- [`archuvos/ARCHUVOS-BACKGROUND.md`](archuvos/ARCHUVOS-BACKGROUND.md) — архитектура фонового стека: демоны `archuvos-cored`, `archuvos-capsuled` (Bubblewrap + Landlock), `archuvos-netgovd` (eBPF + nftables), `archuvos-undervoltd` (MSR / RAPL / hwmon), D-Bus API и интеграция с pacman.
+- [`archuvos/ARCHUVOS-STYLER.md`](archuvos/ARCHUVOS-STYLER.md) — спецификация визуального бэкграунда и генератора тем `archuvos-styler`: процедурные обои с координатной сеткой и шлицевыми винтами, темы для Plymouth, Greetd, Hyprland, Waybar, Rofi, Kitty, GTK 3/4.
+- [`archuvos/ARCHUVOS-VM-SETUP.md`](archuvos/ARCHUVOS-VM-SETUP.md) — пошаговое руководство по развертыванию Arch Linux в виртуальной машине для тестирования фонового стека и стилизации.
+
 ## Код прототипа
 
 - [`uvos-dashboard/`](../uvos-dashboard/) — Kotlin-прототип приборной панели
