@@ -68,13 +68,13 @@ class NetworkRegulatorActivity : Activity() {
         modeSelector.setItems(modeNames, defaultModeIdx)
         updateModeVisibility(netConfig.mode)
 
-        modeSelector.onSegmentSelected = { idx ->
+        modeSelector.onSegmentSelected = onSelect@{ idx ->
             val newMode = when (idx) {
                 0 -> NetworkMode.FULLY_CLOSED
                 1 -> NetworkMode.WHITELIST
                 else -> NetworkMode.OPEN
             }
-            val currentApp = repository.getAppRule(packageName) ?: return@onSegmentSelected
+            val currentApp = repository.getAppRule(packageName) ?: return@onSelect
             val updated = currentApp.networkConfig.copy(mode = newMode)
             repository.updateNetworkConfig(packageName, updated)
             updateModeVisibility(newMode)
@@ -90,9 +90,9 @@ class NetworkRegulatorActivity : Activity() {
         val sliderFrac = ((currentLimitMb - 50f) / 950f).coerceIn(0f, 1f)
         limitSlider.setProgress(sliderFrac)
 
-        limitSlider.onProgressChanged = { frac ->
+        limitSlider.onProgressChanged = onProgress@{ frac ->
             val limitMb = (50 + frac * 950).toLong()
-            val currentApp = repository.getAppRule(packageName) ?: return@onProgressChanged
+            val currentApp = repository.getAppRule(packageName) ?: return@onProgress
             val updated = currentApp.networkConfig.copy(dailyLimitBytes = limitMb * 1024L * 1024L)
             repository.updateNetworkConfig(packageName, updated)
             updateTrafficGauge(updated)
@@ -100,8 +100,8 @@ class NetworkRegulatorActivity : Activity() {
 
         // 3. Тумблер зарядки
         toggleCharging.setChecked(netConfig.chargingOnly)
-        toggleCharging.onToggleChanged = { isCharging ->
-            val currentApp = repository.getAppRule(packageName) ?: return@onToggleChanged
+        toggleCharging.onToggleChanged = onToggle@{ isCharging ->
+            val currentApp = repository.getAppRule(packageName) ?: return@onToggle
             val updated = currentApp.networkConfig.copy(chargingOnly = isCharging)
             repository.updateNetworkConfig(packageName, updated)
         }
