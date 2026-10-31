@@ -339,6 +339,12 @@ class ArchUVOSShell(QMainWindow):
 
         b_layout.addStretch()
 
+        btn_detach = QPushButton("❐ ОТКРЕПИТЬ ВИДЖЕТЫ")
+        btn_detach.setFont(QFont("Share Tech Mono", 8, QFont.Weight.Bold))
+        btn_detach.setStyleSheet(f"background-color: {TILE_PRESSED.name()}; color: {TEXT_COLOR.name()}; border-radius: 6px; padding: 6px 12px; border: 1px solid {DIVIDER_COLOR.name()};")
+        btn_detach.clicked.connect(lambda: subprocess.Popen(["python3", "/home/dust/archuvos/tools/scripts/uvos_widgets.py"]))
+        b_layout.addWidget(btn_detach)
+
         sec_status = QLabel("СИСТЕМА ИЗОЛЯЦИИ: АКТИВНА  •  БЛОКИРОВОК: 0")
         sec_status.setFont(QFont("Share Tech Mono", 9))
         sec_status.setStyleSheet(f"color: {TEXT_DIM_COLOR.name()};")
