@@ -13,6 +13,8 @@
             android:launchMode="singleTask"
             android:clearTaskOnLaunch="true"
             android:stateNotNeeded="true"
+            android:screenOrientation="portrait"
+            android:configChanges="orientation|screenSize|screenLayout"
             android:windowSoftInputMode="adjustPan">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -23,15 +25,19 @@
         </activity>
         <activity
             android:name=".ShieldActivity"
+            android:screenOrientation="portrait"
             android:exported="false" />
         <activity
             android:name=".AppChannelsActivity"
+            android:screenOrientation="portrait"
             android:exported="false" />
         <activity
             android:name=".NetworkRegulatorActivity"
+            android:screenOrientation="portrait"
             android:exported="false" />
         <activity
             android:name=".LogActivity"
+            android:screenOrientation="portrait"
             android:exported="false" />
     </application>
 </manifest>
