@@ -1,0 +1,923 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ArchUVOS — Все виды рабочих столов и примеры окон для ПК</title>
+  <script src="https://www.gstatic.com/antigravity/web/dev/tailwindcss.min.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Oswald:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap');
+
+    :root {
+      --bg-system: #06070A;
+      --bg-tile: #12141C;
+      --bg-tile-sub: #181A24;
+      --bg-tile-pressed: #202330;
+      --dial-color: #E8E4D8;
+      --ink-color: #1A1A1A;
+      --red-accent: #E02020;
+      --lamp-dim: #7A1010;
+      --text-main: #D8D8DC;
+      --text-dim: #8A8A92;
+      --divider-color: #222533;
+    }
+
+    body {
+      background-color: #030406;
+      color: var(--text-main);
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      margin: 0;
+      padding: 0;
+      overflow-x: hidden;
+      user-select: none;
+    }
+
+    .font-mono-inst {
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .font-header-caps {
+      font-family: 'Oswald', sans-serif;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    /* PC Monitor Frame (16:9 aspect ratio display) */
+    .pc-monitor-frame {
+      width: 100%;
+      max-width: 1200px;
+      aspect-ratio: 16 / 9.5;
+      background: var(--bg-system);
+      border-radius: 20px;
+      border: 3px solid #1C1E2A;
+      box-shadow: 0 35px 80px -15px rgba(0,0,0,0.95), 0 0 0 1px rgba(255,255,255,0.06);
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Wayland / Hyprland Top Bar */
+    .wayland-topbar {
+      height: 38px;
+      background: rgba(10, 11, 16, 0.95);
+      border-bottom: 1px solid var(--divider-color);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 16px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11.5px;
+      z-index: 40;
+      backdrop-filter: blur(10px);
+    }
+
+    /* M4200 Instrument Case (Square Panel Meter) */
+    .meter-case-panel {
+      background: radial-gradient(circle at 50% 20%, #1e212b, #12141a);
+      border: 2px solid #282c38;
+      border-radius: 22px;
+      position: relative;
+      box-shadow: inset 0 1px 1px rgba(255,255,255,0.08), 0 10px 22px rgba(0,0,0,0.65);
+      padding: 12px 14px 14px 14px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 100%;
+    }
+
+    /* Precision Screws with realistic slot */
+    .screw {
+      width: 13px;
+      height: 13px;
+      background: radial-gradient(circle at 35% 35%, #464a5c, #191b22);
+      border-radius: 50%;
+      position: absolute;
+      box-shadow: inset 0 1px 1px rgba(255,255,255,0.25), 0 2px 4px rgba(0,0,0,0.8);
+      z-index: 15;
+      pointer-events: none;
+    }
+    .screw::after {
+      content: '';
+      position: absolute;
+      top: 5.5px;
+      left: 1.5px;
+      width: 10px;
+      height: 2px;
+      background: #0b0c10;
+      transform: rotate(var(--rot, 35deg));
+    }
+
+    /* FIXED ASPECT RATIO DIAL WINDOW (NO SIDE GAPS) */
+    .dial-window-fixed {
+      width: 100%;
+      aspect-ratio: 320 / 220;
+      border-radius: 14px;
+      background-color: var(--dial-color);
+      box-shadow: inset 0 3px 10px rgba(0,0,0,0.35), 0 1px 2px rgba(255,255,255,0.06);
+      border: 2px solid #14151c;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* Indicator Lamp with metallic bezel */
+    .lamp-bezel {
+      padding: 2px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #44495c, #1a1c24);
+      box-shadow: 0 2px 4px rgba(0,0,0,0.5);
+    }
+    .lamp-bulb {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--lamp-dim);
+      border: 1px solid #300c0c;
+      transition: all 0.25s ease;
+      box-shadow: inset 0 1px 2px rgba(255,255,255,0.2);
+    }
+    .lamp-bulb.active {
+      background: var(--red-accent);
+      box-shadow: 0 0 10px #ff2b2b, 0 0 3px #ff8888, inset 0 1px 2px #fff;
+    }
+
+    /* Needle Physics with inertia */
+    .meter-needle {
+      transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    /* Desktop Windows / Containers */
+    .desktop-window {
+      background: #10121A;
+      border: 1px solid #282C3C;
+      border-radius: 16px;
+      box-shadow: 0 16px 40px rgba(0,0,0,0.7), inset 0 1px 1px rgba(255,255,255,0.05);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .desktop-window-header {
+      height: 34px;
+      background: #171A24;
+      border-bottom: 1px solid #242736;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 12px;
+    }
+
+    /* Industrial Window Controls (Bolt/Dot style) */
+    .win-btn {
+      width: 11px;
+      height: 11px;
+      border-radius: 50%;
+      background: #252836;
+      border: 1px solid #383D50;
+      cursor: pointer;
+    }
+    .win-btn.close:hover { background: #E02020; border-color: #ff4d4d; }
+
+    /* UVOS Desktop Dock */
+    .desktop-dock {
+      height: 52px;
+      background: rgba(14, 16, 23, 0.92);
+      border: 1px solid #282C3C;
+      border-radius: 20px;
+      padding: 0 16px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      box-shadow: 0 12px 30px rgba(0,0,0,0.8);
+      backdrop-filter: blur(12px);
+    }
+    .dock-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      background: #171A24;
+      border: 1px solid #2A2E40;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .dock-icon:hover {
+      transform: translateY(-4px);
+      border-color: #E02020;
+    }
+    .dock-icon.active::after {
+      content: '';
+      position: absolute;
+      bottom: -6px;
+      width: 4px;
+      height: 4px;
+      border-radius: 50%;
+      background: #E02020;
+      box-shadow: 0 0 6px #ff3333;
+    }
+
+    /* Tab switcher for desktop presentations */
+    .view-tab-btn {
+      padding: 8px 18px;
+      border-radius: 12px;
+      font-family: 'Oswald', sans-serif;
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: #8A8A92;
+      background: #0E0E12;
+      border: 1px solid #222533;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .view-tab-btn.active {
+      background: #1C1E26;
+      color: #FFF;
+      border-color: #E02020;
+      box-shadow: 0 0 12px rgba(224, 32, 32, 0.3);
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between py-6 px-4">
+
+  <!-- TOP PROJECT HEADER -->
+  <header class="max-w-6xl w-full mx-auto mb-6 flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-[#202330] pb-4">
+    <div>
+      <div class="flex items-center gap-3">
+        <div class="w-9 h-9 rounded-xl bg-[#E02020] flex items-center justify-center font-bold text-white font-mono-inst text-lg shadow-[0_0_14px_rgba(224,32,32,0.5)]">
+          U
+        </div>
+        <div>
+          <h1 class="text-2xl md:text-3xl font-header-caps text-white tracking-widest flex items-center gap-2">
+            ArchUVOS Desktop Showcase
+            <span class="text-xs bg-[#1C1E26] text-[#E02020] px-2.5 py-0.5 rounded font-mono-inst border border-[#E02020]/40">PC EDITION</span>
+          </h1>
+          <p class="text-xs text-[#8A8A92] font-mono-inst mt-0.5">Все виды рабочих столов и примеры окон на базе Arch Linux</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Desktop Switcher Tabs -->
+    <div class="flex items-center gap-2 overflow-x-auto pb-1">
+      <button onclick="switchDesktop(1)" class="view-tab-btn active" id="tabBtn1">СТОЛ 01: ПРИБОРНЫЙ</button>
+      <button onclick="switchDesktop(2)" class="view-tab-btn" id="tabBtn2">СТОЛ 02: ТАЙЛИНГ / HOME</button>
+      <button onclick="switchDesktop(3)" class="view-tab-btn" id="tabBtn3">СТОЛ 03: ЩИТОК ПРАВ</button>
+      <button onclick="switchDesktop(4)" class="view-tab-btn" id="tabBtn4">СТОЛ 04: ДИСПЕТЧЕР & СЕТЬ</button>
+      <button onclick="switchDesktop(5)" class="view-tab-btn" id="tabBtn5">ПРИМЕРЫ ОКОН</button>
+    </div>
+  </header>
+
+  <!-- MAIN MONITOR DISPLAY CANVAS -->
+  <main class="flex-grow max-w-6xl w-full mx-auto flex flex-col items-center justify-center">
+
+    <!-- ========================================================================= -->
+    <!-- DESKTOP 1: INSTRUMENT COCKPIT DASHBOARD (ПРИБОРНЫЙ РАБОЧИЙ СТОЛ)         -->
+    <!-- ========================================================================= -->
+    <div class="pc-monitor-frame" id="desktopView1">
+      <!-- Wayland Top Bar -->
+      <div class="wayland-topbar">
+        <div class="flex items-center gap-3">
+          <span class="text-[#E02020] font-bold">ARCH·UVOS</span>
+          <div class="flex gap-1">
+            <span class="px-2 py-0.5 rounded bg-[#1C1E26] text-white border border-[#2A2C36]">1: COCKPIT</span>
+            <span class="px-2 py-0.5 rounded text-[#8A8A92] hover:text-white cursor-pointer">2</span>
+            <span class="px-2 py-0.5 rounded text-[#8A8A92] hover:text-white cursor-pointer">3</span>
+            <span class="px-2 py-0.5 rounded text-[#8A8A92] hover:text-white cursor-pointer">4</span>
+          </div>
+        </div>
+        <div class="flex items-center gap-2">
+          <span class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+          <span class="text-green-400 font-bold">ПИТАНИЕ: АВТО (SMART GOV)</span>
+        </div>
+        <div class="flex items-center gap-4 text-[#8A8A92]">
+          <span>EBPF: ACTIVE</span>
+          <span class="text-white font-bold">20:15:30</span>
+        </div>
+      </div>
+
+      <!-- Cockpit Content Grid -->
+      <div class="flex-1 p-6 flex flex-col justify-between overflow-y-auto">
+        <!-- 4 Authentic M4200 Gauges (White Dials, Black Ticks, Fixed Aspect Ratio) -->
+        <div class="grid grid-cols-4 gap-4">
+          
+          <!-- Gauge 1: VCORE -->
+          <div class="meter-case-panel">
+            <div class="screw" style="top: 8px; left: 8px; --rot: 20deg;"></div>
+            <div class="screw" style="top: 8px; right: 8px; --rot: 75deg;"></div>
+            <div class="screw" style="bottom: 8px; left: 8px; --rot: 110deg;"></div>
+            <div class="screw" style="bottom: 8px; right: 8px; --rot: 35deg;"></div>
+            <div class="screw" style="bottom: 5px; left: calc(50% - 6.5px); --rot: 88deg;"></div>
+            <div class="absolute" style="top: 8px; right: 28px;"><div class="lamp-bezel"><div class="lamp-bulb" id="d1Lamp1"></div></div></div>
+
+            <div class="dial-window-fixed">
+              <svg viewBox="0 0 320 220" class="w-full h-full">
+                <text x="20" y="28" font-family="JetBrains Mono" font-size="9" fill="#666" font-weight="bold">UVOS·VCORE</text>
+                <g id="g1TickArc"></g>
+                <text x="28" y="138" font-family="JetBrains Mono" font-size="11" fill="#1A1A1A" font-weight="700">0.7V</text>
+                <text x="292" y="138" font-family="JetBrains Mono" font-size="11" fill="#E02020" font-weight="700" text-anchor="end">1.35V</text>
+                <text x="160" y="126" text-anchor="middle" font-family="JetBrains Mono" font-weight="bold" font-size="28" fill="#1A1A1A">0.945 V</text>
+                <text x="160" y="148" text-anchor="middle" font-family="JetBrains Mono" font-weight="bold" font-size="10" fill="#777" letter-spacing="2">VCORE</text>
+                <g class="meter-needle" style="transform-origin: 160px 195px; transform: rotate(-5deg);">
+                  <line x1="160" y1="195" x2="160" y2="48" stroke="#1A1A1A" stroke-width="2.6" stroke-linecap="round" />
+                  <circle cx="160" cy="195" r="7.5" fill="#1A1A1A" />
+                  <circle cx="160" cy="195" r="3" fill="#E8E4D8" />
+                </g>
+              </svg>
+            </div>
+          </div>
+
+          <!-- Gauge 2: POWER -->
+          <div class="meter-case-panel">
+            <div class="screw" style="top: 8px; left: 8px; --rot: 40deg;"></div>
+            <div class="screw" style="top: 8px; right: 8px; --rot: 95deg;"></div>
+            <div class="screw" style="bottom: 8px; left: 8px; --rot: 10deg;"></div>
+            <div class="screw" style="bottom: 8px; right: 8px; --rot: 60deg;"></div>
+            <div class="screw" style="bottom: 5px; left: calc(50% - 6.5px); --rot: 15deg;"></div>
+            <div class="absolute" style="top: 8px; right: 28px;"><div class="lamp-bezel"><div class="lamp-bulb" id="d1Lamp2"></div></div></div>
+
+            <div class="dial-window-fixed">
+              <svg viewBox="0 0 320 220" class="w-full h-full">
+                <text x="20" y="28" font-family="JetBrains Mono" font-size="9" fill="#666" font-weight="bold">UVOS·POWER</text>
+                <g id="g2TickArc"></g>
+                <text x="28" y="138" font-family="JetBrains Mono" font-size="11" fill="#1A1A1A" font-weight="700">0 W</text>
+                <text x="292" y="138" font-family="JetBrains Mono" font-size="11" fill="#E02020" font-weight="700" text-anchor="end">65 W</text>
+                <text x="160" y="126" text-anchor="middle" font-family="JetBrains Mono" font-weight="bold" font-size="28" fill="#1A1A1A">18.4 W</text>
+                <text x="160" y="148" text-anchor="middle" font-family="JetBrains Mono" font-weight="bold" font-size="10" fill="#777" letter-spacing="2">PACKAGE</text>
+                <g class="meter-needle" style="transform-origin: 160px 195px; transform: rotate(-28deg);">
+                  <line x1="160" y1="195" x2="160" y2="48" stroke="#1A1A1A" stroke-width="2.6" stroke-linecap="round" />
+                  <circle cx="160" cy="195" r="7.5" fill="#1A1A1A" />
+                  <circle cx="160" cy="195" r="3" fill="#E8E4D8" />
+                </g>
+              </svg>
+            </div>
+          </div>
+
+          <!-- Gauge 3: NETWORK TRAFFIC -->
+          <div class="meter-case-panel">
+            <div class="screw" style="top: 8px; left: 8px; --rot: 55deg;"></div>
+            <div class="screw" style="top: 8px; right: 8px; --rot: 115deg;"></div>
+            <div class="screw" style="bottom: 8px; left: 8px; --rot: 40deg;"></div>
+            <div class="screw" style="bottom: 8px; right: 8px; --rot: 90deg;"></div>
+            <div class="screw" style="bottom: 5px; left: calc(50% - 6.5px); --rot: 30deg;"></div>
+            <div class="absolute" style="top: 8px; right: 28px;"><div class="lamp-bezel"><div class="lamp-bulb" id="d1Lamp3"></div></div></div>
+
+            <div class="dial-window-fixed">
+              <svg viewBox="0 0 320 220" class="w-full h-full">
+                <text x="20" y="28" font-family="JetBrains Mono" font-size="9" fill="#666" font-weight="bold">UVOS·NET</text>
+                <g id="g3TickArc"></g>
+                <text x="28" y="138" font-family="JetBrains Mono" font-size="11" fill="#1A1A1A" font-weight="700">0 KB</text>
+                <text x="292" y="138" font-family="JetBrains Mono" font-size="11" fill="#E02020" font-weight="700" text-anchor="end">100 MB</text>
+                <text x="160" y="126" text-anchor="middle" font-family="JetBrains Mono" font-weight="bold" font-size="28" fill="#1A1A1A">4.2 MB/s</text>
+                <text x="160" y="148" text-anchor="middle" font-family="JetBrains Mono" font-weight="bold" font-size="10" fill="#777" letter-spacing="2">TRAFFIC</text>
+                <g class="meter-needle" style="transform-origin: 160px 195px; transform: rotate(-22deg);">
+                  <line x1="160" y1="195" x2="160" y2="48" stroke="#1A1A1A" stroke-width="2.6" stroke-linecap="round" />
+                  <circle cx="160" cy="195" r="7.5" fill="#1A1A1A" />
+                  <circle cx="160" cy="195" r="3" fill="#E8E4D8" />
+                </g>
+              </svg>
+            </div>
+          </div>
+
+          <!-- Gauge 4: THERMAL -->
+          <div class="meter-case-panel">
+            <div class="screw" style="top: 8px; left: 8px; --rot: 25deg;"></div>
+            <div class="screw" style="top: 8px; right: 8px; --rot: 70deg;"></div>
+            <div class="screw" style="bottom: 8px; left: 8px; --rot: 120deg;"></div>
+            <div class="screw" style="bottom: 8px; right: 8px; --rot: 45deg;"></div>
+            <div class="screw" style="bottom: 5px; left: calc(50% - 6.5px); --rot: 80deg;"></div>
+            <div class="absolute" style="top: 8px; right: 28px;"><div class="lamp-bezel"><div class="lamp-bulb"></div></div></div>
+
+            <div class="dial-window-fixed">
+              <svg viewBox="0 0 320 220" class="w-full h-full">
+                <text x="20" y="28" font-family="JetBrains Mono" font-size="9" fill="#666" font-weight="bold">UVOS·TEMP</text>
+                <g id="g4TickArc"></g>
+                <text x="28" y="138" font-family="JetBrains Mono" font-size="11" fill="#1A1A1A" font-weight="700">20°C</text>
+                <text x="292" y="138" font-family="JetBrains Mono" font-size="11" fill="#E02020" font-weight="700" text-anchor="end">100°C</text>
+                <text x="160" y="126" text-anchor="middle" font-family="JetBrains Mono" font-weight="bold" font-size="28" fill="#1A1A1A">41 °C</text>
+                <text x="160" y="148" text-anchor="middle" font-family="JetBrains Mono" font-weight="bold" font-size="10" fill="#777" letter-spacing="2">CORE TEMP</text>
+                <g class="meter-needle" style="transform-origin: 160px 195px; transform: rotate(-18deg);">
+                  <line x1="160" y1="195" x2="160" y2="48" stroke="#1A1A1A" stroke-width="2.6" stroke-linecap="round" />
+                  <circle cx="160" cy="195" r="7.5" fill="#1A1A1A" />
+                  <circle cx="160" cy="195" r="3" fill="#E8E4D8" />
+                </g>
+              </svg>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Middle Row: Power Profiles & Daily Security Audit Log -->
+        <div class="grid grid-cols-12 gap-4 mt-3">
+          <div class="col-span-5 bg-[#12141C] border border-[#242736] rounded-2xl p-4 flex flex-col justify-between">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-header-caps text-[#8A8A92]">ПРОФИЛИ УПРАВЛЕНИЯ ПИТАНИЕМ</span>
+              <span class="text-[11px] font-mono-inst text-green-400">АКТИВЕН: АВТО</span>
+            </div>
+            <div class="grid grid-cols-4 gap-2 mt-2">
+              <div class="p-2.5 rounded-xl bg-[#1C1E26] border-2 border-green-500 text-center">
+                <div class="text-xs font-header-caps text-green-400 font-bold">★ АВТО</div>
+                <div class="text-[10px] text-[#8A8A92] font-mono-inst mt-0.5">Динамический</div>
+              </div>
+              <div class="p-2.5 rounded-xl bg-[#0E0E12] border border-[#2A2C36] text-center">
+                <div class="text-xs font-header-caps text-white">ECO</div>
+                <div class="text-[10px] text-[#8A8A92] font-mono-inst mt-0.5">-80mV, 18W</div>
+              </div>
+              <div class="p-2.5 rounded-xl bg-[#0E0E12] border border-[#2A2C36] text-center">
+                <div class="text-xs font-header-caps text-white">БАЛАНС</div>
+                <div class="text-[10px] text-[#8A8A92] font-mono-inst mt-0.5">-50mV, 35W</div>
+              </div>
+              <div class="p-2.5 rounded-xl bg-[#0E0E12] border border-[#2A2C36] text-center">
+                <div class="text-xs font-header-caps text-[#E02020]">AIRGAP</div>
+                <div class="text-[10px] text-[#8A8A92] font-mono-inst mt-0.5">Сеть выкл</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-span-7 bg-[#12141C] border border-[#242736] rounded-2xl p-4 flex flex-col justify-between">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-header-caps text-[#8A8A92]">ЖУРНАЛ АУДИТА БЕЗОПАСНОСТИ (AUDIT LOG ЗА СУТКИ)</span>
+              <span class="text-[11px] font-mono-inst text-[#E02020] font-bold">14 ПОПЫТОК ЗАБЛОКИРОВАНО</span>
+            </div>
+            <div class="bg-[#0A0B10] border border-[#202330] rounded-xl p-2.5 font-mono-inst text-[11px] space-y-1 mt-2">
+              <div class="text-[#8A8A92] flex justify-between">
+                <span><span class="text-[#E02020] font-bold">[BLOCKED]</span> discord.bin &rarr; /sys/class/dmi/id/product_uuid</span>
+                <span class="text-[#555]">20:14:12</span>
+              </div>
+              <div class="text-[#8A8A92] flex justify-between">
+                <span><span class="text-[#E02020] font-bold">[BLOCKED]</span> proprietary_client &rarr; raw socket 0.0.0.0</span>
+                <span class="text-[#555]">20:11:05</span>
+              </div>
+              <div class="text-[#8A8A92] flex justify-between">
+                <span><span class="text-[#E02020] font-bold">[SPOOFED]</span> chrome &rarr; clock_gettime(CLOCK_MONOTONIC) jiter=1s</span>
+                <span class="text-[#555]">20:09:44</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Bottom Desktop Dock -->
+        <div class="flex justify-center mt-2">
+          <div class="desktop-dock">
+            <div class="dock-icon active"><svg class="w-5 h-5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="4"/><line x1="7" y1="12" x2="17" y2="12"/><line x1="12" y1="7" x2="12" y2="17"/></svg></div>
+            <div class="dock-icon"><svg class="w-5 h-5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 17l6-6-6-6"/><line x1="12" y1="19" x2="20" y2="19"/></svg></div>
+            <div class="dock-icon"><svg class="w-5 h-5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3"/></svg></div>
+            <div class="dock-icon"><svg class="w-5 h-5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg></div>
+            <div class="dock-icon"><svg class="w-5 h-5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========================================================================= -->
+    <!-- DESKTOP 2: TILING WORKSTATION / PRODUCTIVITY (РАБОЧИЙ СТОЛ С ТАЙЛИНГОМ)   -->
+    <!-- ========================================================================= -->
+    <div class="pc-monitor-frame hidden" id="desktopView2">
+      <div class="wayland-topbar">
+        <div class="flex items-center gap-3">
+          <span class="text-[#E02020] font-bold">ARCH·UVOS</span>
+          <div class="flex gap-1">
+            <span class="px-2 py-0.5 rounded text-[#8A8A92] hover:text-white cursor-pointer">1</span>
+            <span class="px-2 py-0.5 rounded bg-[#1C1E26] text-white border border-[#2A2C36]">2: CODE</span>
+            <span class="px-2 py-0.5 rounded text-[#8A8A92] hover:text-white cursor-pointer">3</span>
+            <span class="px-2 py-0.5 rounded text-[#8A8A92] hover:text-white cursor-pointer">4</span>
+          </div>
+        </div>
+        <div class="flex items-center gap-4 text-[#8A8A92]">
+          <span>CPU: 4% (0.94V)</span>
+          <span>MEM: 2.1 / 16 GB</span>
+          <span class="text-white font-bold">20:15:30</span>
+        </div>
+      </div>
+
+      <!-- Tiling Split Screen (Hyprland style) -->
+      <div class="flex-1 p-4 grid grid-cols-2 gap-4 overflow-hidden">
+        
+        <!-- Left Window: uvos-term (Kitty with Fastfetch) -->
+        <div class="desktop-window">
+          <div class="desktop-window-header">
+            <div class="flex items-center gap-2">
+              <div class="win-btn close"></div>
+              <div class="win-btn"></div>
+              <div class="win-btn"></div>
+              <span class="text-xs font-mono-inst text-[#8A8A92] ml-2">uvos-term ~ fastfetch</span>
+            </div>
+            <span class="text-[10px] font-mono-inst text-[#555]">pts/1</span>
+          </div>
+          <div class="p-4 font-mono-inst text-xs leading-relaxed text-[#D8D8DC] bg-[#0A0B10] flex-1 overflow-y-auto">
+            <div class="text-[#E02020] font-bold">user@arch-uvos ~ $ fastfetch</div>
+            <div class="grid grid-cols-12 gap-2 mt-2">
+              <div class="col-span-4 text-[#E02020] font-bold leading-tight">
+                <pre>
+   /\_____/\
+  /  o   o  \
+ ( ==  ^  == )
+  )         (
+ (           )
+( (  )   (  ) )
+(__(__)___(__)__)</pre>
+              </div>
+              <div class="col-span-8 space-y-1 text-xs">
+                <div><span class="text-[#8A8A92]">OS:</span> ArchUVOS Rolling x86_64</div>
+                <div><span class="text-[#8A8A92]">Kernel:</span> 6.12.1-zen-uvos</div>
+                <div><span class="text-[#8A8A92]">Uptime:</span> 4 days, 6 hours</div>
+                <div><span class="text-[#8A8A92]">Packages:</span> 842 (pacman + uvos-capsules)</div>
+                <div><span class="text-[#8A8A92]">Shell:</span> zsh 5.9 + uvos-theme</div>
+                <div><span class="text-[#8A8A92]">WM:</span> Hyprland-UVOS (Wayland)</div>
+                <div><span class="text-[#8A8A92]">Power Mode:</span> <span class="text-green-400 font-bold">AUTO-SMART (Vcore -65mV)</span></div>
+                <div><span class="text-[#8A8A92]">Security:</span> Landlock LSM + eBPF TC Filter [ACTIVE]</div>
+              </div>
+            </div>
+            <div class="mt-4 text-[#E02020] font-bold">user@arch-uvos ~ $ <span class="animate-pulse bg-[#E02020] text-black px-1">_</span></div>
+          </div>
+        </div>
+
+        <!-- Right Window: Code Editor / Rust Kernel Driver -->
+        <div class="desktop-window">
+          <div class="desktop-window-header">
+            <div class="flex items-center gap-2">
+              <div class="win-btn close"></div>
+              <div class="win-btn"></div>
+              <div class="win-btn"></div>
+              <span class="text-xs font-mono-inst text-[#8A8A92] ml-2">governor.rs — uvos-adaptive-gov</span>
+            </div>
+            <span class="text-[10px] font-mono-inst text-green-400">RUST</span>
+          </div>
+          <div class="p-4 font-mono-inst text-xs leading-relaxed text-[#D8D8DC] bg-[#0A0B10] flex-1 overflow-y-auto">
+            <div class="text-[#8A8A92]">// Autonomous voltage regulation loop</div>
+            <div><span class="text-[#E02020] font-bold">pub fn</span> <span class="text-yellow-300">apply_adaptive_voltage</span>(load: <span class="text-cyan-400">CpuLoad</span>) -&gt; <span class="text-cyan-400">Result</span>&lt;(), <span class="text-cyan-400">GovError</span>&gt; {</div>
+            <div class="pl-4">match load.p_state {</div>
+            <div class="pl-8"><span class="text-cyan-400">PState::Idle</span> =&gt; set_core_offset(-<span class="text-purple-400">80</span>), <span class="text-[#8A8A92]">// -80mV in silent idle</span></div>
+            <div class="pl-8"><span class="text-cyan-400">PState::Balanced</span> =&gt; set_core_offset(-<span class="text-purple-400">55</span>), <span class="text-[#8A8A92]">// -55mV in daily tasks</span></div>
+            <div class="pl-8"><span class="text-cyan-400">PState::PeakBoost</span> =&gt; set_core_offset(-<span class="text-purple-400">45</span>), <span class="text-[#8A8A92]">// -45mV under heavy compilation</span></div>
+            <div class="pl-4">};</div>
+            <div class="pl-4">enforce_ebpf_sandbox_limits()?;</div>
+            <div class="pl-4"><span class="text-green-400">Ok</span>(())</div>
+            <div>}</div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ========================================================================= -->
+    <!-- DESKTOP 3: PERMISSION SHIELD (КОНТРОЛЬНЫЙ ЩИТОК ПРАВ)                     -->
+    <!-- ========================================================================= -->
+    <div class="pc-monitor-frame hidden" id="desktopView3">
+      <div class="wayland-topbar">
+        <div class="flex items-center gap-3">
+          <span class="text-[#E02020] font-bold">ARCH·UVOS</span>
+          <div class="flex gap-1">
+            <span class="px-2 py-0.5 rounded text-[#8A8A92] hover:text-white cursor-pointer">1</span>
+            <span class="px-2 py-0.5 rounded text-[#8A8A92] hover:text-white cursor-pointer">2</span>
+            <span class="px-2 py-0.5 rounded bg-[#1C1E26] text-white border border-[#2A2C36]">3: SHIELD</span>
+            <span class="px-2 py-0.5 rounded text-[#8A8A92] hover:text-white cursor-pointer">4</span>
+          </div>
+        </div>
+        <div class="text-[#E02020] font-bold font-mono-inst">ZERO-TRUST SANDBOX GATEWAY</div>
+        <div class="text-white font-bold font-mono-inst">20:15:30</div>
+      </div>
+
+      <!-- Shield Matrix Content -->
+      <div class="flex-1 p-6 flex flex-col justify-between overflow-y-auto">
+        <div class="desktop-window h-full">
+          <div class="desktop-window-header">
+            <span class="text-xs font-header-caps text-white">КОНТРОЛЬНЫЙ ЩИТОК ПРИЛОЖЕНИЙ (PERMISSION SHIELD)</span>
+            <span class="text-xs font-mono-inst text-[#8A8A92]">ПО УМОЛЧАНИЮ ВСЁ ЗАКРЫТО (DEFAULT DROP)</span>
+          </div>
+
+          <div class="p-4 flex-1 bg-[#0A0B10] overflow-y-auto">
+            <table class="w-full text-left font-mono-inst text-xs border-collapse">
+              <thead>
+                <tr class="border-b border-[#242736] text-[#8A8A92]">
+                  <th class="py-2.5 px-3 font-header-caps">ПРИЛОЖЕНИЕ</th>
+                  <th class="py-2.5 px-3 font-header-caps text-center">СЕТЬ (EBPF)</th>
+                  <th class="py-2.5 px-3 font-header-caps text-center">ВРЕМЯ (RTC)</th>
+                  <th class="py-2.5 px-3 font-header-caps text-center">БАТАРЕЯ</th>
+                  <th class="py-2.5 px-3 font-header-caps text-center">ФАЙЛЫ (LANDLOCK)</th>
+                  <th class="py-2.5 px-3 font-header-caps text-center">HW UUID</th>
+                  <th class="py-2.5 px-3 font-header-caps text-right">РЕЖИМ</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-[#1A1C28]">
+                <tr>
+                  <td class="py-3 px-3 text-white font-bold flex items-center gap-2">
+                    <span class="w-2.5 h-2.5 rounded-full bg-green-500"></span> Firefox Web Browser
+                  </td>
+                  <td class="py-3 px-3 text-center"><span class="px-2 py-0.5 rounded bg-green-950 text-green-400 font-bold">PORT 80/443</span></td>
+                  <td class="py-3 px-3 text-center"><span class="px-2 py-0.5 rounded bg-[#1C1E26] text-[#8A8A92]">JITTER 1S</span></td>
+                  <td class="py-3 px-3 text-center"><span class="px-2 py-0.5 rounded bg-red-950 text-red-400">LOCKED (100%)</span></td>
+                  <td class="py-3 px-3 text-center"><span class="px-2 py-0.5 rounded bg-[#1C1E26] text-[#8A8A92]">~/Downloads only</span></td>
+                  <td class="py-3 px-3 text-center"><span class="text-yellow-400">SPOOFED</span></td>
+                  <td class="py-3 px-3 text-right"><button class="px-2.5 py-1 rounded bg-[#E02020] text-white font-bold">ЩИТОК: ON</button></td>
+                </tr>
+
+                <tr>
+                  <td class="py-3 px-3 text-white font-bold flex items-center gap-2">
+                    <span class="w-2.5 h-2.5 rounded-full bg-yellow-500"></span> Telegram Messenger
+                  </td>
+                  <td class="py-3 px-3 text-center"><span class="px-2 py-0.5 rounded bg-yellow-950 text-yellow-400 font-bold">*.telegram.org</span></td>
+                  <td class="py-3 px-3 text-center"><span class="px-2 py-0.5 rounded bg-[#1C1E26] text-[#8A8A92]">JITTER 1S</span></td>
+                  <td class="py-3 px-3 text-center"><span class="px-2 py-0.5 rounded bg-red-950 text-red-400">LOCKED</span></td>
+                  <td class="py-3 px-3 text-center"><span class="px-2 py-0.5 rounded bg-[#1C1E26] text-[#8A8A92]">~/.var/app/tg/</span></td>
+                  <td class="py-3 px-3 text-center"><span class="text-yellow-400">SPOOFED</span></td>
+                  <td class="py-3 px-3 text-right"><button class="px-2.5 py-1 rounded bg-[#E02020] text-white font-bold">ЩИТОК: ON</button></td>
+                </tr>
+
+                <tr>
+                  <td class="py-3 px-3 text-white font-bold flex items-center gap-2">
+                    <span class="w-2.5 h-2.5 rounded-full bg-red-500"></span> Steam Client & Games
+                  </td>
+                  <td class="py-3 px-3 text-center"><span class="px-2 py-0.5 rounded bg-green-950 text-green-400 font-bold">GAME PORTS</span></td>
+                  <td class="py-3 px-3 text-center"><span class="px-2 py-0.5 rounded bg-[#1C1E26] text-white">REALTIME</span></td>
+                  <td class="py-3 px-3 text-center"><span class="px-2 py-0.5 rounded bg-red-950 text-red-400">LOCKED</span></td>
+                  <td class="py-3 px-3 text-center"><span class="px-2 py-0.5 rounded bg-red-950 text-red-400">ISOLATED HOME</span></td>
+                  <td class="py-3 px-3 text-center"><span class="text-green-400">PASSTHROUGH</span></td>
+                  <td class="py-3 px-3 text-right"><button class="px-2.5 py-1 rounded bg-[#E02020] text-white font-bold">ЩИТОК: ON</button></td>
+                </tr>
+
+                <tr>
+                  <td class="py-3 px-3 text-white font-bold flex items-center gap-2">
+                    <span class="w-2.5 h-2.5 rounded-full bg-gray-500"></span> Proprietary Telemetry App
+                  </td>
+                  <td class="py-3 px-3 text-center"><span class="px-2 py-0.5 rounded bg-red-900 text-white font-bold">BLOCKED (0 B)</span></td>
+                  <td class="py-3 px-3 text-center"><span class="px-2 py-0.5 rounded bg-red-950 text-red-400">FROZEN</span></td>
+                  <td class="py-3 px-3 text-center"><span class="px-2 py-0.5 rounded bg-red-950 text-red-400">DENIED</span></td>
+                  <td class="py-3 px-3 text-center"><span class="px-2 py-0.5 rounded bg-red-950 text-red-400">EMPTY /tmp</span></td>
+                  <td class="py-3 px-3 text-center"><span class="text-red-400">ZERO UUID</span></td>
+                  <td class="py-3 px-3 text-right"><button class="px-2.5 py-1 rounded bg-[#1C1E26] border border-[#2A2C36] text-[#8A8A92]">AIRGAP: LOCKED</button></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========================================================================= -->
+    <!-- DESKTOP 4: PROCESS & NETWORK GOVERNOR (ДИСПЕТЧЕР ПРОЦЕССОВ И СЕТЬ)        -->
+    <!-- ========================================================================= -->
+    <div class="pc-monitor-frame hidden" id="desktopView4">
+      <div class="wayland-topbar">
+        <div class="flex items-center gap-3">
+          <span class="text-[#E02020] font-bold">ARCH·UVOS</span>
+          <div class="flex gap-1">
+            <span class="px-2 py-0.5 rounded text-[#8A8A92] hover:text-white cursor-pointer">1</span>
+            <span class="px-2 py-0.5 rounded text-[#8A8A92] hover:text-white cursor-pointer">2</span>
+            <span class="px-2 py-0.5 rounded text-[#8A8A92] hover:text-white cursor-pointer">3</span>
+            <span class="px-2 py-0.5 rounded bg-[#1C1E26] text-white border border-[#2A2C36]">4: GOVERNOR</span>
+          </div>
+        </div>
+        <div class="text-[#E02020] font-bold font-mono-inst">HARDWARE & TASK GOVERNOR</div>
+        <div class="text-white font-bold font-mono-inst">20:15:30</div>
+      </div>
+
+      <!-- Governor Content -->
+      <div class="flex-1 p-6 grid grid-cols-12 gap-4 overflow-hidden">
+        <!-- Process Table -->
+        <div class="col-span-8 desktop-window h-full">
+          <div class="desktop-window-header">
+            <span class="text-xs font-header-caps text-white">ДИСПЕТЧЕР ПРОЦЕССОВ (UVOS-TOP)</span>
+            <span class="text-xs font-mono-inst text-green-400">TOTAL CPU: 4.8%</span>
+          </div>
+          <div class="p-3 bg-[#0A0B10] flex-1 font-mono-inst text-xs overflow-y-auto">
+            <table class="w-full text-left">
+              <thead>
+                <tr class="text-[#8A8A92] border-b border-[#202330]">
+                  <th class="pb-2">PID</th>
+                  <th class="pb-2">COMMAND</th>
+                  <th class="pb-2">CPU%</th>
+                  <th class="pb-2">OFFSET</th>
+                  <th class="pb-2">NET TX</th>
+                  <th class="pb-2 text-right">KILL-SWITCH</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-[#181A24]">
+                <tr>
+                  <td class="py-2 text-[#8A8A92]">1024</td>
+                  <td class="py-2 text-white font-bold">hyprland</td>
+                  <td class="py-2 text-green-400">1.2%</td>
+                  <td class="py-2">-65 mV</td>
+                  <td class="py-2 text-[#555]">0 B</td>
+                  <td class="py-2 text-right"><span class="text-[#8A8A92]">SYSTEM</span></td>
+                </tr>
+                <tr>
+                  <td class="py-2 text-[#8A8A92]">1450</td>
+                  <td class="py-2 text-white font-bold">firefox.bin</td>
+                  <td class="py-2 text-yellow-400">2.4%</td>
+                  <td class="py-2">-65 mV</td>
+                  <td class="py-2 text-cyan-400">1.8 MB/s</td>
+                  <td class="py-2 text-right"><button class="px-2 py-0.5 rounded bg-red-950 text-[#E02020] border border-[#E02020]/40 font-bold">DROP</button></td>
+                </tr>
+                <tr>
+                  <td class="py-2 text-[#8A8A92]">1892</td>
+                  <td class="py-2 text-white font-bold">rustc</td>
+                  <td class="py-2 text-green-400">0.8%</td>
+                  <td class="py-2">-55 mV</td>
+                  <td class="py-2 text-[#555]">0 B</td>
+                  <td class="py-2 text-right"><button class="px-2 py-0.5 rounded bg-red-950 text-[#E02020] border border-[#E02020]/40 font-bold">DROP</button></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Hardware Governor Sidebar -->
+        <div class="col-span-4 desktop-window h-full">
+          <div class="desktop-window-header">
+            <span class="text-xs font-header-caps text-white">АППАРАТНЫЙ РЕГУЛЯТОР</span>
+            <span class="lamp-bulb active"></span>
+          </div>
+          <div class="p-4 bg-[#0A0B10] flex-1 flex flex-col justify-between font-mono-inst text-xs">
+            <div class="space-y-3">
+              <div class="p-3 rounded-xl bg-[#12141C] border border-[#242736]">
+                <div class="text-[#8A8A92] text-[11px]">РЕЖИМ АВТО:</div>
+                <div class="text-green-400 font-bold text-sm mt-0.5">АКТИВЕН (SMART GOV)</div>
+                <div class="text-[10px] text-[#555] mt-1">Кривая калибруется ядром без участия пользователя</div>
+              </div>
+
+              <div class="p-3 rounded-xl bg-[#12141C] border border-[#242736]">
+                <div class="text-[#8A8A92] text-[11px]">ТЕКУЩИЙ OFFSET:</div>
+                <div class="text-white font-bold text-lg mt-0.5">-65 mV</div>
+              </div>
+
+              <div class="p-3 rounded-xl bg-[#12141C] border border-[#242736]">
+                <div class="text-[#8A8A92] text-[11px]">TDP CAP:</div>
+                <div class="text-white font-bold text-lg mt-0.5">28 Watts</div>
+              </div>
+            </div>
+
+            <button class="w-full py-2.5 rounded-xl bg-[#E02020] text-white font-header-caps text-sm tracking-wider font-bold">
+              АППАРАТНЫЙ AIRGAP (KILL-ALL)
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========================================================================= -->
+    <!-- DESKTOP 5: SHOWCASE OF DESKTOP WINDOWS (ПРИМЕРЫ ДЕСКТОПНЫХ ОКОН)         -->
+    <!-- ========================================================================= -->
+    <div class="pc-monitor-frame hidden" id="desktopView5">
+      <div class="wayland-topbar">
+        <div class="flex items-center gap-3">
+          <span class="text-[#E02020] font-bold">ARCH·UVOS</span>
+          <span class="px-2 py-0.5 rounded bg-[#1C1E26] text-white border border-[#2A2C36]">WINDOWS SHOWCASE</span>
+        </div>
+        <div class="text-[#8A8A92] font-mono-inst">ПРИМЕРЫ СИСТЕМНЫХ И ПОЛЬЗОВАТЕЛЬСКИХ ОКОН</div>
+        <div class="text-white font-bold font-mono-inst">20:15:30</div>
+      </div>
+
+      <!-- Overlapping Cascade Windows Showcase -->
+      <div class="flex-1 p-6 relative overflow-hidden flex items-center justify-center">
+        
+        <!-- Window 1: File Manager uvos-files -->
+        <div class="desktop-window w-[440px] h-[300px] absolute left-12 top-10 shadow-2xl z-10">
+          <div class="desktop-window-header">
+            <div class="flex items-center gap-2">
+              <div class="win-btn close"></div>
+              <div class="win-btn"></div>
+              <div class="win-btn"></div>
+              <span class="text-xs font-mono-inst text-[#8A8A92] ml-2">uvos-files ~ /home/user/vault</span>
+            </div>
+            <span class="text-[10px] font-mono-inst text-[#E02020]">LANDLOCK PROTECTED</span>
+          </div>
+          <div class="p-3 bg-[#0A0B10] flex-1 font-mono-inst text-xs grid grid-cols-3 gap-2">
+            <div class="p-2 rounded-lg bg-[#12141C] border border-[#222533] flex flex-col items-center justify-center gap-1">
+              <svg class="w-7 h-7 text-[#E8E4D8]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h6l2 3h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z"/></svg>
+              <span class="text-[11px] text-white">capsules</span>
+            </div>
+            <div class="p-2 rounded-lg bg-[#12141C] border border-[#222533] flex flex-col items-center justify-center gap-1">
+              <svg class="w-7 h-7 text-[#E8E4D8]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h6l2 3h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z"/></svg>
+              <span class="text-[11px] text-white">credentials</span>
+            </div>
+            <div class="p-2 rounded-lg bg-[#12141C] border border-[#222533] flex flex-col items-center justify-center gap-1">
+              <svg class="w-7 h-7 text-[#E02020]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+              <span class="text-[11px] text-[#E02020] font-bold">airgap.sh</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Window 2: Hardware Control Tool uvos-power-gui -->
+        <div class="desktop-window w-[480px] h-[340px] absolute right-16 bottom-8 shadow-2xl z-20">
+          <div class="desktop-window-header">
+            <div class="flex items-center gap-2">
+              <div class="win-btn close"></div>
+              <div class="win-btn"></div>
+              <div class="win-btn"></div>
+              <span class="text-xs font-mono-inst text-[#8A8A92] ml-2">uvos-power-tuning</span>
+            </div>
+            <span class="text-[10px] font-mono-inst text-green-400">SYSFS / MSR</span>
+          </div>
+          <div class="p-4 bg-[#0A0B10] flex-1 flex flex-col justify-between font-mono-inst text-xs">
+            <div class="space-y-3">
+              <div class="flex justify-between items-center p-3 rounded-xl bg-[#12141C] border border-[#242736]">
+                <div>
+                  <div class="text-white font-bold">Режим «АВТО» (Рекомендуется)</div>
+                  <div class="text-[#8A8A92] text-[10px]">Автоматический подбор смещения вольтажа</div>
+                </div>
+                <div class="w-12 h-6 rounded-full bg-green-500 flex items-center justify-end px-1 shadow-[0_0_8px_rgba(34,197,94,0.6)]">
+                  <div class="w-4 h-4 rounded-full bg-white"></div>
+                </div>
+              </div>
+
+              <div class="p-3 rounded-xl bg-[#12141C] border border-[#242736]">
+                <div class="flex justify-between text-[#8A8A92] mb-1">
+                  <span>Core Voltage Offset</span>
+                  <span class="text-[#E02020] font-bold">-65 mV</span>
+                </div>
+                <div class="h-2 rounded-full bg-[#0A0B10] border border-[#2A2C36] overflow-hidden">
+                  <div class="h-full bg-[#E02020] w-[55%]"></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="flex justify-end gap-2 pt-2 border-t border-[#1C1E26]">
+              <button class="px-3 py-1.5 rounded-lg bg-[#1C1E26] border border-[#2A2C36] text-[#8A8A92]">Сброс</button>
+              <button class="px-4 py-1.5 rounded-lg bg-[#E02020] text-white font-bold">Применить</button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </main>
+
+  <!-- BOTTOM FOOTER -->
+  <footer class="max-w-6xl w-full mx-auto mt-6 pt-3 border-t border-[#1C1E26] flex items-center justify-between text-xs font-mono-inst text-[#8A8A92]">
+    <div>ARCH·UVOS LINUX DESKTOP ARCHITECTURE SPECIFICATION</div>
+    <div>СТАНДАРТ ДИЗАЙНА М4200 (FIXED 320:220 PROPORTIONS)</div>
+  </footer>
+
+  <!-- SCRIPT FOR SWITCHING DESKTOPS AND GENERATING GAUGES -->
+  <script>
+    function switchDesktop(num) {
+      for (let i = 1; i <= 5; i++) {
+        const view = document.getElementById('desktopView' + i);
+        const tab = document.getElementById('tabBtn' + i);
+        if (i === num) {
+          view.classList.remove('hidden');
+          tab.classList.add('active');
+        } else {
+          view.classList.add('hidden');
+          tab.classList.remove('active');
+        }
+      }
+    }
+
+    // High precision tick builder for M4200 Gauges (White dial, black ticks, red danger zone)
+    function buildTickArc(containerId, options = {}) {
+      const container = document.getElementById(containerId);
+      if (!container) return;
+
+      const cx = 160, cy = 195;
+      const R = 145;
+      const minDeg = -52, maxDeg = 52;
+      const redThresholdDeg = 24;
+
+      let svgHtml = '';
+      const toRad = deg => (deg * Math.PI) / 180;
+
+      const pStart = { x: cx + R * Math.sin(toRad(minDeg)), y: cy - R * Math.cos(toRad(minDeg)) };
+      const pEnd = { x: cx + R * Math.sin(toRad(maxDeg)), y: cy - R * Math.cos(toRad(maxDeg)) };
+
+      // Base black arc
+      const arcD = `M ${pStart.x.toFixed(1)} ${pStart.y.toFixed(1)} A ${R} ${R} 0 0 1 ${pEnd.x.toFixed(1)} ${pEnd.y.toFixed(1)}`;
+      svgHtml += `<path d="${arcD}" fill="none" stroke="#1A1A1A" stroke-width="2.2" stroke-linecap="round" />`;
+
+      // Concentric red danger zone overlay (last 27%)
+      svgHtml += `<path d="${arcD}" fill="none" stroke="#E02020" stroke-width="4.8" stroke-linecap="round" pathLength="100" stroke-dasharray="0 73 27 0" />`;
+
+      // Inward radial tick marks
+      let idx = 0;
+      for (let deg = minDeg; deg <= maxDeg + 0.5; deg += 5.2) {
+        const isMajor = (idx % 2 === 0);
+        const tickLen = isMajor ? 14 : 8;
+        const rad = toRad(deg);
+
+        const xOuter = (cx + R * Math.sin(rad)).toFixed(1);
+        const yOuter = (cy - R * Math.cos(rad)).toFixed(1);
+        const xInner = (cx + (R - tickLen) * Math.sin(rad)).toFixed(1);
+        const yInner = (cy - (R - tickLen) * Math.cos(rad)).toFixed(1);
+
+        const isRed = deg >= redThresholdDeg - 0.5;
+        const color = isRed ? '#E02020' : '#1A1A1A';
+        const strokeW = isMajor ? (isRed ? '2.6' : '2.2') : '1.5';
+
+        svgHtml += `<line x1="${xOuter}" y1="${yOuter}" x2="${xInner}" y2="${yInner}" stroke="${color}" stroke-width="${strokeW}" stroke-linecap="round" />`;
+        idx++;
+      }
+
+      container.innerHTML = svgHtml;
+    }
+
+    // Build all gauges on load
+    buildTickArc('g1TickArc');
+    buildTickArc('g2TickArc');
+    buildTickArc('g3TickArc');
+    buildTickArc('g4TickArc');
+  </script>
+</body>
+</html>

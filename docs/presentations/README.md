@@ -16,3 +16,31 @@
    - 4 слота: Смартфон (Host), Наушники (Buds), Часы (Watch), Внешний АКБ (Powerbank).
    - Поддерживает интерактивное переключение «Подключено / Отключено» с анимацией падения стрелки на механический ноль (-52°), уходом шкалы в глубокую тень и отключением светодиодов.
    - **Графические постеры**: [`uvos_battery_widget_presentation_v2.png`](uvos_battery_widget_presentation_v2.png), [`uvos_battery_widget_preview.png`](uvos_battery_widget_preview.png).
+
+3. **[Витрина рабочих столов и окон ArchUVOS для ПК](arch_uvos_desktop_showcase.html)** (`arch_uvos_desktop_showcase.html`):
+   - Полноразмерная адаптация интерфейса под мониторы ПК (16:9 Wayland / Hyprland).
+   - **Стол 01 (Приборный / Cockpit)**: 4 прибора М4200 (VCORE, POWER, NET, TEMP) с аутентичными пропорциями 320:220, режим «★ АВТО» по умолчанию, суточный журнал блокировок eBPF.
+   - **Стол 02 (Тайлинг / Productivity)**: Tiling сплит 50/50 — `uvos-term` (Fastfetch) и редактор драйвера ядра на Rust.
+   - **Стол 03 (Щиток прав / Matrix)**: Матрица разрешений приложений (Firefox, Telegram, Steam, Telemetry) по осям Landlock FS, RTC Jitter, Battery Masking и eBPF Network.
+   - **Стол 04 (Диспетчер процессов и сеть)**: `uvos-top` с индивидуальными переключателями сброса трафика и регулятором TDP.
+   - **Примеры окон**: `uvos-files` (изолированный сейф) и `uvos-power-tuning` (окно настройки вольтажей).
+
+4. **[Интерактивная 8-слайдовая презентация концепта ArchUVOS](arch_uvos_presentation.html)** (`arch_uvos_presentation.html`):
+   - Презентация с живыми стрелочными приборами, слайдами безопасности, архитектуры ядра и песочниц.
+
+5. **[Экспериментальный батарейный виджет ArchUVOS (4 слота)](arch_uvos_battery_widget.html)** (`arch_uvos_battery_widget.html`):
+   - Десктопный 4-слотовый горизонтальный виджет в стиле панели аккумуляторов iOS, в котором вместо колец используются вольтметры М4200.
+   - Физическое отключение прибора при отсоединении устройства: стрелка падает на упор (-52°), шкала гаснет в глубокую тень, светодиод обесточивается.
+
+---
+
+## Фотоматериалы и референсы дизайна (`docs/references/`)
+
+- [`m4200-power-package-wide.png`](../references/m4200-power-package-wide.png): Широкий стрелочный индикатор мощности (18.4 W).
+- [`m4200-vcore-white-norm-boost.png`](../references/m4200-vcore-white-norm-boost.png): Светлый прибор М4200 с селектором IDLE / NORM / BOOST.
+- [`m4200-dial-white-ticks.png`](../references/m4200-dial-white-ticks.png): Точная геометрия светлого циферблата с радиальными насечками и красной зоной.
+- [`m4200-vcore-dark-rectangular.png`](../references/m4200-vcore-dark-rectangular.png): Темный прямоугольный вариант прибора.
+- [`m4200-vcore-dark-close.png`](../references/m4200-vcore-dark-close.png): Детализированный макро-вид темного циферблата.
+- [`m4200-net-dark-round.png`](../references/m4200-net-dark-round.png): Круглый стрелочный индикатор сетевого трафика.
+- [`ios-battery-widget-reference.png`](../references/ios-battery-widget-reference.png): Оригинальный референс 4-слотового виджета батареи.
+- [`m4200-voltmeter.jpg`](../references/m4200-voltmeter.jpg): Исторический фото-референс прибора М4200.

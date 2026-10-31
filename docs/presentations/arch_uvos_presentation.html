@@ -1,0 +1,1280 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ArchUVOS — Презентация концепта и архитектуры</title>
+  <script src="https://www.gstatic.com/antigravity/web/dev/tailwindcss.min.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Oswald:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap');
+
+    :root {
+      --bg-main: #0E0E12;
+      --bg-tile: #1C1E26;
+      --bg-tile-pressed: #242630;
+      --dial-color: #E8E4D8;
+      --ink-color: #1A1A1A;
+      --red-accent: #E02020;
+      --lamp-dim: #7A1010;
+      --text-main: #D8D8DC;
+      --text-dim: #8A8A92;
+      --divider-color: #2A2C36;
+    }
+
+    body {
+      background-color: var(--bg-main);
+      color: var(--text-main);
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      margin: 0;
+      padding: 0;
+      overflow-x: hidden;
+      user-select: none;
+    }
+
+    .font-mono-inst {
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .font-header-caps {
+      font-family: 'Oswald', sans-serif;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    /* Authentic Instrument Casing */
+    .meter-case-panel {
+      background: radial-gradient(circle at 50% 20%, #1e212b, #12141a);
+      border: 2px solid #282c38;
+      border-radius: 26px;
+      position: relative;
+      box-shadow: inset 0 1px 1px rgba(255,255,255,0.08), 0 14px 30px rgba(0,0,0,0.65);
+      padding: 16px 16px 18px 16px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 100%;
+    }
+
+    /* Precision Screws with realistic slot */
+    .screw {
+      width: 15px;
+      height: 15px;
+      background: radial-gradient(circle at 35% 35%, #464a5c, #191b22);
+      border-radius: 50%;
+      position: absolute;
+      box-shadow: inset 0 1px 1px rgba(255,255,255,0.25), 0 2px 4px rgba(0,0,0,0.8);
+      z-index: 15;
+      pointer-events: none;
+    }
+    .screw::after {
+      content: '';
+      position: absolute;
+      top: 6.5px;
+      left: 2px;
+      width: 11px;
+      height: 2px;
+      background: #0b0c10;
+      transform: rotate(var(--rot, 35deg));
+    }
+
+    /* FIXED ASPECT RATIO DIAL WINDOW (NO SIDE GAPS) */
+    .dial-window-fixed {
+      width: 100%;
+      aspect-ratio: 320 / 220;
+      border-radius: 18px;
+      background-color: var(--dial-color);
+      box-shadow: inset 0 3px 12px rgba(0,0,0,0.35), 0 1px 2px rgba(255,255,255,0.06);
+      border: 2px solid #14151c;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* Indicator Lamp with metallic bezel */
+    .lamp-bezel {
+      padding: 2px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #44495c, #1a1c24);
+      box-shadow: 0 2px 4px rgba(0,0,0,0.5);
+    }
+    .lamp-bulb {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: var(--lamp-dim);
+      border: 1px solid #300c0c;
+      transition: all 0.25s ease;
+      box-shadow: inset 0 1px 2px rgba(255,255,255,0.2);
+    }
+    .lamp-bulb.active {
+      background: var(--red-accent);
+      box-shadow: 0 0 12px #ff2b2b, 0 0 4px #ff8888, inset 0 1px 2px #fff;
+    }
+
+    /* Industrial Toggle Switch */
+    .uvos-toggle-btn {
+      width: 86px;
+      height: 42px;
+      background: var(--bg-tile);
+      border: 1px solid var(--divider-color);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 10px;
+      cursor: pointer;
+      transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .uvos-toggle-btn.on {
+      background: var(--red-accent);
+      border-color: #ff4a4a;
+    }
+    .uvos-toggle-btn .indicator-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--lamp-dim);
+    }
+    .uvos-toggle-btn.on .indicator-dot {
+      background: #ffffff;
+      box-shadow: 0 0 6px #ffffff;
+    }
+    .uvos-toggle-btn span {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text-dim);
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .uvos-toggle-btn.on span {
+      color: #ffffff;
+    }
+
+    /* Needle Physics with inertia */
+    .meter-needle {
+      transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    /* Presentation Slide transitions */
+    .slide-page {
+      display: none;
+      opacity: 0;
+      transform: translateY(12px);
+      transition: opacity 0.35s ease, transform 0.35s ease;
+    }
+    .slide-page.active-slide {
+      display: block;
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .tile-card {
+      background: var(--bg-tile);
+      border-radius: 24px;
+      border: 1px solid #232632;
+      padding: 24px;
+      transition: transform 0.2s ease, border-color 0.2s ease;
+    }
+    .tile-card:hover {
+      border-color: #323648;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between">
+
+  <!-- TOP BAR -->
+  <header class="border-b border-[#22242F] bg-[#0E0E12] px-6 py-4 flex items-center justify-between sticky top-0 z-50">
+    <div class="flex items-center space-x-4">
+      <div class="w-8 h-8 rounded-lg bg-[#E02020] flex items-center justify-center font-bold text-white font-mono-inst text-base shadow-[0_0_12px_rgba(224,32,32,0.4)]">
+        U
+      </div>
+      <div>
+        <div class="text-sm font-header-caps text-white tracking-widest flex items-center gap-2">
+          <span>ARCH·UVOS</span>
+          <span class="text-xs bg-[#1C1E26] text-[#8A8A92] px-2 py-0.5 rounded font-mono-inst border border-[#2A2C36]">v1.0 ROLLING</span>
+        </div>
+        <div class="text-xs text-[#8A8A92] font-mono-inst">ZERO-TRUST SANDBOX & UNDERVOLT CORE</div>
+      </div>
+    </div>
+
+    <!-- Slide progress & switcher -->
+    <div class="flex items-center space-x-3">
+      <button onclick="prevSlide()" class="p-2 rounded-xl bg-[#1C1E26] hover:bg-[#242630] border border-[#2A2C36] text-[#D8D8DC] text-xs font-mono-inst transition">
+        ← НАЗАД
+      </button>
+      <div class="text-xs font-mono-inst text-[#8A8A92]">
+        СЛАЙД <span id="currentSlideNum" class="text-white font-bold">1</span> / <span id="totalSlideNum">8</span>
+      </div>
+      <button onclick="nextSlide()" class="p-2 rounded-xl bg-[#1C1E26] hover:bg-[#242630] border border-[#2A2C36] text-[#D8D8DC] text-xs font-mono-inst transition">
+        ВПЕРЁД →
+      </button>
+    </div>
+
+    <!-- Quick status indicators -->
+    <div class="hidden md:flex items-center space-x-6 text-xs font-mono-inst">
+      <div class="flex items-center gap-2">
+        <div class="lamp-bulb active"></div>
+        <span class="text-[#8A8A92]">EBPF GUARD:</span>
+        <span class="text-white font-bold">ACTIVE</span>
+      </div>
+      <div class="flex items-center gap-2">
+        <div class="w-2.5 h-2.5 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]"></div>
+        <span class="text-[#8A8A92]">ПИТАНИЕ:</span>
+        <span class="text-green-400 font-bold" id="topModeBadge">АВТО (АДАПТИВНО)</span>
+      </div>
+      <div class="bg-[#1C1E26] border border-[#2A2C36] px-3 py-1 rounded-full text-white font-bold font-mono-inst">
+        VCORE: <span id="topVcoreText">0.945V</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- MAIN PRESENTATION BODY -->
+  <main class="flex-grow max-w-6xl w-full mx-auto px-4 py-8">
+
+    <!-- ================= SLIDE 1: ТИТУЛЬНЫЙ ================= -->
+    <section class="slide-page active-slide" id="slide-1">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center pt-2">
+        <div class="lg:col-span-7 space-y-6">
+          <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#1C1E26] border border-[#2A2C36] text-xs font-mono-inst text-[#8A8A92]">
+            <span class="w-2 h-2 rounded-full bg-[#E02020] animate-pulse"></span>
+            АРХИТЕКТУРА И ПРИБОРНЫЙ ДИЗАЙН М4200
+          </div>
+
+          <h1 class="text-4xl md:text-5xl font-header-caps text-white leading-tight">
+            ArchUVOS: Ретро-приборы × iPhone-минимализм
+          </h1>
+
+          <p class="text-[#D8D8DC] text-base leading-relaxed">
+            Перенос философии UnderVoltOS на базу <strong>Arch Linux</strong>. 
+            Операционная система с концепцией <em>«Закрытая территория»</em>, где приложения изолированы по умолчанию, 
+            аппаратное питание находится в <strong>автономном режиме «Авто»</strong>, а весь интерфейс оформлен в виде прецизионных приборов серии М4200 с белым циферблатом слоновой кости, черными шкалами и акцентным красным сектором.
+          </p>
+
+          <div class="grid grid-cols-3 gap-4 pt-2">
+            <div class="bg-[#1C1E26] p-4 rounded-2xl border border-[#2A2C36]">
+              <div class="text-xs font-header-caps text-[#8A8A92]">БАЗИС</div>
+              <div class="text-base font-bold text-white font-mono-inst mt-1">Arch Linux</div>
+              <div class="text-[12px] text-[#8A8A92] mt-0.5">Rolling, Zen-Kernel</div>
+            </div>
+            <div class="bg-[#1C1E26] p-4 rounded-2xl border border-[#2A2C36]">
+              <div class="text-xs font-header-caps text-[#8A8A92]">БЕЗОПАСНОСТЬ</div>
+              <div class="text-base font-bold text-[#E02020] font-mono-inst mt-1">Zero-Trust</div>
+              <div class="text-[12px] text-[#8A8A92] mt-0.5">eBPF + Landlock</div>
+            </div>
+            <div class="bg-[#1C1E26] p-4 rounded-2xl border border-[#2A2C36]">
+              <div class="text-xs font-header-caps text-[#8A8A92]">ПИТАНИЕ</div>
+              <div class="text-base font-bold text-green-400 font-mono-inst mt-1">Авто-Smart</div>
+              <div class="text-[12px] text-[#8A8A92] mt-0.5">Включён по умолчанию</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- HERO GAUGE: M4200 WHITE DIAL, BLACK TICKS, FIXED RATIO -->
+        <div class="lg:col-span-5 flex flex-col items-center">
+          <div class="meter-case-panel w-full max-w-[370px]">
+            <!-- 5 Precision Screws (4 corners + 1 bottom center) -->
+            <div class="screw" style="top: 10px; left: 10px; --rot: 28deg;"></div>
+            <div class="screw" style="top: 10px; right: 10px; --rot: 72deg;"></div>
+            <div class="screw" style="bottom: 10px; left: 10px; --rot: 115deg;"></div>
+            <div class="screw" style="bottom: 10px; right: 10px; --rot: 42deg;"></div>
+            <div class="screw" style="bottom: 6px; left: calc(50% - 7.5px); --rot: 88deg;"></div>
+
+            <!-- Top Right Indicator Lamp with metallic bezel ring -->
+            <div class="absolute" style="top: 11px; right: 34px;">
+              <div class="lamp-bezel">
+                <div class="lamp-bulb" id="heroLamp"></div>
+              </div>
+            </div>
+
+            <!-- Header Title -->
+            <div class="w-full flex justify-between items-center pl-7 pr-14 mb-2">
+              <span class="text-xs font-header-caps text-[#8A8A92] tracking-wider">ПРИБОР НАПРЯЖЕНИЯ VCORE</span>
+            </div>
+
+            <!-- WHITE DIAL WINDOW (FIXED RATIO 320/220, NO SIDE GAPS) -->
+            <div class="dial-window-fixed">
+              <svg viewBox="0 0 320 220" class="w-full h-full" id="heroGaugeSvg">
+                <!-- Instrument Stamp -->
+                <text x="24" y="32" font-family="JetBrains Mono" font-size="10" fill="#666" font-weight="bold">ARCH·UVOS М4200</text>
+
+                <!-- Arc with Radial Ticks generated dynamically -->
+                <g id="heroTickGroup"></g>
+
+                <!-- Scale Labels -->
+                <text x="32" y="142" font-family="JetBrains Mono" font-size="12" fill="#1A1A1A" font-weight="700">0.7V</text>
+                <text x="160" y="74" font-family="JetBrains Mono" font-size="12" fill="#1A1A1A" font-weight="700" text-anchor="middle">1.0V</text>
+                <text x="288" y="142" font-family="JetBrains Mono" font-size="12" fill="#E02020" font-weight="700" text-anchor="end">1.35V</text>
+
+                <!-- Center Value & Label -->
+                <text x="160" y="128" text-anchor="middle" font-family="JetBrains Mono" font-weight="bold" font-size="30" fill="#1A1A1A" id="heroValText">0.945 V</text>
+                <text x="160" y="150" text-anchor="middle" font-family="JetBrains Mono" font-weight="bold" font-size="11" fill="#777" letter-spacing="2">VCORE</text>
+
+                <!-- Black Needle with smooth inertia -->
+                <g id="heroNeedle" class="meter-needle" style="transform-origin: 160px 195px; transform: rotate(-5deg);">
+                  <line x1="160" y1="195" x2="160" y2="46" stroke="#1A1A1A" stroke-width="2.6" stroke-linecap="round" />
+                  <circle cx="160" cy="195" r="8" fill="#1A1A1A" />
+                  <circle cx="160" cy="195" r="3.5" fill="#E8E4D8" />
+                </g>
+              </svg>
+            </div>
+          </div>
+
+          <!-- EXTERNAL CONTROL DOCK (NO COLLISION WITH SCREWS) -->
+          <div class="mt-3.5 w-full max-w-[370px] bg-[#1C1E26] border border-[#2A2C36] rounded-2xl px-4 py-2.5 flex justify-between items-center text-xs font-mono-inst shadow-md">
+            <span class="text-[#8A8A92] font-header-caps">РЕЖИМ НАГРУЗКИ:</span>
+            <div class="flex gap-1.5">
+              <button onclick="setHeroVolt(0.945)" class="px-3 py-1.5 bg-[#0E0E12] hover:bg-[#242630] rounded-xl border border-green-500/50 text-green-400 font-bold transition">АВТО</button>
+              <button onclick="setHeroVolt(0.82)" class="px-3 py-1.5 bg-[#0E0E12] hover:bg-[#242630] rounded-xl border border-[#2A2C36] text-white transition">IDLE</button>
+              <button onclick="setHeroVolt(1.28)" class="px-3 py-1.5 bg-[#0E0E12] hover:bg-[#242630] rounded-xl border border-[#2A2C36] text-[#E02020] transition">BOOST</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= SLIDE 2: ПРИНЦИПЫ И ДИЗАЙН ================= -->
+    <section class="slide-page" id="slide-2">
+      <div class="space-y-6">
+        <div>
+          <span class="text-xs font-mono-inst text-[#E02020]">РАЗДЕЛ 01 / СТИЛЬ И ФИЛОСОФИЯ</span>
+          <h2 class="text-3xl font-header-caps text-white mt-1">Приборная дизайн-система UVOS</h2>
+          <p class="text-[#8A8A92] text-sm mt-1">Основано на правилах DESIGN.md: ретро-приборы, темная комната и строгий акцент</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div class="tile-card space-y-3">
+            <div class="w-10 h-10 rounded-2xl bg-[#0E0E12] border border-[#2A2C36] flex items-center justify-center text-[#E02020] font-mono-inst font-bold">
+              01
+            </div>
+            <h3 class="text-lg font-header-caps text-white">Прибор, а не декорация</h3>
+            <p class="text-sm text-[#8A8A92] leading-relaxed">
+              Каждый датчик выглядит как реальный физический измеритель М4200. Белый циферблат слоновой кости, черная дуга со строгими радиальными насечками, 5 винтов крепления и механическая инерция стрелки.
+            </p>
+          </div>
+
+          <div class="tile-card space-y-3">
+            <div class="w-10 h-10 rounded-2xl bg-[#0E0E12] border border-[#2A2C36] flex items-center justify-center text-[#E02020] font-mono-inst font-bold">
+              02
+            </div>
+            <h3 class="text-lg font-header-caps text-white">Тёмная комната & Циферблат</h3>
+            <p class="text-sm text-[#8A8A92] leading-relaxed">
+              Фон системы монолитно тёмен (<code class="text-white font-mono-inst">#0E0E12</code>). «Светятся» только циферблаты слоновой кости (<code class="text-white font-mono-inst">#E8E4D8</code>), четкие значения и красные аварийные индикаторы. Глаза не утомляются часами.
+            </p>
+          </div>
+
+          <div class="tile-card space-y-3">
+            <div class="w-10 h-10 rounded-2xl bg-[#0E0E12] border border-[#2A2C36] flex items-center justify-center text-[#E02020] font-mono-inst font-bold">
+              03
+            </div>
+            <h3 class="text-lg font-header-caps text-white">Правило Одного Красного</h3>
+            <p class="text-sm text-[#8A8A92] leading-relaxed">
+              Красный цвет (<code class="text-[#E02020] font-mono-inst">#E02020</code>) разрешён только для: опасной зоны шкалы (последние 20%), активного тумблера или критического оповещения. Не более двух красных акцентов на одном экране одновременно.
+            </p>
+          </div>
+        </div>
+
+        <!-- Color Palette Strip -->
+        <div class="tile-card">
+          <div class="text-xs font-header-caps text-[#8A8A92] mb-3">ОФИЦИАЛЬНАЯ ПАЛИТРА ТОКЕНОВ ARCH·UVOS</div>
+          <div class="grid grid-cols-2 md:grid-cols-6 gap-3 text-xs font-mono-inst">
+            <div class="p-3 rounded-xl border border-[#2A2C36] bg-[#0E0E12]">
+              <div class="text-white font-bold">#0E0E12</div>
+              <div class="text-[#8A8A92] text-[11px] mt-1">background</div>
+            </div>
+            <div class="p-3 rounded-xl border border-[#2A2C36] bg-[#1C1E26]">
+              <div class="text-white font-bold">#1C1E26</div>
+              <div class="text-[#8A8A92] text-[11px] mt-1">tile / card</div>
+            </div>
+            <div class="p-3 rounded-xl border border-[#1A1A1A] bg-[#E8E4D8]">
+              <div class="text-[#1A1A1A] font-bold">#E8E4D8</div>
+              <div class="text-[#333] text-[11px] mt-1">dial background</div>
+            </div>
+            <div class="p-3 rounded-xl border border-[#2A2C36] bg-[#1A1A1A]">
+              <div class="text-white font-bold">#1A1A1A</div>
+              <div class="text-[#8A8A92] text-[11px] mt-1">needle & ink</div>
+            </div>
+            <div class="p-3 rounded-xl border border-[#2A2C36] bg-[#E02020]">
+              <div class="text-white font-bold">#E02020</div>
+              <div class="text-white text-[11px] mt-1">red accent</div>
+            </div>
+            <div class="p-3 rounded-xl border border-[#2A2C36] bg-[#7A1010]">
+              <div class="text-white font-bold">#7A1010</div>
+              <div class="text-[#8A8A92] text-[11px] mt-1">lamp dim</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= SLIDE 3: ЗАКРЫТАЯ ТЕРРИТОРИЯ ================= -->
+    <section class="slide-page" id="slide-3">
+      <div class="space-y-6">
+        <div>
+          <span class="text-xs font-mono-inst text-[#E02020]">РАЗДЕЛ 02 / АРХИТЕКТУРА БЕЗОПАСНОСТИ</span>
+          <h2 class="text-3xl font-header-caps text-white mt-1">Концепция «Закрытая территория» (Zero-Trust Sandbox)</h2>
+          <p class="text-[#8A8A92] text-sm mt-1">В ArchUVOS любое приложение по умолчанию считает, что оно запущено в пустой изолированной капсуле.</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div class="tile-card space-y-4">
+            <div class="flex items-center justify-between">
+              <span class="text-sm font-header-caps text-white">КАНАЛЫ ДАННЫХ И ОГРАНИЧИТЕЛИ</span>
+              <span class="px-2 py-0.5 rounded bg-[#7A1010] text-[#ffaaaa] text-xs font-mono-inst">DEFAULT: DROP</span>
+            </div>
+
+            <div class="space-y-3 text-xs font-mono-inst">
+              <div class="p-3 rounded-xl bg-[#0E0E12] border border-[#2A2C36] flex items-center justify-between">
+                <div>
+                  <div class="text-white font-bold">ВРЕМЯ (Time & RTC Sanitizer)</div>
+                  <div class="text-[#8A8A92] text-[11px]">Огрубление до 1 сек / подмена monotonic clock</div>
+                </div>
+                <div class="text-[#E02020] font-bold">ЗАЩИЩЕНО</div>
+              </div>
+
+              <div class="p-3 rounded-xl bg-[#0E0E12] border border-[#2A2C36] flex items-center justify-between">
+                <div>
+                  <div class="text-white font-bold">ИДЕНТИФИКАТОРЫ (Machine ID / DMI / MAC)</div>
+                  <div class="text-[#8A8A92] text-[11px]">Фейковый случайный uuid при каждом запуске</div>
+                </div>
+                <div class="text-[#E02020] font-bold">СПООФИНГ</div>
+              </div>
+
+              <div class="p-3 rounded-xl bg-[#0E0E12] border border-[#2A2C36] flex items-center justify-between">
+                <div>
+                  <div class="text-white font-bold">БАТАРЕЯ И ПИТАНИЕ (/sys/class/power_supply)</div>
+                  <div class="text-[#8A8A92] text-[11px]">Маскировка под стационарный ПК (100% AC)</div>
+                </div>
+                <div class="text-[#E02020] font-bold">ИЗОЛИРОВАНО</div>
+              </div>
+
+              <div class="p-3 rounded-xl bg-[#0E0E12] border border-[#2A2C36] flex items-center justify-between">
+                <div>
+                  <div class="text-white font-bold">ФАЙЛОВАЯ СИСТЕМА (Landlock LSM + Bwrap)</div>
+                  <div class="text-[#8A8A92] text-[11px]">Доступ строго к ~/.var/app/$APP_ID/</div>
+                </div>
+                <div class="text-[#E02020] font-bold">КВАНТОВАНО</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="tile-card space-y-4">
+            <span class="text-sm font-header-caps text-white">ЖУРНАЛ АУДИТА ПОПЫТОК (AUDIT LOG)</span>
+            <p class="text-xs text-[#8A8A92]">
+              Система молча блокирует попытки зондирования окружения и заносит их в приборный журнал. Пользователь видит истинные намерения программ.
+            </p>
+
+            <div class="bg-[#0E0E12] p-3 rounded-xl border border-[#2A2C36] font-mono-inst text-[12px] space-y-2 h-56 overflow-y-auto">
+              <div class="text-[#8A8A92]"><span class="text-[#E02020]">[BLOCKED]</span> discord.bin -> /sys/class/dmi/id/product_uuid (Denied)</div>
+              <div class="text-[#8A8A92]"><span class="text-[#E02020]">[BLOCKED]</span> telegram.bin -> NETLINK_ROUTE socket (Filtered)</div>
+              <div class="text-[#8A8A92]"><span class="text-[#E02020]">[SPOOFED]</span> chrome -> clock_gettime(CLOCK_MONOTONIC) (Jitter added)</div>
+              <div class="text-[#8A8A92]"><span class="text-[#E02020]">[BLOCKED]</span> proprietary_client -> /proc/net/arp (Empty)</div>
+              <div class="text-[#8A8A92]"><span class="text-[#E02020]">[BLOCKED]</span> steam -> scan /home/user/.ssh/ (Landlock EPERM)</div>
+              <div class="text-white"><span class="text-green-500">[ALLOWED]</span> obsidian -> local vault read (Granted via Shield)</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= SLIDE 4: СЕТЕВОЙ РЕГУЛЯТОР ================= -->
+    <section class="slide-page" id="slide-4">
+      <div class="space-y-6">
+        <div>
+          <span class="text-xs font-mono-inst text-[#E02020]">РАЗДЕЛ 03 / РЕГУЛЯЦИЯ ТРАФИКА</span>
+          <h2 class="text-3xl font-header-caps text-white mt-1">Сетевой Регулятор (Network Governor)</h2>
+          <p class="text-[#8A8A92] text-sm mt-1">eBPF + nftables фильтрация на уровне каждого приложения с физическими тумблерами доступа</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div class="tile-card space-y-3">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-header-caps text-white">РЕЖИМ «AIRGAP»</span>
+              <div class="lamp-bulb" id="airgapLamp"></div>
+            </div>
+            <p class="text-xs text-[#8A8A92]">
+              Аппаратный Kill-Switch на уровне ядра: отсекает радиомодули (Wi-Fi, Bluetooth) и глушит сокеты.
+            </p>
+            <div class="pt-2">
+              <button id="airgapToggle" onclick="toggleAirgap()" class="uvos-toggle-btn">
+                <div class="indicator-dot"></div>
+                <span id="airgapToggleText">OFF</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="tile-card space-y-3">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-header-caps text-white">ДОМЕННЫЙ ФИЛЬТР DNS</span>
+              <div class="lamp-bulb active"></div>
+            </div>
+            <p class="text-xs text-[#8A8A92]">
+              Встроенный DoH/DoT резолвер с автоматической блокировкой телеметрии, трекеров и рекламных сетей.
+            </p>
+            <div class="pt-2">
+              <button class="uvos-toggle-btn on">
+                <div class="indicator-dot"></div>
+                <span>ON</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="tile-card space-y-3">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-header-caps text-white">PER-APP GATEWAY</span>
+              <div class="lamp-bulb active"></div>
+            </div>
+            <p class="text-xs text-[#8A8A92]">
+              Никакая программа не выйдет в сеть, пока пользователь явно не включит её в контрольном щитке.
+            </p>
+            <div class="pt-2">
+              <button class="uvos-toggle-btn on">
+                <div class="indicator-dot"></div>
+                <span>ON</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Per App Permissions Table -->
+        <div class="tile-card">
+          <div class="text-xs font-header-caps text-[#8A8A92] mb-3">КОНТРОЛЬНЫЙ ЩИТОК СЕТИ ДЛЯ ПРИЛОЖЕНИЙ</div>
+          <div class="space-y-2 text-xs font-mono-inst">
+            <div class="flex items-center justify-between p-3 rounded-xl bg-[#0E0E12] border border-[#2A2C36]">
+              <div class="flex items-center gap-3">
+                <span class="w-3 h-3 rounded-full bg-green-500"></span>
+                <span class="text-white font-bold">Firefox Browser</span>
+              </div>
+              <div class="flex items-center gap-4">
+                <span class="text-[#8A8A92]">Ограничение: Web Ports Only</span>
+                <button class="px-3 py-1 rounded bg-[#E02020] text-white font-bold">РАЗРЕШЕНО</button>
+              </div>
+            </div>
+
+            <div class="flex items-center justify-between p-3 rounded-xl bg-[#0E0E12] border border-[#2A2C36]">
+              <div class="flex items-center gap-3">
+                <span class="w-3 h-3 rounded-full bg-yellow-500"></span>
+                <span class="text-white font-bold">Telegram Messenger</span>
+              </div>
+              <div class="flex items-center gap-4">
+                <span class="text-[#8A8A92]">Только *.telegram.org</span>
+                <button class="px-3 py-1 rounded bg-[#E02020] text-white font-bold">WHITE-LIST</button>
+              </div>
+            </div>
+
+            <div class="flex items-center justify-between p-3 rounded-xl bg-[#0E0E12] border border-[#2A2C36]">
+              <div class="flex items-center gap-3">
+                <span class="w-3 h-3 rounded-full bg-red-500"></span>
+                <span class="text-white font-bold">VS Code / OSS</span>
+              </div>
+              <div class="flex items-center gap-4">
+                <span class="text-[#8A8A92]">Телеметрия Microsoft заблокирована</span>
+                <button class="px-3 py-1 rounded bg-[#1C1E26] border border-[#2A2C36] text-[#8A8A92]">ОТКЛЮЧЕНО</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= SLIDE 5: UNDERVOLT И АВТО-РЕЖИМ ================= -->
+    <section class="slide-page" id="slide-5">
+      <div class="space-y-6">
+        <div class="flex flex-col md:flex-row md:items-end justify-between gap-4">
+          <div>
+            <span class="text-xs font-mono-inst text-[#E02020]">РАЗДЕЛ 04 / АППАРАТНЫЙ ПОТЕНЦИАЛ</span>
+            <h2 class="text-3xl font-header-caps text-white mt-1">UnderVolt Core: Управление Энергией</h2>
+            <p class="text-[#8A8A92] text-sm mt-1">Умный авто-режим по умолчанию: система сама калибрует вольтаж под нагрузку</p>
+          </div>
+          <!-- Mode status indicator badge -->
+          <div class="flex items-center gap-3 bg-[#1C1E26] border border-green-500/40 px-4 py-2 rounded-2xl">
+            <span class="w-3 h-3 rounded-full bg-green-500 animate-pulse"></span>
+            <div>
+              <div class="text-[11px] text-[#8A8A92] font-mono-inst">АКТИВНЫЙ РЕЖИМ</div>
+              <div class="text-sm font-bold text-green-400 font-mono-inst" id="activeProfileLabel">АВТО (ПО УМОЛЧАНИЮ)</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Telemetry boxes -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div class="tile-card text-center border-green-500/30">
+            <div class="text-xs font-header-caps text-[#8A8A92]">CPU OFFSET</div>
+            <div class="text-2xl font-mono-inst font-bold text-white mt-1" id="curOffset">-65 mV</div>
+            <div class="text-[11px] text-green-400 font-mono-inst mt-1" id="offsetStateDesc">АВТО-ПОДБОР СТАБИЛЕН</div>
+          </div>
+          <div class="tile-card text-center">
+            <div class="text-xs font-header-caps text-[#8A8A92]">TDP LIMIT</div>
+            <div class="text-2xl font-mono-inst font-bold text-white mt-1" id="curTdp">28 W</div>
+            <div class="text-[11px] text-[#8A8A92] font-mono-inst mt-1">АВТО-РЕГУЛИРОВАНИЕ</div>
+          </div>
+          <div class="tile-card text-center">
+            <div class="text-xs font-header-caps text-[#8A8A92]">ТЕМПЕРАТУРА</div>
+            <div class="text-2xl font-mono-inst font-bold text-white mt-1" id="curTemp">41 °C</div>
+            <div class="text-[11px] text-green-400 font-mono-inst mt-1">ОПТИМАЛЬНО</div>
+          </div>
+          <div class="tile-card text-center">
+            <div class="text-xs font-header-caps text-[#8A8A92]">КУЛЕРЫ</div>
+            <div class="text-2xl font-mono-inst font-bold text-white mt-1">0 RPM</div>
+            <div class="text-[11px] text-[#8A8A92] font-mono-inst mt-1">БЕСШУМНО</div>
+          </div>
+        </div>
+
+        <!-- Mode selector profiles -->
+        <div class="tile-card space-y-4">
+          <div class="flex items-center justify-between">
+            <span class="text-sm font-header-caps text-white">ПРОФИЛИ УПРАВЛЕНИЯ ПИТАНИЕМ</span>
+            <span class="text-xs font-mono-inst text-[#8A8A92]">ОСНОВНОЙ РЕЖИМ: АВТОНОМНЫЙ ДЕМОН uvos-adaptive-gov</span>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-5 gap-3">
+            <button id="profBtnAuto" onclick="setProfile('auto')" class="p-3.5 rounded-2xl bg-[#1C1E26] border-2 border-green-500 text-left transition relative overflow-hidden">
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-header-caps text-green-400 font-bold">★ АВТО (DEFAULT)</span>
+                <span class="w-2 h-2 rounded-full bg-green-500"></span>
+              </div>
+              <div class="text-[11px] text-white font-mono-inst mt-1.5">Умный подбор</div>
+              <div class="text-[10px] text-[#8A8A92] mt-0.5">Система рулит сама, 0 забот</div>
+            </button>
+
+            <button id="profBtnEco" onclick="setProfile('eco')" class="p-3.5 rounded-2xl bg-[#0E0E12] hover:bg-[#242630] border border-[#2A2C36] text-left transition">
+              <div class="text-xs font-header-caps text-white">АВТОНОМИЯ (ECO)</div>
+              <div class="text-[11px] text-[#8A8A92] font-mono-inst mt-1.5">-80mV, 18W TDP</div>
+              <div class="text-[10px] text-[#8A8A92] mt-0.5">Максимум батареи</div>
+            </button>
+
+            <button id="profBtnBalanced" onclick="setProfile('balanced')" class="p-3.5 rounded-2xl bg-[#0E0E12] hover:bg-[#242630] border border-[#2A2C36] text-left transition">
+              <div class="text-xs font-header-caps text-white">БАЛАНС</div>
+              <div class="text-[11px] text-[#8A8A92] font-mono-inst mt-1.5">-50mV, 35W TDP</div>
+              <div class="text-[10px] text-[#8A8A92] mt-0.5">Повседневная работа</div>
+            </button>
+
+            <button id="profBtnAirgap" onclick="setProfile('airgap')" class="p-3.5 rounded-2xl bg-[#0E0E12] hover:bg-[#242630] border border-[#2A2C36] text-left transition">
+              <div class="text-xs font-header-caps text-white">СТЕРИЛЬНО</div>
+              <div class="text-[11px] text-[#8A8A92] font-mono-inst mt-1.5">Сеть выкл, 10W TDP</div>
+              <div class="text-[10px] text-[#8A8A92] mt-0.5">Полная изоляция</div>
+            </button>
+
+            <button id="profBtnOverdrive" onclick="setProfile('overdrive')" class="p-3.5 rounded-2xl bg-[#0E0E12] hover:bg-[#242630] border border-[#2A2C36] text-left transition">
+              <div class="text-xs font-header-caps text-[#E02020]">ОВЕРДРАЙВ</div>
+              <div class="text-[11px] text-[#8A8A92] font-mono-inst mt-1.5">Stock V, Max Boost</div>
+              <div class="text-[10px] text-[#8A8A92] mt-0.5">Рендеринг / Игры</div>
+            </button>
+          </div>
+        </div>
+
+        <!-- Manual Tuning (Protected under lock switch) -->
+        <div class="tile-card space-y-4">
+          <div class="flex items-center justify-between">
+            <div>
+              <span class="text-sm font-header-caps text-white">ТОЧНАЯ ЮСТИРОВКА КРИВОЙ (ДЛЯ РЕДКИХ РУЧНЫХ ПРАВОК)</span>
+              <p class="text-xs text-[#8A8A92] mt-0.5">По умолчанию заблокировано. В 99% случаев используется режим «Авто».</p>
+            </div>
+            <div class="flex items-center gap-3">
+              <span class="text-xs font-mono-inst text-[#8A8A92]">РУЧНАЯ ПРАВКА:</span>
+              <button id="manualLockToggle" onclick="toggleManualLock()" class="px-3 py-1.5 rounded-xl bg-[#0E0E12] border border-[#2A2C36] text-xs font-mono-inst text-[#8A8A92] hover:text-white transition">
+                ЗАБЛОКИРОВАНО (АВТО)
+              </button>
+            </div>
+          </div>
+
+          <div id="manualControlsArea" class="space-y-3 opacity-40 pointer-events-none transition duration-200">
+            <div class="flex justify-between items-center text-xs font-mono-inst">
+              <span class="text-white">CPU Core Voltage Offset:</span>
+              <span class="text-[#E02020] font-bold text-sm" id="offsetValText">-65 mV</span>
+            </div>
+            <input type="range" min="0" max="120" value="65" id="offsetSlider" oninput="updateOffset(this.value)" class="w-full accent-[#E02020] bg-[#0E0E12] cursor-pointer">
+            <div class="flex justify-between text-[11px] font-mono-inst text-[#8A8A92]">
+              <span>0 mV (Stock)</span>
+              <span>-50 mV (Safe)</span>
+              <span>-80 mV (Optimal)</span>
+              <span class="text-[#E02020]">-120 mV (Risk)</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= SLIDE 6: ИНТЕРАКТИВНЫЙ ПРИБОРНЫЙ СТЕНД ================= -->
+    <section class="slide-page" id="slide-6">
+      <div class="space-y-6">
+        <div>
+          <span class="text-xs font-mono-inst text-[#E02020]">РАЗДЕЛ 05 / ИНТЕРФЕЙС РАБОЧЕГО СТОЛА</span>
+          <h2 class="text-3xl font-header-caps text-white mt-1">Интерактивный Приборный Щит (Live Gauges)</h2>
+          <p class="text-[#8A8A92] text-sm mt-1">Белые циферблаты М4200, черные дуги с радиальными насечками и красной зоной. Точные фиксированные пропорции без боковых зазоров.</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+          
+          <!-- METER 1: VCORE -->
+          <div class="flex flex-col items-center">
+            <div class="meter-case-panel">
+              <div class="screw" style="top: 10px; left: 10px; --rot: 15deg;"></div>
+              <div class="screw" style="top: 10px; right: 10px; --rot: 65deg;"></div>
+              <div class="screw" style="bottom: 10px; left: 10px; --rot: 120deg;"></div>
+              <div class="screw" style="bottom: 10px; right: 10px; --rot: 45deg;"></div>
+              <div class="screw" style="bottom: 6px; left: calc(50% - 7.5px); --rot: 90deg;"></div>
+
+              <div class="absolute" style="top: 11px; right: 34px;">
+                <div class="lamp-bezel">
+                  <div class="lamp-bulb" id="m1Lamp"></div>
+                </div>
+              </div>
+
+              <div class="w-full flex justify-between items-center pl-7 pr-14 mb-2">
+                <span class="text-xs font-header-caps text-[#8A8A92] tracking-wider">НАПРЯЖЕНИЕ ЯДРА</span>
+              </div>
+
+              <div class="dial-window-fixed">
+                <svg viewBox="0 0 320 220" class="w-full h-full" id="m1Svg">
+                  <text x="24" y="32" font-family="JetBrains Mono" font-size="10" fill="#666" font-weight="bold">UVOS·VCORE</text>
+                  <g id="m1TickGroup"></g>
+                  <text x="32" y="142" font-family="JetBrains Mono" font-size="12" fill="#1A1A1A" font-weight="700">0.7V</text>
+                  <text x="160" y="74" font-family="JetBrains Mono" font-size="12" fill="#1A1A1A" font-weight="700" text-anchor="middle">1.0V</text>
+                  <text x="288" y="142" font-family="JetBrains Mono" font-size="12" fill="#E02020" font-weight="700" text-anchor="end">1.35V</text>
+                  <text x="160" y="128" text-anchor="middle" font-family="JetBrains Mono" font-weight="bold" font-size="30" fill="#1A1A1A" id="m1Text">0.945 V</text>
+                  <text x="160" y="150" text-anchor="middle" font-family="JetBrains Mono" font-weight="bold" font-size="11" fill="#777" letter-spacing="2">VCORE</text>
+
+                  <g id="m1Needle" class="meter-needle" style="transform-origin: 160px 195px; transform: rotate(-8deg);">
+                    <line x1="160" y1="195" x2="160" y2="46" stroke="#1A1A1A" stroke-width="2.6" stroke-linecap="round" />
+                    <circle cx="160" cy="195" r="8" fill="#1A1A1A" />
+                    <circle cx="160" cy="195" r="3.5" fill="#E8E4D8" />
+                  </g>
+                </svg>
+              </div>
+            </div>
+
+            <!-- EXTERNAL CONTROL BAR -->
+            <div class="mt-3 w-full bg-[#1C1E26] border border-[#2A2C36] rounded-2xl px-4 py-2 flex justify-between items-center text-xs font-mono-inst shadow-md">
+              <span class="text-[#8A8A92]">OFFSET:</span>
+              <button onclick="bumpM1()" class="px-3 py-1.5 rounded-xl bg-[#0E0E12] hover:bg-[#242630] border border-[#2A2C36] text-white font-bold transition">+0.05V</button>
+            </div>
+          </div>
+
+          <!-- METER 2: POWER -->
+          <div class="flex flex-col items-center">
+            <div class="meter-case-panel">
+              <div class="screw" style="top: 10px; left: 10px; --rot: 30deg;"></div>
+              <div class="screw" style="top: 10px; right: 10px; --rot: 85deg;"></div>
+              <div class="screw" style="bottom: 10px; left: 10px; --rot: 10deg;"></div>
+              <div class="screw" style="bottom: 10px; right: 10px; --rot: 75deg;"></div>
+              <div class="screw" style="bottom: 6px; left: calc(50% - 7.5px); --rot: 40deg;"></div>
+
+              <div class="absolute" style="top: 11px; right: 34px;">
+                <div class="lamp-bezel">
+                  <div class="lamp-bulb" id="m2Lamp"></div>
+                </div>
+              </div>
+
+              <div class="w-full flex justify-between items-center pl-7 pr-14 mb-2">
+                <span class="text-xs font-header-caps text-[#8A8A92] tracking-wider">PACKAGE МОЩНОСТЬ</span>
+              </div>
+
+              <div class="dial-window-fixed">
+                <svg viewBox="0 0 320 220" class="w-full h-full" id="m2Svg">
+                  <text x="24" y="32" font-family="JetBrains Mono" font-size="10" fill="#666" font-weight="bold">UVOS·POWER</text>
+                  <g id="m2TickGroup"></g>
+                  <text x="32" y="142" font-family="JetBrains Mono" font-size="12" fill="#1A1A1A" font-weight="700">0 W</text>
+                  <text x="160" y="74" font-family="JetBrains Mono" font-size="12" fill="#1A1A1A" font-weight="700" text-anchor="middle">35 W</text>
+                  <text x="288" y="142" font-family="JetBrains Mono" font-size="12" fill="#E02020" font-weight="700" text-anchor="end">65 W</text>
+                  <text x="160" y="128" text-anchor="middle" font-family="JetBrains Mono" font-weight="bold" font-size="30" fill="#1A1A1A" id="m2Text">18.4 W</text>
+                  <text x="160" y="150" text-anchor="middle" font-family="JetBrains Mono" font-weight="bold" font-size="11" fill="#777" letter-spacing="2">POWER</text>
+
+                  <g id="m2Needle" class="meter-needle" style="transform-origin: 160px 195px; transform: rotate(-32deg);">
+                    <line x1="160" y1="195" x2="160" y2="46" stroke="#1A1A1A" stroke-width="2.6" stroke-linecap="round" />
+                    <circle cx="160" cy="195" r="8" fill="#1A1A1A" />
+                    <circle cx="160" cy="195" r="3.5" fill="#E8E4D8" />
+                  </g>
+                </svg>
+              </div>
+            </div>
+
+            <!-- EXTERNAL CONTROL BAR -->
+            <div class="mt-3 w-full bg-[#1C1E26] border border-[#2A2C36] rounded-2xl px-4 py-2 flex justify-between items-center text-xs font-mono-inst shadow-md">
+              <span class="text-[#8A8A92]">НАГРУЗКА:</span>
+              <button onclick="bumpM2()" class="px-3 py-1.5 rounded-xl bg-[#0E0E12] hover:bg-[#242630] border border-[#2A2C36] text-white font-bold transition">ТЕСТ +15W</button>
+            </div>
+          </div>
+
+          <!-- METER 3: NET -->
+          <div class="flex flex-col items-center">
+            <div class="meter-case-panel">
+              <div class="screw" style="top: 10px; left: 10px; --rot: 55deg;"></div>
+              <div class="screw" style="top: 10px; right: 10px; --rot: 115deg;"></div>
+              <div class="screw" style="bottom: 10px; left: 10px; --rot: 40deg;"></div>
+              <div class="screw" style="bottom: 10px; right: 10px; --rot: 90deg;"></div>
+              <div class="screw" style="bottom: 6px; left: calc(50% - 7.5px); --rot: 20deg;"></div>
+
+              <div class="absolute" style="top: 11px; right: 34px;">
+                <div class="lamp-bezel">
+                  <div class="lamp-bulb" id="m3Lamp"></div>
+                </div>
+              </div>
+
+              <div class="w-full flex justify-between items-center pl-7 pr-14 mb-2">
+                <span class="text-xs font-header-caps text-[#8A8A92] tracking-wider">СЕТЕВОЙ ТРАФИК</span>
+              </div>
+
+              <div class="dial-window-fixed">
+                <svg viewBox="0 0 320 220" class="w-full h-full" id="m3Svg">
+                  <text x="24" y="32" font-family="JetBrains Mono" font-size="10" fill="#666" font-weight="bold">UVOS·SPEED</text>
+                  <g id="m3TickGroup"></g>
+                  <text x="32" y="142" font-family="JetBrains Mono" font-size="12" fill="#1A1A1A" font-weight="700">0 KB</text>
+                  <text x="160" y="74" font-family="JetBrains Mono" font-size="12" fill="#1A1A1A" font-weight="700" text-anchor="middle">50 MB</text>
+                  <text x="288" y="142" font-family="JetBrains Mono" font-size="12" fill="#E02020" font-weight="700" text-anchor="end">100 MB</text>
+                  <text x="160" y="128" text-anchor="middle" font-family="JetBrains Mono" font-weight="bold" font-size="30" fill="#1A1A1A" id="m3Text">4.2 MB/s</text>
+                  <text x="160" y="150" text-anchor="middle" font-family="JetBrains Mono" font-weight="bold" font-size="11" fill="#777" letter-spacing="2">TRAFFIC</text>
+
+                  <g id="m3Needle" class="meter-needle" style="transform-origin: 160px 195px; transform: rotate(-22deg);">
+                    <line x1="160" y1="195" x2="160" y2="46" stroke="#1A1A1A" stroke-width="2.6" stroke-linecap="round" />
+                    <circle cx="160" cy="195" r="8" fill="#1A1A1A" />
+                    <circle cx="160" cy="195" r="3.5" fill="#E8E4D8" />
+                  </g>
+                </svg>
+              </div>
+            </div>
+
+            <!-- EXTERNAL CONTROL BAR -->
+            <div class="mt-3 w-full bg-[#1C1E26] border border-[#2A2C36] rounded-2xl px-4 py-2 flex justify-between items-center text-xs font-mono-inst shadow-md">
+              <span class="text-[#8A8A92]">ТРАФИК:</span>
+              <button onclick="bumpM3()" class="px-3 py-1.5 rounded-xl bg-[#0E0E12] hover:bg-[#242630] border border-[#2A2C36] text-white font-bold transition">ПЕРЕДАТЬ</button>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= SLIDE 7: ТЕХНИЧЕСКИЙ СТЕК ARCH ================= -->
+    <section class="slide-page" id="slide-7">
+      <div class="space-y-6">
+        <div>
+          <span class="text-xs font-mono-inst text-[#E02020]">РАЗДЕЛ 06 / ТЕХНОЛОГИЧЕСКИЙ СТЕК</span>
+          <h2 class="text-3xl font-header-caps text-white mt-1">Реализация на компонентах Arch Linux</h2>
+          <p class="text-[#8A8A92] text-sm mt-1">Нативный Linux-стек, обеспечивающий высочайшую производительность без компромиссов</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div class="tile-card space-y-4">
+            <span class="text-sm font-header-caps text-white">КОМПОНЕНТЫ ОКРУЖЕНИЯ (DESKTOP ENVIRONMENT)</span>
+            
+            <div class="space-y-3 text-xs font-mono-inst">
+              <div class="p-3 rounded-xl bg-[#0E0E12] border border-[#2A2C36]">
+                <div class="text-white font-bold">Hyprland-UVOS (Wayland Compositor)</div>
+                <div class="text-[#8A8A92] mt-0.5">Аппаратные скругления 24px, рамки окон 1px #2A2C36, активная рамка #E02020</div>
+              </div>
+
+              <div class="p-3 rounded-xl bg-[#0E0E12] border border-[#2A2C36]">
+                <div class="text-white font-bold">UVOS-Shell (AGS / GTK4 / Rust)</div>
+                <div class="text-[#8A8A92] mt-0.5">Статус-бар, аутентичные приборы М4200 со шкалами слоновой кости, Control Center</div>
+              </div>
+
+              <div class="p-3 rounded-xl bg-[#0E0E12] border border-[#2A2C36]">
+                <div class="text-white font-bold">UVOS-Term (Kitty / Alacritty theme)</div>
+                <div class="text-[#8A8A92] mt-0.5">Цветовая палитра: глубокий графит, чернила слоновой кости, янтарно-красный курсор</div>
+              </div>
+
+              <div class="p-3 rounded-xl bg-[#0E0E12] border border-[#2A2C36]">
+                <div class="text-white font-bold">UVOS-Greet (Display Login Manager)</div>
+                <div class="text-[#8A8A92] mt-0.5">Вход в систему с ретро-тумблером питания и вольтметром батареи М4200</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="tile-card space-y-4">
+            <span class="text-sm font-header-caps text-white">СИСТЕМНЫЕ СЛУЖБЫ И ЯДРО (CORE DAEMONS)</span>
+            
+            <div class="space-y-3 text-xs font-mono-inst">
+              <div class="p-3 rounded-xl bg-[#0E0E12] border border-[#2A2C36]">
+                <div class="text-white font-bold">Linux-Zen / Linux-Hardened Kernel</div>
+                <div class="text-[#8A8A92] mt-0.5">MSR-модули, Landlock LSM, cgroups v2, eBPF TC filters</div>
+              </div>
+
+              <div class="p-3 rounded-xl bg-[#0E0E12] border border-[#2A2C36]">
+                <div class="text-white font-bold">uvos-sandbox-daemon</div>
+                <div class="text-[#8A8A92] mt-0.5">Управление песочницами Bubblewrap, генерация изолированных окружений</div>
+              </div>
+
+              <div class="p-3 rounded-xl bg-[#0E0E12] border border-[#2A2C36]">
+                <div class="text-white font-bold">uvos-adaptive-gov (Автономный демон питания)</div>
+                <div class="text-[#8A8A92] mt-0.5">Режим «Авто» по умолчанию: динамический андервольтинг и TDP без ручной возни</div>
+              </div>
+
+              <div class="p-3 rounded-xl bg-[#0E0E12] border border-[#2A2C36]">
+                <div class="text-white font-bold">Pacman Sandbox Hook</div>
+                <div class="text-[#8A8A92] mt-0.5">Автоматическая генерация профиля изоляции для каждого устанавливаемого пакета</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= SLIDE 8: ИТОГИ И ДОРОЖНАЯ КАРТА ================= -->
+    <section class="slide-page" id="slide-8">
+      <div class="space-y-6">
+        <div>
+          <span class="text-xs font-mono-inst text-[#E02020]">РАЗДЕЛ 07 / СРАВНЕНИЕ И ПЛАН</span>
+          <h2 class="text-3xl font-header-caps text-white mt-1">Arch Linux vs ArchUVOS: В чём разница?</h2>
+          <p class="text-[#8A8A92] text-sm mt-1">Эволюция от обычного дистрибутива к защищённой приборной станции</p>
+        </div>
+
+        <!-- Comparison Table -->
+        <div class="tile-card overflow-x-auto">
+          <table class="w-full text-left text-xs font-mono-inst border-collapse">
+            <thead>
+              <tr class="border-b border-[#2A2C36] text-[#8A8A92]">
+                <th class="py-3 px-4 font-header-caps">ХАРАКТЕРИСТИКА</th>
+                <th class="py-3 px-4 font-header-caps">СТАНДАРТНЫЙ ARCH LINUX</th>
+                <th class="py-3 px-4 font-header-caps text-[#E02020]">ARCH·UVOS EDITION</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-[#22242F]">
+              <tr>
+                <td class="py-3 px-4 text-white font-bold">Сетевой доступ приложений</td>
+                <td class="py-3 px-4 text-[#8A8A92]">Открыт любому бинарнику без ведома</td>
+                <td class="py-3 px-4 text-white font-bold">Строго по тумблеру / Белый список eBPF</td>
+              </tr>
+              <tr>
+                <td class="py-3 px-4 text-white font-bold">Управление напряжением (UnderVolt)</td>
+                <td class="py-3 px-4 text-[#8A8A92]">Ручные консольные скрипты msr/ryzenadj</td>
+                <td class="py-3 px-4 text-white font-bold">Режим «Авто» по умолчанию + приборы М4200</td>
+              </tr>
+              <tr>
+                <td class="py-3 px-4 text-white font-bold">Телеметрия и фингерпринтинг</td>
+                <td class="py-3 px-4 text-[#8A8A92]">Доступен machine-id, RTC тайминги, procfs</td>
+                <td class="py-3 px-4 text-white font-bold">Огрубление времени, спуфинг UUID, hidepid=2</td>
+              </tr>
+              <tr>
+                <td class="py-3 px-4 text-white font-bold">Визуальная среда</td>
+                <td class="py-3 px-4 text-[#8A8A92]">Стандартные GNOME / KDE / Tiling</td>
+                <td class="py-3 px-4 text-white font-bold">Ретро-приборы СССР × iPhone-минимализм</td>
+              </tr>
+              <tr>
+                <td class="py-3 px-4 text-white font-bold">Реакция на нарушения</td>
+                <td class="py-3 px-4 text-[#8A8A92]">Молчаливое исполнение</td>
+                <td class="py-3 px-4 text-[#E02020] font-bold">Мгновенный отказ + запись в Журнал Аудита</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Roadmap -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs font-mono-inst">
+          <div class="tile-card space-y-2">
+            <div class="text-[#E02020] font-bold">ФАЗА 1: UI ПРОТОТИП</div>
+            <div class="text-white font-bold">Gauges & Hyprland Theme</div>
+            <div class="text-[#8A8A92]">Готовые приборы М4200 на Wayland/AGS, зафиксированная дизайн-система.</div>
+          </div>
+          <div class="tile-card space-y-2">
+            <div class="text-white font-bold">ФАЗА 2: ДЕМОНЫ БЕЗОПАСНОСТИ</div>
+            <div class="text-white font-bold">eBPF & Landlock Sandbox</div>
+            <div class="text-[#8A8A92]">Регулятор сети per-app и огрубление таймеров в пространстве пользователя.</div>
+          </div>
+          <div class="tile-card space-y-2">
+            <div class="text-[#8A8A92] font-bold">ФАЗА 3: ISO ОБРАЗ ARCH·UVOS</div>
+            <div class="text-white font-bold">Archiso Installer & Repo</div>
+            <div class="text-[#8A8A92]">Готовый установочный образ с ядром Zen и встроенным uvos-adaptive-gov.</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- BOTTOM BAR: SLIDE CONTROLS & MINI DOTS -->
+  <footer class="border-t border-[#22242F] bg-[#0E0E12] px-6 py-4 flex items-center justify-between text-xs font-mono-inst">
+    <div class="text-[#8A8A92] flex items-center gap-2">
+      <span>НАВИГАЦИЯ:</span>
+      <kbd class="px-2 py-0.5 rounded bg-[#1C1E26] border border-[#2A2C36] text-white">← ВЛЕВО</kbd>
+      <kbd class="px-2 py-0.5 rounded bg-[#1C1E26] border border-[#2A2C36] text-white">ВПРАВО →</kbd>
+    </div>
+
+    <div class="flex items-center space-x-2" id="slideDots"></div>
+
+    <div class="text-[#8A8A92]">
+      ARCH·UVOS SPECIFICATION v1.0
+    </div>
+  </footer>
+
+  <!-- SCRIPT FOR PRESENTATION LOGIC, EXACT TICK ARC BUILDER & INTERACTIVITY -->
+  <script>
+    let currentSlide = 1;
+    const totalSlides = 8;
+
+    // HIGH-ACCURACY TICK ARC BUILDER (Clean single arc with radial tick marks)
+    function buildTickArcGauge(groupId) {
+      const container = document.getElementById(groupId);
+      if (!container) return;
+
+      const cx = 160, cy = 195;
+      const R = 145;
+      const minDeg = -52, maxDeg = 52;
+      const redThresholdDeg = 24;
+
+      let svgHtml = '';
+      const toRad = deg => (deg * Math.PI) / 180;
+
+      // Arc endpoints
+      const pStart = { x: cx + R * Math.sin(toRad(minDeg)), y: cy - R * Math.cos(toRad(minDeg)) };
+      const pEnd = { x: cx + R * Math.sin(toRad(maxDeg)), y: cy - R * Math.cos(toRad(maxDeg)) };
+
+      // 1. Black Base Arc
+      const arcD = `M ${pStart.x.toFixed(1)} ${pStart.y.toFixed(1)} A ${R} ${R} 0 0 1 ${pEnd.x.toFixed(1)} ${pEnd.y.toFixed(1)}`;
+      svgHtml += `<path d="${arcD}" fill="none" stroke="#1A1A1A" stroke-width="2.2" stroke-linecap="round" />`;
+
+      // 2. Red Danger Zone (Exact concentric overlay on the last 27%)
+      svgHtml += `<path d="${arcD}" fill="none" stroke="#E02020" stroke-width="5" stroke-linecap="round" pathLength="100" stroke-dasharray="0 73 27 0" />`;
+
+      // 3. Radial Ticks (Насечки) every 5.2 degrees
+      let tickIndex = 0;
+      for (let deg = minDeg; deg <= maxDeg + 0.5; deg += 5.2) {
+        const isMajor = (tickIndex % 2 === 0);
+        const tickLen = isMajor ? 14 : 8;
+        const rad = toRad(deg);
+
+        const xOuter = (cx + R * Math.sin(rad)).toFixed(1);
+        const yOuter = (cy - R * Math.cos(rad)).toFixed(1);
+        const xInner = (cx + (R - tickLen) * Math.sin(rad)).toFixed(1);
+        const yInner = (cy - (R - tickLen) * Math.cos(rad)).toFixed(1);
+
+        const isRed = deg >= redThresholdDeg - 0.5;
+        const color = isRed ? '#E02020' : '#1A1A1A';
+        const strokeW = isMajor ? (isRed ? '2.6' : '2.2') : '1.5';
+
+        svgHtml += `<line x1="${xOuter}" y1="${yOuter}" x2="${xInner}" y2="${yInner}" stroke="${color}" stroke-width="${strokeW}" stroke-linecap="round" />`;
+        tickIndex++;
+      }
+
+      container.innerHTML = svgHtml;
+    }
+
+    function initAllGauges() {
+      buildTickArcGauge('heroTickGroup');
+      buildTickArcGauge('m1TickGroup');
+      buildTickArcGauge('m2TickGroup');
+      buildTickArcGauge('m3TickGroup');
+    }
+
+    function initDots() {
+      const container = document.getElementById('slideDots');
+      container.innerHTML = '';
+      for (let i = 1; i <= totalSlides; i++) {
+        const dot = document.createElement('button');
+        dot.className = `h-2.5 rounded-full transition-all ${i === currentSlide ? 'bg-[#E02020] w-6' : 'bg-[#2A2C36] hover:bg-[#8A8A92] w-2.5'}`;
+        dot.onclick = () => goToSlide(i);
+        container.appendChild(dot);
+      }
+    }
+
+    function updateSlide() {
+      document.querySelectorAll('.slide-page').forEach((el, idx) => {
+        if (idx + 1 === currentSlide) {
+          el.classList.add('active-slide');
+        } else {
+          el.classList.remove('active-slide');
+        }
+      });
+      document.getElementById('currentSlideNum').innerText = currentSlide;
+      initDots();
+    }
+
+    function nextSlide() {
+      if (currentSlide < totalSlides) {
+        currentSlide++;
+        updateSlide();
+      }
+    }
+
+    function prevSlide() {
+      if (currentSlide > 1) {
+        currentSlide--;
+        updateSlide();
+      }
+    }
+
+    function goToSlide(n) {
+      currentSlide = n;
+      updateSlide();
+    }
+
+    // Keyboard navigation
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowRight' || e.key === 'PageDown' || e.key === ' ') {
+        nextSlide();
+      } else if (e.key === 'ArrowLeft' || e.key === 'PageUp') {
+        prevSlide();
+      }
+    });
+
+    // Hero meter interaction
+    function setHeroVolt(volt) {
+      const needle = document.getElementById('heroNeedle');
+      const valText = document.getElementById('heroValText');
+      const lamp = document.getElementById('heroLamp');
+      const topVcore = document.getElementById('topVcoreText');
+
+      valText.innerText = volt.toFixed(3) + ' V';
+      if (topVcore) topVcore.innerText = volt.toFixed(3) + 'V';
+
+      // Mapping volt (0.7V to 1.35V) into angle (-52deg to +52deg)
+      let angle = -52 + ((volt - 0.7) / (1.35 - 0.7)) * 104;
+      needle.style.transform = `rotate(${angle.toFixed(1)}deg)`;
+
+      if (volt >= 1.22) {
+        lamp.classList.add('active');
+        valText.setAttribute('fill', '#E02020');
+      } else {
+        lamp.classList.remove('active');
+        valText.setAttribute('fill', '#1A1A1A');
+      }
+    }
+
+    // Airgap toggle
+    let airgapActive = false;
+    function toggleAirgap() {
+      airgapActive = !airgapActive;
+      const btn = document.getElementById('airgapToggle');
+      const txt = document.getElementById('airgapToggleText');
+      const lamp = document.getElementById('airgapLamp');
+
+      if (airgapActive) {
+        btn.classList.add('on');
+        txt.innerText = 'ON';
+        lamp.classList.add('active');
+      } else {
+        btn.classList.remove('on');
+        txt.innerText = 'OFF';
+        lamp.classList.remove('active');
+      }
+    }
+
+    // Manual offset toggle logic
+    let manualUnlocked = false;
+    function toggleManualLock() {
+      manualUnlocked = !manualUnlocked;
+      const btn = document.getElementById('manualLockToggle');
+      const area = document.getElementById('manualControlsArea');
+      if (manualUnlocked) {
+        btn.innerText = 'РАЗБЛОКИРОВАНО (ВНИМАНИЕ)';
+        btn.classList.add('border-[#E02020]', 'text-[#E02020]');
+        area.classList.remove('opacity-40', 'pointer-events-none');
+      } else {
+        btn.innerText = 'ЗАБЛОКИРОВАНО (АВТО)';
+        btn.classList.remove('border-[#E02020]', 'text-[#E02020]');
+        area.classList.add('opacity-40', 'pointer-events-none');
+        setProfile('auto');
+      }
+    }
+
+    function updateOffset(val) {
+      document.getElementById('offsetValText').innerText = '-' + val + ' mV';
+      document.getElementById('curOffset').innerText = '-' + val + ' mV';
+    }
+
+    function resetProfileButtons() {
+      ['profBtnAuto', 'profBtnEco', 'profBtnBalanced', 'profBtnAirgap', 'profBtnOverdrive'].forEach(id => {
+        const btn = document.getElementById(id);
+        if (btn) {
+          btn.className = "p-3.5 rounded-2xl bg-[#0E0E12] hover:bg-[#242630] border border-[#2A2C36] text-left transition";
+        }
+      });
+    }
+
+    function setProfile(profile) {
+      resetProfileButtons();
+      const label = document.getElementById('activeProfileLabel');
+      const topBadge = document.getElementById('topModeBadge');
+      const offsetDesc = document.getElementById('offsetStateDesc');
+      const curTdp = document.getElementById('curTdp');
+
+      if (profile === 'auto') {
+        document.getElementById('profBtnAuto').className = "p-3.5 rounded-2xl bg-[#1C1E26] border-2 border-green-500 text-left transition";
+        label.innerText = 'АВТО (ПО УМОЛЧАНИЮ)';
+        label.className = 'text-sm font-bold text-green-400 font-mono-inst';
+        topBadge.innerText = 'АВТО (АДАПТИВНО)';
+        topBadge.className = 'text-green-400 font-bold';
+        offsetDesc.innerText = 'АВТО-ПОДБОР СТАБИЛЕН';
+        curTdp.innerText = '28 W';
+        updateOffset(65);
+        document.getElementById('offsetSlider').value = 65;
+        setHeroVolt(0.945);
+      } else if (profile === 'eco') {
+        document.getElementById('profBtnEco').className = "p-3.5 rounded-2xl bg-[#1C1E26] border-2 border-green-500 text-left transition";
+        label.innerText = 'АВТОНОМИЯ (ECO)';
+        label.className = 'text-sm font-bold text-green-400 font-mono-inst';
+        topBadge.innerText = 'ECO (-80mV)';
+        offsetDesc.innerText = 'ЭНЕРГОСБЕРЕЖЕНИЕ';
+        curTdp.innerText = '18 W';
+        updateOffset(80);
+        document.getElementById('offsetSlider').value = 80;
+        setHeroVolt(0.85);
+      } else if (profile === 'balanced') {
+        document.getElementById('profBtnBalanced').className = "p-3.5 rounded-2xl bg-[#1C1E26] border-2 border-white text-left transition";
+        label.innerText = 'БАЛАНС';
+        label.className = 'text-sm font-bold text-white font-mono-inst';
+        topBadge.innerText = 'БАЛАНС (-50mV)';
+        offsetDesc.innerText = 'СТАНДАРТ';
+        curTdp.innerText = '35 W';
+        updateOffset(50);
+        document.getElementById('offsetSlider').value = 50;
+        setHeroVolt(0.95);
+      } else if (profile === 'airgap') {
+        document.getElementById('profBtnAirgap').className = "p-3.5 rounded-2xl bg-[#1C1E26] border-2 border-white text-left transition";
+        label.innerText = 'СТЕРИЛЬНО (AIRGAP)';
+        label.className = 'text-sm font-bold text-white font-mono-inst';
+        topBadge.innerText = 'AIRGAP (10W)';
+        offsetDesc.innerText = 'ИЗОЛИРОВАНО';
+        curTdp.innerText = '10 W';
+        updateOffset(20);
+        document.getElementById('offsetSlider').value = 20;
+        setHeroVolt(0.80);
+      } else if (profile === 'overdrive') {
+        document.getElementById('profBtnOverdrive').className = "p-3.5 rounded-2xl bg-[#1C1E26] border-2 border-[#E02020] text-left transition";
+        label.innerText = 'ОВЕРДРАЙВ (МАКСИМУМ)';
+        label.className = 'text-sm font-bold text-[#E02020] font-mono-inst';
+        topBadge.innerText = 'OVERDRIVE';
+        offsetDesc.innerText = 'МАКС. БУСТ';
+        curTdp.innerText = '65 W';
+        updateOffset(0);
+        document.getElementById('offsetSlider').value = 0;
+        setHeroVolt(1.28);
+      }
+    }
+
+    // Live meters interactive bumps
+    let m1Val = 0.945;
+    function bumpM1() {
+      m1Val += 0.06;
+      if (m1Val > 1.35) m1Val = 0.72;
+      document.getElementById('m1Text').innerText = m1Val.toFixed(3) + ' V';
+      let angle = -52 + ((m1Val - 0.7) / (1.35 - 0.7)) * 104;
+      document.getElementById('m1Needle').style.transform = `rotate(${angle.toFixed(1)}deg)`;
+      const lamp = document.getElementById('m1Lamp');
+      if (m1Val >= 1.22) lamp.classList.add('active'); else lamp.classList.remove('active');
+    }
+
+    let m2Val = 18.4;
+    function bumpM2() {
+      m2Val += 14;
+      if (m2Val > 65) m2Val = 8.5;
+      document.getElementById('m2Text').innerText = m2Val.toFixed(1) + ' W';
+      let angle = -52 + (m2Val / 65) * 104;
+      document.getElementById('m2Needle').style.transform = `rotate(${angle.toFixed(1)}deg)`;
+      const lamp = document.getElementById('m2Lamp');
+      if (m2Val >= 52) lamp.classList.add('active'); else lamp.classList.remove('active');
+    }
+
+    let m3Val = 4.2;
+    function bumpM3() {
+      m3Val = (Math.random() * 85 + 5);
+      document.getElementById('m3Text').innerText = m3Val.toFixed(1) + ' MB/s';
+      let angle = -52 + (m3Val / 100) * 104;
+      document.getElementById('m3Needle').style.transform = `rotate(${angle.toFixed(1)}deg)`;
+      const lamp = document.getElementById('m3Lamp');
+      if (m3Val >= 75) lamp.classList.add('active'); else lamp.classList.remove('active');
+    }
+
+    // Initialize dots & gauges on page load
+    initAllGauges();
+    initDots();
+  </script>
+</body>
+</html>

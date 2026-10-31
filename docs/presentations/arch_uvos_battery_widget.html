@@ -1,0 +1,644 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ArchUVOS — Батарейный виджет с вольтметрами М4200</title>
+  <script src="https://www.gstatic.com/antigravity/web/dev/tailwindcss.min.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Oswald:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap');
+
+    :root {
+      --bg-canvas: #06070A;
+      --widget-bg: #10121A;
+      --widget-border: #222636;
+      --dial-on: #E8E4D8;
+      --dial-off: #13151D;
+      --ink-on: #1A1A1A;
+      --ink-off: #323545;
+      --red-accent: #E02020;
+      --lamp-dim: #7A1010;
+      --lamp-dead: #180808;
+    }
+
+    body {
+      background-color: var(--bg-canvas);
+      color: #D8D8DC;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      margin: 0;
+      padding: 0;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      user-select: none;
+    }
+
+    .font-mono-inst {
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .font-header-caps {
+      font-family: 'Oswald', sans-serif;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    /* iOS-Style Widget Chassis */
+    .battery-widget-container {
+      width: 100%;
+      max-width: 980px;
+      background: linear-gradient(145deg, #151824, #0D0F16);
+      border: 1px solid #282C3E;
+      border-radius: 36px;
+      padding: 24px 28px;
+      box-shadow: 0 30px 70px -15px rgba(0,0,0,0.9), inset 0 1px 1px rgba(255,255,255,0.08);
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* Metallic Screws */
+    .screw {
+      width: 12px;
+      height: 12px;
+      background: radial-gradient(circle at 35% 35%, #464a5c, #191b22);
+      border-radius: 50%;
+      position: absolute;
+      box-shadow: inset 0 1px 1px rgba(255,255,255,0.25), 0 2px 4px rgba(0,0,0,0.8);
+      z-index: 15;
+      pointer-events: none;
+    }
+    .screw::after {
+      content: '';
+      position: absolute;
+      top: 5px;
+      left: 1.5px;
+      width: 9px;
+      height: 2px;
+      background: #0b0c10;
+      transform: rotate(var(--rot, 35deg));
+    }
+
+    /* Slot Meter Case */
+    .slot-case {
+      background: radial-gradient(circle at 50% 25%, #1b1e28, #101217);
+      border: 1.5px solid #242836;
+      border-radius: 22px;
+      position: relative;
+      box-shadow: inset 0 1px 1px rgba(255,255,255,0.06), 0 10px 24px rgba(0,0,0,0.6);
+      padding: 12px 12px 14px 12px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .slot-case.disconnected {
+      background: radial-gradient(circle at 50% 25%, #121319, #0a0b0f);
+      border-color: #1a1c26;
+      box-shadow: inset 0 1px 1px rgba(255,255,255,0.02), 0 4px 12px rgba(0,0,0,0.5);
+      opacity: 0.65;
+    }
+
+    /* FIXED ASPECT RATIO DIAL WINDOW (NO GAPS) */
+    .dial-window {
+      width: 100%;
+      aspect-ratio: 320 / 220;
+      border-radius: 14px;
+      position: relative;
+      overflow: hidden;
+      border: 2px solid #14151c;
+      transition: all 0.45s ease;
+    }
+    .dial-window.active {
+      background-color: var(--dial-on);
+      box-shadow: inset 0 3px 10px rgba(0,0,0,0.35), 0 1px 2px rgba(255,255,255,0.06);
+    }
+    .dial-window.off {
+      background-color: var(--dial-off);
+      box-shadow: inset 0 4px 12px rgba(0,0,0,0.7);
+    }
+
+    /* Indicator Lamp */
+    .lamp-bezel {
+      padding: 1.5px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #44495c, #1a1c24);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.6);
+    }
+    .lamp-bulb {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: var(--lamp-dead);
+      border: 1px solid #1c0808;
+      transition: all 0.3s ease;
+    }
+    .lamp-bulb.on {
+      background: var(--lamp-dim);
+      border-color: #401010;
+    }
+    .lamp-bulb.warning {
+      background: var(--red-accent);
+      box-shadow: 0 0 10px #ff2b2b, 0 0 3px #ff8888, inset 0 1px 2px #fff;
+    }
+
+    /* Smooth Needle Rotation */
+    .meter-needle {
+      transition: transform 0.8s cubic-bezier(0.18, 1, 0.28, 1.05);
+    }
+
+    /* Device Quick Toggle Badge */
+    .device-badge {
+      font-size: 10.5px;
+      font-family: 'JetBrains Mono', monospace;
+      padding: 3px 8px;
+      border-radius: 8px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      transition: all 0.2s ease;
+    }
+    .device-badge.connected {
+      background: rgba(34, 197, 94, 0.12);
+      border: 1px solid rgba(34, 197, 94, 0.4);
+      color: #4ade80;
+    }
+    .device-badge.disconnected {
+      background: #151822;
+      border: 1px solid #242838;
+      color: #6a6f84;
+    }
+    .device-badge:hover {
+      transform: translateY(-1px);
+    }
+  </style>
+</head>
+<body class="p-6">
+
+  <!-- TOP HEADER -->
+  <div class="max-w-[980px] w-full mb-6 flex flex-col md:flex-row md:items-end justify-between gap-4">
+    <div>
+      <div class="flex items-center gap-3">
+        <div class="w-8 h-8 rounded-lg bg-[#E02020] flex items-center justify-center font-bold text-white font-mono-inst text-base shadow-[0_0_12px_rgba(224,32,32,0.5)]">
+          U
+        </div>
+        <div>
+          <h1 class="text-2xl font-header-caps text-white tracking-widest flex items-center gap-2">
+            ArchUVOS Battery Panel
+            <span class="text-xs bg-[#1C1E26] text-[#E02020] px-2.5 py-0.5 rounded font-mono-inst border border-[#E02020]/40">M4200 EXPERIMENTAL</span>
+          </h1>
+          <p class="text-xs text-[#8A8A92] font-mono-inst mt-0.5">Аналог 4-местного iOS-виджета батареи с вольтметрами вместо колец</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Global State Info -->
+    <div class="flex items-center gap-3 text-xs font-mono-inst text-[#8A8A92]">
+      <span class="flex items-center gap-1.5">
+        <span class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+        <span id="connectedCount" class="text-white font-bold">1/4 ПОДКЛЮЧЕНО</span>
+      </span>
+      <span class="text-[#333]">|</span>
+      <span>Клик по бейджу подключает/отключает устройство</span>
+    </div>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- MAIN 4-SLOT BATTERY WIDGET CHASSIS                                        -->
+  <!-- ========================================================================= -->
+  <div class="battery-widget-container">
+    
+    <!-- Widget Sub Header / Mode -->
+    <div class="flex justify-between items-center mb-4 px-2">
+      <div class="flex items-center gap-2 text-xs font-header-caps text-[#8A8A92] tracking-wider">
+        <svg class="w-4 h-4 text-[#E02020]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="6" width="18" height="12" rx="3"/><path d="M22 10v4"/><line x1="6" y1="10" x2="6" y2="14"/><line x1="10" y1="10" x2="10" y2="14"/></svg>
+        <span>СОСТОЯНИЕ ПИТАНИЯ ПОДСОЕДИНЕННЫХ УСТРОЙСТВ</span>
+      </div>
+      <div class="text-[11px] font-mono-inst text-[#666]">
+        АВТО-ОПРОС EBPF · ШКАЛА 0%–100% (М4200-BATT)
+      </div>
+    </div>
+
+    <!-- 4 Horizontal Meter Slots Grid -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+
+      <!-- ===================================================================== -->
+      <!-- SLOT 1: HOST PC / TABLET (ПОДКЛЮЧЕН — 84%, КАК НА РЕФЕРЕНСЕ)          -->
+      <!-- ===================================================================== -->
+      <div class="slot-case" id="case1">
+        <!-- Screws -->
+        <div class="screw" style="top: 6px; left: 6px; --rot: 25deg;"></div>
+        <div class="screw" style="top: 6px; right: 6px; --rot: 80deg;"></div>
+        <div class="screw" style="bottom: 6px; left: 6px; --rot: 115deg;"></div>
+        <div class="screw" style="bottom: 6px; right: 6px; --rot: 40deg;"></div>
+        <div class="screw" style="bottom: 4px; left: calc(50% - 6px); --rot: 90deg;"></div>
+        <div class="absolute" style="top: 6px; right: 24px;"><div class="lamp-bezel"><div class="lamp-bulb on" id="lamp1"></div></div></div>
+
+        <!-- Meter Dial Window (Fixed 320x220) -->
+        <div class="dial-window active" id="dialWin1">
+          <svg viewBox="0 0 320 220" class="w-full h-full" id="svg1">
+            <!-- Header inside dial -->
+            <g id="dialContent1">
+              <text x="20" y="26" font-family="JetBrains Mono" font-size="9" fill="#555" font-weight="bold">UVOS·ПК / НОУТБУК</text>
+              <g id="arc1"></g>
+              <text x="28" y="138" font-family="JetBrains Mono" font-size="11" fill="#1A1A1A" font-weight="700">0%</text>
+              <text x="292" y="138" font-family="JetBrains Mono" font-size="11" fill="#E02020" font-weight="700" text-anchor="end">100%</text>
+              
+              <!-- Device Icon inside dial center-top -->
+              <g transform="translate(150, 68)" stroke="#1A1A1A" fill="none" stroke-width="2">
+                <rect x="0" y="0" width="20" height="28" rx="4" />
+                <line x1="7" y1="23" x2="13" y2="23" stroke-linecap="round" />
+              </g>
+
+              <!-- Percentage Value -->
+              <text x="160" y="128" text-anchor="middle" font-family="JetBrains Mono" font-weight="bold" font-size="28" fill="#1A1A1A" id="valText1">84 %</text>
+              <text x="160" y="148" text-anchor="middle" font-family="JetBrains Mono" font-weight="bold" font-size="9" fill="#777" letter-spacing="2">ЗАРЯД БАТАРЕИ</text>
+            </g>
+
+            <!-- Disconnected State Graphics (Hidden when active) -->
+            <g id="offContent1" style="display: none;">
+              <text x="160" y="110" text-anchor="middle" font-family="JetBrains Mono" font-size="13" fill="#3D4154" font-weight="bold" letter-spacing="1">ОТКЛЮЧЕНО</text>
+              <text x="160" y="130" text-anchor="middle" font-family="JetBrains Mono" font-size="9" fill="#282B3A">НЕТ СВЯЗИ</text>
+            </g>
+
+            <!-- Needle (Pivot at 160, 195) -->
+            <g class="meter-needle" id="needle1" style="transform-origin: 160px 195px; transform: rotate(35deg);">
+              <line x1="160" y1="195" x2="160" y2="48" stroke="#1A1A1A" stroke-width="2.6" stroke-linecap="round" id="needleLine1" />
+              <circle cx="160" cy="195" r="7.5" fill="#1A1A1A" id="needleCap1" />
+              <circle cx="160" cy="195" r="3" fill="#E8E4D8" id="needleDot1" />
+            </g>
+          </svg>
+        </div>
+
+        <!-- Bottom Slot Info & Interactive Toggle -->
+        <div class="w-full mt-3 flex items-center justify-between px-1">
+          <div class="flex items-center gap-1.5">
+            <svg class="w-3.5 h-3.5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="12" rx="2"/><line x1="2" y1="20" x2="22" y2="20"/></svg>
+            <span class="text-xs font-mono-inst text-white font-bold">Host PC</span>
+          </div>
+          <button class="device-badge connected" onclick="toggleDevice(1)" id="btn1">
+            <span class="w-1.5 h-1.5 rounded-full bg-green-400"></span>
+            <span>84% ВКЛ</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- ===================================================================== -->
+      <!-- SLOT 2: SMARTPHONE (ПО УМОЛЧАНИЮ ВЫКЛЮЧЕН / НЕ ПОДКЛЮЧЕН)             -->
+      <!-- ===================================================================== -->
+      <div class="slot-case disconnected" id="case2">
+        <div class="screw" style="top: 6px; left: 6px; --rot: 45deg;"></div>
+        <div class="screw" style="top: 6px; right: 6px; --rot: 100deg;"></div>
+        <div class="screw" style="bottom: 6px; left: 6px; --rot: 15deg;"></div>
+        <div class="screw" style="bottom: 6px; right: 6px; --rot: 65deg;"></div>
+        <div class="screw" style="bottom: 4px; left: calc(50% - 6px); --rot: 10deg;"></div>
+        <div class="absolute" style="top: 6px; right: 24px;"><div class="lamp-bezel"><div class="lamp-bulb" id="lamp2"></div></div></div>
+
+        <!-- Meter Dial Window -->
+        <div class="dial-window off" id="dialWin2">
+          <svg viewBox="0 0 320 220" class="w-full h-full" id="svg2">
+            <g id="dialContent2" style="display: none;">
+              <text x="20" y="26" font-family="JetBrains Mono" font-size="9" fill="#555" font-weight="bold">UVOS·PHONE</text>
+              <g id="arc2"></g>
+              <text x="28" y="138" font-family="JetBrains Mono" font-size="11" fill="#1A1A1A" font-weight="700">0%</text>
+              <text x="292" y="138" font-family="JetBrains Mono" font-size="11" fill="#E02020" font-weight="700" text-anchor="end">100%</text>
+              <g transform="translate(153, 72)" stroke="#1A1A1A" fill="none" stroke-width="2">
+                <rect x="0" y="0" width="14" height="24" rx="3" />
+                <circle cx="7" cy="20" r="1" fill="#1A1A1A" />
+              </g>
+              <text x="160" y="128" text-anchor="middle" font-family="JetBrains Mono" font-weight="bold" font-size="28" fill="#1A1A1A" id="valText2">68 %</text>
+              <text x="160" y="148" text-anchor="middle" font-family="JetBrains Mono" font-weight="bold" font-size="9" fill="#777" letter-spacing="2">ЗАРЯД ТЕЛЕФОНА</text>
+            </g>
+
+            <g id="offContent2">
+              <text x="160" y="105" text-anchor="middle" font-family="JetBrains Mono" font-size="13" fill="#3D4154" font-weight="bold" letter-spacing="1">ВЫКЛЮЧЕН</text>
+              <text x="160" y="125" text-anchor="middle" font-family="JetBrains Mono" font-size="9.5" fill="#282B3A">УСТРОЙСТВО НЕ ПОДКЛЮЧЕНО</text>
+              <!-- Pin limiter at resting position -->
+              <circle cx="70" cy="108" r="2.5" fill="#20222e" />
+            </g>
+
+            <!-- Needle at mechanical rest (Zero stop pin = -52deg) -->
+            <g class="meter-needle" id="needle2" style="transform-origin: 160px 195px; transform: rotate(-52deg);">
+              <line x1="160" y1="195" x2="160" y2="48" stroke="#2D303E" stroke-width="2.6" stroke-linecap="round" id="needleLine2" />
+              <circle cx="160" cy="195" r="7.5" fill="#1B1D26" id="needleCap2" />
+              <circle cx="160" cy="195" r="3" fill="#13151D" id="needleDot2" />
+            </g>
+          </svg>
+        </div>
+
+        <div class="w-full mt-3 flex items-center justify-between px-1">
+          <div class="flex items-center gap-1.5">
+            <svg class="w-3.5 h-3.5 text-[#6a6f84]" id="icon2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="2" width="14" height="20" rx="3"/><line x1="12" y1="18" x2="12" y2="18.01"/></svg>
+            <span class="text-xs font-mono-inst text-[#6a6f84]" id="name2">Phone</span>
+          </div>
+          <button class="device-badge disconnected" onclick="toggleDevice(2)" id="btn2">
+            <span class="w-1.5 h-1.5 rounded-full bg-gray-600"></span>
+            <span>ОТКЛЮЧЕН</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- ===================================================================== -->
+      <!-- SLOT 3: HEADPHONES (ПО УМОЛЧАНИЮ ВЫКЛЮЧЕН / НЕ ПОДКЛЮЧЕН)             -->
+      <!-- ===================================================================== -->
+      <div class="slot-case disconnected" id="case3">
+        <div class="screw" style="top: 6px; left: 6px; --rot: 70deg;"></div>
+        <div class="screw" style="top: 6px; right: 6px; --rot: 20deg;"></div>
+        <div class="screw" style="bottom: 6px; left: 6px; --rot: 110deg;"></div>
+        <div class="screw" style="bottom: 6px; right: 6px; --rot: 85deg;"></div>
+        <div class="screw" style="bottom: 4px; left: calc(50% - 6px); --rot: 35deg;"></div>
+        <div class="absolute" style="top: 6px; right: 24px;"><div class="lamp-bezel"><div class="lamp-bulb" id="lamp3"></div></div></div>
+
+        <div class="dial-window off" id="dialWin3">
+          <svg viewBox="0 0 320 220" class="w-full h-full" id="svg3">
+            <g id="dialContent3" style="display: none;">
+              <text x="20" y="26" font-family="JetBrains Mono" font-size="9" fill="#555" font-weight="bold">UVOS·HEADPHONES</text>
+              <g id="arc3"></g>
+              <text x="28" y="138" font-family="JetBrains Mono" font-size="11" fill="#1A1A1A" font-weight="700">0%</text>
+              <text x="292" y="138" font-family="JetBrains Mono" font-size="11" fill="#E02020" font-weight="700" text-anchor="end">100%</text>
+              <g transform="translate(150, 72)" stroke="#1A1A1A" fill="none" stroke-width="2">
+                <path d="M3 18v-6a9 9 0 0 1 18 0v6" />
+                <path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z" />
+              </g>
+              <text x="160" y="128" text-anchor="middle" font-family="JetBrains Mono" font-weight="bold" font-size="28" fill="#1A1A1A" id="valText3">45 %</text>
+              <text x="160" y="148" text-anchor="middle" font-family="JetBrains Mono" font-weight="bold" font-size="9" fill="#777" letter-spacing="2">НАУШНИКИ</text>
+            </g>
+
+            <g id="offContent3">
+              <text x="160" y="105" text-anchor="middle" font-family="JetBrains Mono" font-size="13" fill="#3D4154" font-weight="bold" letter-spacing="1">ВЫКЛЮЧЕН</text>
+              <text x="160" y="125" text-anchor="middle" font-family="JetBrains Mono" font-size="9.5" fill="#282B3A">УСТРОЙСТВО НЕ ПОДКЛЮЧЕНО</text>
+              <circle cx="70" cy="108" r="2.5" fill="#20222e" />
+            </g>
+
+            <g class="meter-needle" id="needle3" style="transform-origin: 160px 195px; transform: rotate(-52deg);">
+              <line x1="160" y1="195" x2="160" y2="48" stroke="#2D303E" stroke-width="2.6" stroke-linecap="round" id="needleLine3" />
+              <circle cx="160" cy="195" r="7.5" fill="#1B1D26" id="needleCap3" />
+              <circle cx="160" cy="195" r="3" fill="#13151D" id="needleDot3" />
+            </g>
+          </svg>
+        </div>
+
+        <div class="w-full mt-3 flex items-center justify-between px-1">
+          <div class="flex items-center gap-1.5">
+            <svg class="w-3.5 h-3.5 text-[#6a6f84]" id="icon3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 18v-6a9 9 0 0 1 18 0v6"/><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/></svg>
+            <span class="text-xs font-mono-inst text-[#6a6f84]" id="name3">Buds Pro</span>
+          </div>
+          <button class="device-badge disconnected" onclick="toggleDevice(3)" id="btn3">
+            <span class="w-1.5 h-1.5 rounded-full bg-gray-600"></span>
+            <span>ОТКЛЮЧЕН</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- ===================================================================== -->
+      <!-- SLOT 4: WIRELESS MOUSE / ACC (ПО УМОЛЧАНИЮ ВЫКЛЮЧЕН / НЕ ПОДКЛЮЧЕН)   -->
+      <!-- ===================================================================== -->
+      <div class="slot-case disconnected" id="case4">
+        <div class="screw" style="top: 6px; left: 6px; --rot: 30deg;"></div>
+        <div class="screw" style="top: 6px; right: 6px; --rot: 95deg;"></div>
+        <div class="screw" style="bottom: 6px; left: 6px; --rot: 40deg;"></div>
+        <div class="screw" style="bottom: 6px; right: 6px; --rot: 120deg;"></div>
+        <div class="screw" style="bottom: 4px; left: calc(50% - 6px); --rot: 75deg;"></div>
+        <div class="absolute" style="top: 6px; right: 24px;"><div class="lamp-bezel"><div class="lamp-bulb" id="lamp4"></div></div></div>
+
+        <div class="dial-window off" id="dialWin4">
+          <svg viewBox="0 0 320 220" class="w-full h-full" id="svg4">
+            <g id="dialContent4" style="display: none;">
+              <text x="20" y="26" font-family="JetBrains Mono" font-size="9" fill="#555" font-weight="bold">UVOS·MOUSE</text>
+              <g id="arc4"></g>
+              <text x="28" y="138" font-family="JetBrains Mono" font-size="11" fill="#1A1A1A" font-weight="700">0%</text>
+              <text x="292" y="138" font-family="JetBrains Mono" font-size="11" fill="#E02020" font-weight="700" text-anchor="end">100%</text>
+              <g transform="translate(153, 72)" stroke="#1A1A1A" fill="none" stroke-width="2">
+                <rect x="0" y="0" width="14" height="24" rx="7" />
+                <line x1="7" y1="4" x2="7" y2="10" />
+              </g>
+              <text x="160" y="128" text-anchor="middle" font-family="JetBrains Mono" font-weight="bold" font-size="28" fill="#1A1A1A" id="valText4">92 %</text>
+              <text x="160" y="148" text-anchor="middle" font-family="JetBrains Mono" font-weight="bold" font-size="9" fill="#777" letter-spacing="2">МЫШЬ BTLE</text>
+            </g>
+
+            <g id="offContent4">
+              <text x="160" y="105" text-anchor="middle" font-family="JetBrains Mono" font-size="13" fill="#3D4154" font-weight="bold" letter-spacing="1">ВЫКЛЮЧЕН</text>
+              <text x="160" y="125" text-anchor="middle" font-family="JetBrains Mono" font-size="9.5" fill="#282B3A">УСТРОЙСТВО НЕ ПОДКЛЮЧЕНО</text>
+              <circle cx="70" cy="108" r="2.5" fill="#20222e" />
+            </g>
+
+            <g class="meter-needle" id="needle4" style="transform-origin: 160px 195px; transform: rotate(-52deg);">
+              <line x1="160" y1="195" x2="160" y2="48" stroke="#2D303E" stroke-width="2.6" stroke-linecap="round" id="needleLine4" />
+              <circle cx="160" cy="195" r="7.5" fill="#1B1D26" id="needleCap4" />
+              <circle cx="160" cy="195" r="3" fill="#13151D" id="needleDot4" />
+            </g>
+          </svg>
+        </div>
+
+        <div class="w-full mt-3 flex items-center justify-between px-1">
+          <div class="flex items-center gap-1.5">
+            <svg class="w-3.5 h-3.5 text-[#6a6f84]" id="icon4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="2" width="14" height="20" rx="7"/><line x1="12" y1="6" x2="12" y2="10"/></svg>
+            <span class="text-xs font-mono-inst text-[#6a6f84]" id="name4">Mouse</span>
+          </div>
+          <button class="device-badge disconnected" onclick="toggleDevice(4)" id="btn4">
+            <span class="w-1.5 h-1.5 rounded-full bg-gray-600"></span>
+            <span>ОТКЛЮЧЕН</span>
+          </button>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Interactive Simulation Controls Bar -->
+    <div class="mt-6 pt-4 border-t border-[#1C1F2D] flex flex-wrap items-center justify-between gap-4 font-mono-inst text-xs">
+      <div class="flex items-center gap-2">
+        <span class="text-[#8A8A92]">Быстрый тест:</span>
+        <button onclick="connectAll()" class="px-3 py-1.5 rounded-lg bg-[#181A24] hover:bg-[#202332] text-white border border-[#2A2E40]">Подключить все</button>
+        <button onclick="disconnectAllExceptHost()" class="px-3 py-1.5 rounded-lg bg-[#181A24] hover:bg-[#202332] text-[#8A8A92] border border-[#2A2E40]">Только хост (как в iOS)</button>
+        <button onclick="triggerLowBattery()" class="px-3 py-1.5 rounded-lg bg-red-950/60 hover:bg-red-900/60 text-[#E02020] border border-[#E02020]/40 font-bold">Тест: низкий заряд (&lt;15%)</button>
+      </div>
+
+      <div class="text-[#666]">
+        При отключении: стрелка падает на -52° (упор 0%), шкала гаснет
+      </div>
+    </div>
+
+  </div>
+
+  <!-- SCRIPT FOR ARC GENERATION & INTERACTIVE STATE LOGIC -->
+  <script>
+    // State of 4 devices
+    const devices = {
+      1: { name: 'Host PC', pct: 84, connected: true },
+      2: { name: 'Phone', pct: 68, connected: false },
+      3: { name: 'Buds Pro', pct: 45, connected: false },
+      4: { name: 'Mouse', pct: 92, connected: false }
+    };
+
+    // Calculate rotation angle for needle (-52deg = 0%, +52deg = 100%)
+    function pctToDeg(pct) {
+      const minDeg = -52;
+      const maxDeg = 52;
+      return minDeg + (pct / 100) * (maxDeg - minDeg);
+    }
+
+    // High precision tick builder for M4200 Gauges (White dial, black ticks, red danger zone under 20%)
+    function buildTickArc(containerId) {
+      const container = document.getElementById(containerId);
+      if (!container) return;
+
+      const cx = 160, cy = 195;
+      const R = 145;
+      const minDeg = -52, maxDeg = 52;
+      // Red danger zone for low battery is on the LEFT side (0% - 20%)
+      const redZoneMaxDeg = -52 + 0.20 * 104; // -31.2 deg
+
+      let svgHtml = '';
+      const toRad = deg => (deg * Math.PI) / 180;
+
+      const pStart = { x: cx + R * Math.sin(toRad(minDeg)), y: cy - R * Math.cos(toRad(minDeg)) };
+      const pEnd = { x: cx + R * Math.sin(toRad(maxDeg)), y: cy - R * Math.cos(toRad(maxDeg)) };
+
+      // Base black arc
+      const arcD = `M ${pStart.x.toFixed(1)} ${pStart.y.toFixed(1)} A ${R} ${R} 0 0 1 ${pEnd.x.toFixed(1)} ${pEnd.y.toFixed(1)}`;
+      svgHtml += `<path d="${arcD}" fill="none" stroke="#1A1A1A" stroke-width="2.2" stroke-linecap="round" />`;
+
+      // Red danger sector at left (0-20%)
+      svgHtml += `<path d="${arcD}" fill="none" stroke="#E02020" stroke-width="4.8" stroke-linecap="round" pathLength="100" stroke-dasharray="20 80" />`;
+
+      // Inward radial tick marks
+      let idx = 0;
+      for (let deg = minDeg; deg <= maxDeg + 0.5; deg += 5.2) {
+        const isMajor = (idx % 2 === 0);
+        const tickLen = isMajor ? 14 : 8;
+        const rad = toRad(deg);
+
+        const xOuter = (cx + R * Math.sin(rad)).toFixed(1);
+        const yOuter = (cy - R * Math.cos(rad)).toFixed(1);
+        const xInner = (cx + (R - tickLen) * Math.sin(rad)).toFixed(1);
+        const yInner = (cy - (R - tickLen) * Math.cos(rad)).toFixed(1);
+
+        const isRed = deg <= redZoneMaxDeg + 0.5;
+        const color = isRed ? '#E02020' : '#1A1A1A';
+        const strokeW = isMajor ? (isRed ? '2.6' : '2.2') : '1.5';
+
+        svgHtml += `<line x1="${xOuter}" y1="${yOuter}" x2="${xInner}" y2="${yInner}" stroke="${color}" stroke-width="${strokeW}" stroke-linecap="round" />`;
+        idx++;
+      }
+
+      container.innerHTML = svgHtml;
+    }
+
+    // Update UI for a single slot
+    function updateSlotUI(id) {
+      const dev = devices[id];
+      const caseEl = document.getElementById('case' + id);
+      const dialWinEl = document.getElementById('dialWin' + id);
+      const dialContentEl = document.getElementById('dialContent' + id);
+      const offContentEl = document.getElementById('offContent' + id);
+      const needleEl = document.getElementById('needle' + id);
+      const needleLineEl = document.getElementById('needleLine' + id);
+      const needleCapEl = document.getElementById('needleCap' + id);
+      const needleDotEl = document.getElementById('needleDot' + id);
+      const lampEl = document.getElementById('lamp' + id);
+      const btnEl = document.getElementById('btn' + id);
+      const nameEl = document.getElementById('name' + id);
+      const iconEl = document.getElementById('icon' + id);
+      const valTextEl = document.getElementById('valText' + id);
+
+      if (valTextEl) valTextEl.textContent = dev.pct + ' %';
+
+      if (dev.connected) {
+        // ACTIVE STATE
+        caseEl.classList.remove('disconnected');
+        dialWinEl.className = 'dial-window active';
+        dialContentEl.style.display = 'block';
+        offContentEl.style.display = 'none';
+
+        const deg = pctToDeg(dev.pct);
+        needleEl.style.transform = `rotate(${deg}deg)`;
+        needleLineEl.setAttribute('stroke', '#1A1A1A');
+        needleCapEl.setAttribute('fill', '#1A1A1A');
+        needleDotEl.setAttribute('fill', '#E8E4D8');
+
+        // Lamp state: warning if < 20%
+        if (dev.pct <= 20) {
+          lampEl.className = 'lamp-bulb warning';
+        } else {
+          lampEl.className = 'lamp-bulb on';
+        }
+
+        btnEl.className = 'device-badge connected';
+        btnEl.innerHTML = `<span class="w-1.5 h-1.5 rounded-full ${dev.pct <= 20 ? 'bg-red-500 animate-ping' : 'bg-green-400'}"></span><span>${dev.pct}% ВКЛ</span>`;
+        if (nameEl) nameEl.className = 'text-xs font-mono-inst text-white font-bold';
+        if (iconEl) iconEl.classList.replace('text-[#6a6f84]', 'text-white');
+      } else {
+        // DISCONNECTED / POWERED OFF STATE
+        caseEl.classList.add('disconnected');
+        dialWinEl.className = 'dial-window off';
+        dialContentEl.style.display = 'none';
+        offContentEl.style.display = 'block';
+
+        // Needle drops to mechanical zero pin (-52 deg)
+        needleEl.style.transform = 'rotate(-52deg)';
+        needleLineEl.setAttribute('stroke', '#2D303E');
+        needleCapEl.setAttribute('fill', '#1B1D26');
+        needleDotEl.setAttribute('fill', '#13151D');
+
+        lampEl.className = 'lamp-bulb'; // dark / dead
+
+        btnEl.className = 'device-badge disconnected';
+        btnEl.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-gray-600"></span><span>ОТКЛЮЧЕН</span>';
+        if (nameEl) nameEl.className = 'text-xs font-mono-inst text-[#6a6f84]';
+        if (iconEl) {
+          iconEl.classList.remove('text-white');
+          iconEl.classList.add('text-[#6a6f84]');
+        }
+      }
+
+      // Update global header count
+      const activeCount = Object.values(devices).filter(d => d.connected).length;
+      document.getElementById('connectedCount').textContent = `${activeCount}/4 ПОДКЛЮЧЕНО`;
+    }
+
+    // Toggle single device
+    function toggleDevice(id) {
+      devices[id].connected = !devices[id].connected;
+      updateSlotUI(id);
+    }
+
+    // Connect all devices
+    function connectAll() {
+      for (let i = 1; i <= 4; i++) {
+        devices[i].connected = true;
+        updateSlotUI(i);
+      }
+    }
+
+    // Reset to iOS style (Host PC connected, rest disconnected)
+    function disconnectAllExceptHost() {
+      devices[1].connected = true;
+      devices[2].connected = false;
+      devices[3].connected = false;
+      devices[4].connected = false;
+      for (let i = 1; i <= 4; i++) {
+        updateSlotUI(i);
+      }
+    }
+
+    // Trigger low battery test
+    function triggerLowBattery() {
+      devices[1].connected = true;
+      devices[1].pct = 12;
+      updateSlotUI(1);
+    }
+
+    // Initialize all arcs and states
+    buildTickArc('arc1');
+    buildTickArc('arc2');
+    buildTickArc('arc3');
+    buildTickArc('arc4');
+
+    for (let i = 1; i <= 4; i++) {
+      updateSlotUI(i);
+    }
+  </script>
+</body>
+</html>
