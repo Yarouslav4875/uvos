@@ -1,0 +1,16 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="28dp"
+    android:height="28dp"
+    android:viewportWidth="32"
+    android:viewportHeight="32">
+    <!-- Пакеты / Модули системы -->
+    <path
+        android:pathData="M16,4l11,6v12l-11,6l-11,-6v-12z"
+        android:strokeWidth="1.8"
+        android:strokeColor="#E2E4EC"
+        android:strokeLineJoin="round" />
+    <path
+        android:pathData="M16,4v24M5,10l22,12M27,10l-22,12"
+        android:strokeWidth="1"
+        android:strokeColor="#71768E" />
+</vector>

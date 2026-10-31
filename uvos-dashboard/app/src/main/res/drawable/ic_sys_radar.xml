@@ -1,0 +1,26 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="28dp"
+    android:height="28dp"
+    android:viewportWidth="32"
+    android:viewportHeight="32">
+    <!-- Круговой экран радиолокатора с лучом сканирования -->
+    <path
+        android:pathData="M16,16m-11,0a11,11 0 1,1 22,0a11,11 0 1,1 -22,0"
+        android:strokeWidth="1.8"
+        android:strokeColor="#E2E4EC" />
+    <path
+        android:pathData="M16,16m-6,0a6,6 0 1,1 12,0a6,6 0 1,1 -12,0"
+        android:strokeWidth="1"
+        android:strokeColor="#71768E" />
+    <path
+        android:pathData="M16,5v22M5,16h22"
+        android:strokeWidth="1.2"
+        android:strokeColor="#E02020" />
+    <path
+        android:pathData="M16,16l8,-7"
+        android:strokeWidth="2"
+        android:strokeColor="#24D05A" />
+    <path
+        android:pathData="M23,10m-1.5,0a1.5,1.5 0 1,1 3,0a1.5,1.5 0 1,1 -3,0"
+        android:fillColor="#24D05A" />
+</vector>

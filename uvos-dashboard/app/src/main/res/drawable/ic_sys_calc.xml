@@ -1,0 +1,17 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="28dp"
+    android:height="28dp"
+    android:viewportWidth="32"
+    android:viewportHeight="32">
+    <!-- Счётчик / Механический калькулятор -->
+    <path
+        android:pathData="M7,5h18a2,2 0 0,1 2,2v18a2,2 0 0,1 -2,2h-18a2,2 0 0,1 -2,-2v-18a2,2 0 0,1 2,-2z"
+        android:strokeWidth="1.8"
+        android:strokeColor="#E2E4EC" />
+    <path
+        android:pathData="M10,9h12v4h-12z"
+        android:fillColor="#E02020" />
+    <path
+        android:pathData="M10,17h3v3h-3zM19,17h3v3h-3zM10,22h3v3h-3zM19,22h3v3h-3z"
+        android:fillColor="#71768E" />
+</vector>

@@ -1,0 +1,19 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="28dp"
+    android:height="28dp"
+    android:viewportWidth="32"
+    android:viewportHeight="32">
+    <!-- Винт со шлицем для минусовой отвёртки и круговой юстировкой -->
+    <path
+        android:pathData="M16,16m-11,0a11,11 0 1,1 22,0a11,11 0 1,1 -22,0"
+        android:strokeWidth="2"
+        android:strokeColor="#D8D8E0" />
+    <path
+        android:pathData="M16,16m-7.5,0a7.5,7.5 0 1,1 15,0a7.5,7.5 0 1,1 -15,0"
+        android:strokeWidth="1"
+        android:strokeColor="#71768E" />
+    <!-- Шлиц отвёртки -->
+    <path
+        android:pathData="M7,14.5h18v3h-18z"
+        android:fillColor="#E02020" />
+</vector>

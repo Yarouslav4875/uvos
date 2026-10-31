@@ -1,0 +1,19 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="28dp"
+    android:height="28dp"
+    android:viewportWidth="32"
+    android:viewportHeight="32">
+    <!-- Индустриальный телетайпный конверт с рубиновым штампом -->
+    <path
+        android:pathData="M4,7h24v18h-24z"
+        android:strokeWidth="2"
+        android:strokeColor="#E2E4EC"
+        android:strokeLineJoin="round" />
+    <path
+        android:pathData="M4,8l12,10l12,-10"
+        android:strokeWidth="2"
+        android:strokeColor="#E2E4EC" />
+    <path
+        android:pathData="M16,14m-2.5,0a2.5,2.5 0 1,1 5,0a2.5,2.5 0 1,1 -5,0"
+        android:fillColor="#E02020" />
+</vector>

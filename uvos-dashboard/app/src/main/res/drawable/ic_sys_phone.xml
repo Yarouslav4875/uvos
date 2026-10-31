@@ -1,0 +1,12 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="28dp"
+    android:height="28dp"
+    android:viewportWidth="32"
+    android:viewportHeight="32">
+    <!-- Бакелитовая трубка с промышленными контактами -->
+    <path
+        android:pathData="M8,6h5l2,5l-3,3c2,4 5,7 9,9l3,-3l5,2v5c0,1 -1,2 -2,2A20,20 0 0,1 6,8c0,-1 1,-2 2,-2z"
+        android:strokeWidth="2"
+        android:strokeColor="#E2E4EC"
+        android:strokeLineJoin="round" />
+</vector>
