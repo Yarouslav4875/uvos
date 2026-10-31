@@ -45,6 +45,7 @@
   блок NFC, датчики, специфика UVOS, шифрование и обновления.
 - [`GLOSSARY.md`](GLOSSARY.md) — глоссарий: 61 термин проекта и Android
   простыми словами + как читать статусы в документах.
+- [`FIRMWARE-MODIFICATION-SPEC.md`](FIRMWARE-MODIFICATION-SPEC.md) — полная спецификация будущих модификаций прошивки (ядро, debloating, SystemUI, uvosd daemon).
 - [`ROADMAP.md`](ROADMAP.md) — дорожная карта этапов A–F со статусами
   и критериями завершения.
 
