@@ -1,0 +1,302 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:custom="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/uvos_background"
+    android:fillViewport="true">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="20dp">
+
+        <!-- Шапка экрана -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <Button
+                android:id="@+id/vault_btn_back"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:background="@drawable/bg_button_secondary"
+                android:text="←"
+                android:textColor="@color/uvos_text"
+                android:textSize="18sp" />
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="14dp"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="АНАЛОГОВЫЙ СЕЙФ"
+                    android:textColor="@color/uvos_text"
+                    android:textSize="18sp"
+                    android:letterSpacing="0.06"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:text="МЕХАНИЧЕСКИЙ ЗАМОК • AES-256"
+                    android:textColor="@color/uvos_text_dim"
+                    android:textSize="11sp"
+                    android:letterSpacing="0.04" />
+            </LinearLayout>
+
+            <!-- Лампа состояния замка -->
+            <com.uvos.dashboard.LampView
+                android:id="@+id/vault_status_lamp"
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                custom:isLampOn="false" />
+        </LinearLayout>
+
+        <!-- РЕЖИМ 1: ЗАБЛОКИРОВАНО (Ввод кода на лимбе) -->
+        <LinearLayout
+            android:id="@+id/container_dial_lock"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:gravity="center_horizontal"
+            android:orientation="vertical"
+            android:visibility="visible">
+
+            <TextView
+                android:id="@+id/vault_instruction_text"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="ВРАЩАЙТЕ ЛИМБ ДЛЯ ВВОДА КОДА"
+                android:textColor="@color/uvos_text_dim"
+                android:textSize="12sp"
+                android:letterSpacing="0.08"
+                android:textStyle="bold" />
+
+            <!-- Дисплей набираемой комбинации [ 12 ] - [ __ ] - [ __ ] -->
+            <LinearLayout
+                android:id="@+id/combination_display"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="14dp"
+                android:layout_marginBottom="16dp"
+                android:gravity="center"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:id="@+id/code_slot_0"
+                    android:layout_width="54dp"
+                    android:layout_height="48dp"
+                    android:background="@drawable/bg_tile"
+                    android:gravity="center"
+                    android:text="--"
+                    android:textColor="@color/uvos_text"
+                    android:textSize="18sp"
+                    android:fontFamily="monospace"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:layout_marginEnd="8dp"
+                    android:text="—"
+                    android:textColor="@color/uvos_text_dim"
+                    android:textSize="18sp" />
+
+                <TextView
+                    android:id="@+id/code_slot_1"
+                    android:layout_width="54dp"
+                    android:layout_height="48dp"
+                    android:background="@drawable/bg_tile"
+                    android:gravity="center"
+                    android:text="--"
+                    android:textColor="@color/uvos_text"
+                    android:textSize="18sp"
+                    android:fontFamily="monospace"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:layout_marginEnd="8dp"
+                    android:text="—"
+                    android:textColor="@color/uvos_text_dim"
+                    android:textSize="18sp" />
+
+                <TextView
+                    android:id="@+id/code_slot_2"
+                    android:layout_width="54dp"
+                    android:layout_height="48dp"
+                    android:background="@drawable/bg_tile"
+                    android:gravity="center"
+                    android:text="--"
+                    android:textColor="@color/uvos_text"
+                    android:textSize="18sp"
+                    android:fontFamily="monospace"
+                    android:textStyle="bold" />
+            </LinearLayout>
+
+            <!-- Механический поворотный лимб SafeDialView -->
+            <com.uvos.dashboard.SafeDialView
+                android:id="@+id/safe_dial_view"
+                android:layout_width="290dp"
+                android:layout_height="290dp"
+                android:layout_margin="10dp" />
+
+            <TextView
+                android:id="@+id/vault_error_text"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:textColor="@color/uvos_red"
+                android:textSize="12sp"
+                android:visibility="invisible" />
+
+            <!-- Кнопки фиксации и сброса -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:orientation="horizontal">
+
+                <Button
+                    android:id="@+id/btn_reset_combination"
+                    android:layout_width="0dp"
+                    android:layout_height="48dp"
+                    android:layout_marginEnd="6dp"
+                    android:layout_weight="1"
+                    android:background="@drawable/bg_button_secondary"
+                    android:text="СБРОС"
+                    android:textColor="@color/uvos_text_dim"
+                    android:textSize="13sp" />
+
+                <Button
+                    android:id="@+id/btn_confirm_slot"
+                    android:layout_width="0dp"
+                    android:layout_height="48dp"
+                    android:layout_marginStart="6dp"
+                    android:layout_weight="2"
+                    android:background="@drawable/bg_button_primary"
+                    android:text="ЗАФИКСИРОВАТЬ ДЕЛЕНИЕ"
+                    android:textColor="#FFFFFF"
+                    android:textSize="13sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- РЕЖИМ 2: СЕЙФ ОТКРЫТ (Список заметок и документов) -->
+        <LinearLayout
+            android:id="@+id/container_vault_content"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:orientation="vertical"
+            android:visibility="gone">
+
+            <!-- Карточка добавления секретной записи -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="16dp"
+                android:background="@drawable/bg_tile"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="СОЗДАТЬ ЗАЩИЩЁННУЮ ЗАПИСЬ"
+                    android:textColor="@color/uvos_text_dim"
+                    android:textSize="11sp"
+                    android:letterSpacing="0.08"
+                    android:textStyle="bold" />
+
+                <EditText
+                    android:id="@+id/edit_note_title"
+                    android:layout_width="match_parent"
+                    android:layout_height="44dp"
+                    android:layout_marginTop="10dp"
+                    android:background="@drawable/bg_button_secondary"
+                    android:hint="Заголовок (например: Мастер-ключ)"
+                    android:paddingStart="12dp"
+                    android:paddingEnd="12dp"
+                    android:textColor="@color/uvos_text"
+                    android:textColorHint="@color/uvos_text_dim"
+                    android:textSize="14sp" />
+
+                <EditText
+                    android:id="@+id/edit_note_content"
+                    android:layout_width="match_parent"
+                    android:layout_height="80dp"
+                    android:layout_marginTop="8dp"
+                    android:background="@drawable/bg_button_secondary"
+                    android:gravity="top|start"
+                    android:hint="Секретные данные, пароли, ключи..."
+                    android:padding="12dp"
+                    android:textColor="@color/uvos_text"
+                    android:textColorHint="@color/uvos_text_dim"
+                    android:textSize="13sp"
+                    android:fontFamily="monospace" />
+
+                <Button
+                    android:id="@+id/btn_save_note"
+                    android:layout_width="match_parent"
+                    android:layout_height="44dp"
+                    android:layout_marginTop="12dp"
+                    android:background="@drawable/bg_button_primary"
+                    android:text="ЗАШИФРОВАТЬ И СОХРАНИТЬ"
+                    android:textColor="#FFFFFF"
+                    android:textSize="13sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:id="@+id/vault_notes_count"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="СОХРАНЁННЫЕ ЗАПИСИ (0)"
+                    android:textColor="@color/uvos_text_dim"
+                    android:textSize="11sp"
+                    android:letterSpacing="0.08"
+                    android:textStyle="bold" />
+
+                <Button
+                    android:id="@+id/btn_lock_vault"
+                    android:layout_width="wrap_content"
+                    android:layout_height="36dp"
+                    android:background="@drawable/bg_button_secondary"
+                    android:paddingStart="12dp"
+                    android:paddingEnd="12dp"
+                    android:text="🔒 ЗАПЕРЕТЬ СЕЙФ"
+                    android:textColor="@color/uvos_red"
+                    android:textSize="12sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/vault_notes_container"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:orientation="vertical" />
+        </LinearLayout>
+    </LinearLayout>
+</ScrollView>

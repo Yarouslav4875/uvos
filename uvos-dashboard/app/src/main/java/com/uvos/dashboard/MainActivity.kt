@@ -243,6 +243,11 @@ class MainActivity : Activity() {
         findViewById<Button>(R.id.open_shield).setOnClickListener {
             startActivity(Intent(this, ShieldActivity::class.java))
         }
+
+        // Аналоговый сейф UVOS
+        findViewById<Button>(R.id.btn_open_vault).setOnClickListener {
+            startActivity(Intent(this, VaultActivity::class.java))
+        }
     }
 
     // =========================================================================
@@ -323,8 +328,8 @@ class MainActivity : Activity() {
         findViewById<View>(R.id.home_app_osc).setOnClickListener {
             Toast.makeText(this, "Осциллограф: мониторинг радиоканалов активен", Toast.LENGTH_SHORT).show()
         }
-        findViewById<View>(R.id.home_app_term).setOnClickListener {
-            Toast.makeText(this, "Терминал UVOS: tty1 готов", Toast.LENGTH_SHORT).show()
+        findViewById<View>(R.id.home_app_vault).setOnClickListener {
+            startActivity(Intent(this, VaultActivity::class.java))
         }
         findViewById<View>(R.id.home_app_packages).setOnClickListener {
             // Переход на Стол 03 (Пакеты / Меню)

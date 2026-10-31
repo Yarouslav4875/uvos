@@ -3,6 +3,8 @@
 
     <!-- Системная оболочка (Launcher): опрос и запуск установленных приложений -->
     <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES" />
+    <!-- Тактильный отклик для аналогового лимба сейфа -->
+    <uses-permission android:name="android.permission.VIBRATE" />
 
     <application
         android:label="@string/app_name"
@@ -18,6 +20,16 @@
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.HOME" />
                 <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+        <activity
+            android:name=".VaultActivity"
+            android:exported="true"
+            android:label="Сейф UVOS"
+            android:windowSoftInputMode="adjustResize">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
