@@ -72,7 +72,6 @@ class MainActivity : Activity() {
 
     // Стол 02: Home Clock & Grid
     private var batteryQuadWidget: BatteryQuadWidgetView? = null
-    private var batteryWidgetHeaderStatus: TextView? = null
     private var bluetoothDeviceManager: BluetoothDeviceManager? = null
     private lateinit var homeClockTime: TextView
     private lateinit var homeClockDate: TextView
@@ -410,7 +409,6 @@ class MainActivity : Activity() {
         homeRow3 = findViewById(R.id.home_row_3)
         homeRow4 = findViewById(R.id.home_row_4)
 
-        batteryWidgetHeaderStatus = findViewById(R.id.battery_widget_header_status)
         batteryQuadWidget = findViewById(R.id.battery_quad_widget)
         batteryQuadWidget?.onSlotClickListener = { slotIdx, slot ->
             if (slot.isConnected) {
@@ -424,13 +422,7 @@ class MainActivity : Activity() {
             onDevicesChangedListener = { devices ->
                 runOnUiThread {
                     batteryQuadWidget?.setConnectedBluetoothDevices(devices)
-                    if (devices.isEmpty()) {
-                        batteryWidgetHeaderStatus?.text = "БЛЮТУЗ МОНИТОР"
-                        batteryWidgetHeaderStatus?.setTextColor(Color.parseColor("#71768E"))
-                    } else {
-                        batteryWidgetHeaderStatus?.text = "ПОДКЛЮЧЕНО: ${devices.size}"
-                        batteryWidgetHeaderStatus?.setTextColor(Color.parseColor("#44CC66"))
-                    }
+
                 }
             }
         }
