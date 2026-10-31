@@ -171,7 +171,7 @@ class MainActivity : Activity() {
         )
 
         fun updatePageIndicators(page: Int) {
-            topBarCenter.text = pageTitles.getOrElse(page) { "UVOS-CORE" }
+            // topBarCenter.text = "" (подпись стола отключена по запросу)
             dotPage1.setBackgroundResource(if (page == 0) R.drawable.bg_dot_active else R.drawable.bg_dot_inactive)
             dotPage2.setBackgroundResource(if (page == 1) R.drawable.bg_dot_active else R.drawable.bg_dot_inactive)
             dotPage3.setBackgroundResource(if (page == 2) R.drawable.bg_dot_active else R.drawable.bg_dot_inactive)
