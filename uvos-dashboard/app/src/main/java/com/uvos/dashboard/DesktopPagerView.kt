@@ -13,8 +13,7 @@ import kotlin.math.abs
 
 /**
  * UVOS DesktopPagerView - аппаратный горизонтальный пагинатор рабочих столов (Столы 01, 02, 03, 04).
- * Чистый ViewGroup с жестким контролем ширины страниц (100% экрана на каждый стол),
- * предотвращающий сползание столов и гарантирующий идеальный snap.
+ * Чистый ViewGroup с жестким контролем геометрии страниц: ровно 100% ширины экрана на каждый стол.
  */
 class DesktopPagerView @JvmOverloads constructor(
     context: Context,
@@ -42,13 +41,23 @@ class DesktopPagerView @JvmOverloads constructor(
         setWillNotDraw(false)
     }
 
-    private fun getContainer(): ViewGroup? {
-        return getChildAt(0) as? ViewGroup
+    private fun getPages(): List<View> {
+        val list = mutableListOf<View>()
+        if (childCount == 1 && getChildAt(0) is ViewGroup) {
+            val container = getChildAt(0) as ViewGroup
+            for (i in 0 until container.childCount) {
+                list.add(container.getChildAt(i))
+            }
+        } else {
+            for (i in 0 until childCount) {
+                list.add(getChildAt(i))
+            }
+        }
+        return list
     }
 
     fun getTotalPages(): Int {
-        val container = getContainer() ?: return 1
-        return container.childCount.coerceAtLeast(1)
+        return getPages().size.coerceAtLeast(1)
     }
 
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
@@ -56,35 +65,51 @@ class DesktopPagerView @JvmOverloads constructor(
         val height = MeasureSpec.getSize(heightMeasureSpec)
         setMeasuredDimension(width, height)
 
-        val container = getContainer() ?: return
-        val count = container.childCount
-        if (count == 0) return
-
         val childWidthSpec = MeasureSpec.makeMeasureSpec(width, MeasureSpec.EXACTLY)
         val childHeightSpec = MeasureSpec.makeMeasureSpec(height, MeasureSpec.EXACTLY)
 
-        for (i in 0 until count) {
-            container.getChildAt(i).measure(childWidthSpec, childHeightSpec)
+        if (childCount == 1 && getChildAt(0) is ViewGroup) {
+            val container = getChildAt(0) as ViewGroup
+            val count = container.childCount
+            for (i in 0 until count) {
+                container.getChildAt(i).measure(childWidthSpec, childHeightSpec)
+            }
+            container.measure(
+                MeasureSpec.makeMeasureSpec(width * count, MeasureSpec.EXACTLY),
+                childHeightSpec
+            )
+            // Повторно жестко возвращаем каждому столу ровно width x height!
+            for (i in 0 until count) {
+                container.getChildAt(i).measure(childWidthSpec, childHeightSpec)
+            }
+        } else {
+            for (i in 0 until childCount) {
+                getChildAt(i).measure(childWidthSpec, childHeightSpec)
+            }
         }
-
-        val containerWidthSpec = MeasureSpec.makeMeasureSpec(width * count, MeasureSpec.EXACTLY)
-        container.measure(containerWidthSpec, childHeightSpec)
     }
 
     override fun onLayout(changed: Boolean, l: Int, t: Int, r: Int, b: Int) {
         val width = r - l
         val height = b - t
-        val container = getContainer() ?: return
-        val count = container.childCount
 
-        container.layout(0, 0, width * count, height)
-        for (i in 0 until count) {
-            val child = container.getChildAt(i)
-            val childLeft = i * width
-            child.layout(childLeft, 0, childLeft + width, height)
+        if (childCount == 1 && getChildAt(0) is ViewGroup) {
+            val container = getChildAt(0) as ViewGroup
+            val count = container.childCount
+            container.layout(0, 0, width * count, height)
+            for (i in 0 until count) {
+                val child = container.getChildAt(i)
+                val childLeft = i * width
+                child.layout(childLeft, 0, childLeft + width, height)
+            }
+        } else {
+            for (i in 0 until childCount) {
+                val child = getChildAt(i)
+                val childLeft = i * width
+                child.layout(childLeft, 0, childLeft + width, height)
+            }
         }
 
-        // Поддерживаем правильное позиционирование при повороте или изменении размера
         if (!scroller.isFinished) {
             scroller.abortAnimation()
         }
@@ -111,7 +136,6 @@ class DesktopPagerView @JvmOverloads constructor(
             MotionEvent.ACTION_MOVE -> {
                 val dx = abs(x - downX)
                 val dy = abs(y - downY)
-                // Горизонтальный жест должен преобладать над вертикальным скроллом внутри стола
                 if (dx > touchSlop && dx > dy * 1.15f) {
                     isBeingDragged = true
                     lastX = x
@@ -185,7 +209,6 @@ class DesktopPagerView @JvmOverloads constructor(
 
         var targetPage = Math.round(currentScrollX.toFloat() / pageWidth).coerceIn(0, total - 1)
 
-        // Четкая реакция на скорость свайпа (Fling)
         if (abs(velocityX) > minFlingVelocity) {
             targetPage = if (velocityX < 0) {
                 (currentPage + 1).coerceAtMost(total - 1)

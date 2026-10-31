@@ -58,11 +58,6 @@
         android:layout_height="0dp"
         android:layout_weight="1">
 
-        <LinearLayout
-            android:layout_width="wrap_content"
-            android:layout_height="match_parent"
-            android:orientation="horizontal">
-
             <!-- ======================================================== -->
             <!-- СТОЛ 01: ПРИБОРНЫЙ СТОЛ (DASHBOARD) - 4 ВОЛЬТМЕТРА 2x2  -->
             <!-- ======================================================== -->
@@ -711,7 +706,6 @@
                         android:textStyle="bold" />
                 </LinearLayout>
             </ScrollView>
-        </LinearLayout>
     </com.uvos.dashboard.DesktopPagerView>
 
     <!-- ИНДИКАТОР ПАГИНАЦИИ (СТРОГО НАД ДОКОМ) -->
