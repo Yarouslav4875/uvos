@@ -7,13 +7,16 @@ import android.view.VelocityTracker
 import android.view.View
 import android.view.ViewConfiguration
 import android.view.ViewGroup
-import android.view.animation.DecelerateInterpolator
+import android.view.animation.PathInterpolator
 import android.widget.OverScroller
 import kotlin.math.abs
 
 /**
- * UVOS DesktopPagerView - аппаратный горизонтальный пагинатор рабочих столов (Столы 01, 02, 03, 04).
- * Чистый ViewGroup с жестким контролем геометрии страниц: ровно 100% ширины экрана на каждый стол.
+ * UVOS DesktopPagerView - аппаратный пагинатор столов с физикой плавных переходов в стиле Apple iOS:
+ * - Кубический сплайн Apple Spring (PathInterpolator 0.20, 1.0, 0.32, 1.0)
+ * - Rubber-banding (упругий резиновый отскок на границах)
+ * - Плавная трансформация глубины и прозрачности при листании (Apple Depth Scale & Alpha)
+ * - Жесткий контроль геометрии (ровно 100% ширины экрана на каждый стол)
  */
 class DesktopPagerView @JvmOverloads constructor(
     context: Context,
@@ -25,10 +28,14 @@ class DesktopPagerView @JvmOverloads constructor(
         private set
 
     var onPageSelectedListener: ((Int) -> Unit)? = null
+    var onScrollProgressListener: ((Float) -> Unit)? = null
 
-    private val scroller = OverScroller(context, DecelerateInterpolator(1.2f))
+    // Эталонный сплайн Apple Fluid Motion (быстрый старт, мягкая пружинная доводка без резкой остановки)
+    private val appleSpringInterpolator = PathInterpolator(0.20f, 1.0f, 0.32f, 1.0f)
+    private val scroller = OverScroller(context, appleSpringInterpolator)
+
     private val touchSlop = ViewConfiguration.get(context).scaledTouchSlop
-    private val minFlingVelocity = ViewConfiguration.get(context).scaledMinimumFlingVelocity * 1.5f
+    private val minFlingVelocity = ViewConfiguration.get(context).scaledMinimumFlingVelocity * 1.2f
 
     private var velocityTracker: VelocityTracker? = null
     private var isBeingDragged = false
@@ -41,23 +48,8 @@ class DesktopPagerView @JvmOverloads constructor(
         setWillNotDraw(false)
     }
 
-    private fun getPages(): List<View> {
-        val list = mutableListOf<View>()
-        if (childCount == 1 && getChildAt(0) is ViewGroup) {
-            val container = getChildAt(0) as ViewGroup
-            for (i in 0 until container.childCount) {
-                list.add(container.getChildAt(i))
-            }
-        } else {
-            for (i in 0 until childCount) {
-                list.add(getChildAt(i))
-            }
-        }
-        return list
-    }
-
     fun getTotalPages(): Int {
-        return getPages().size.coerceAtLeast(1)
+        return childCount.coerceAtLeast(1)
     }
 
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
@@ -68,24 +60,8 @@ class DesktopPagerView @JvmOverloads constructor(
         val childWidthSpec = MeasureSpec.makeMeasureSpec(width, MeasureSpec.EXACTLY)
         val childHeightSpec = MeasureSpec.makeMeasureSpec(height, MeasureSpec.EXACTLY)
 
-        if (childCount == 1 && getChildAt(0) is ViewGroup) {
-            val container = getChildAt(0) as ViewGroup
-            val count = container.childCount
-            for (i in 0 until count) {
-                container.getChildAt(i).measure(childWidthSpec, childHeightSpec)
-            }
-            container.measure(
-                MeasureSpec.makeMeasureSpec(width * count, MeasureSpec.EXACTLY),
-                childHeightSpec
-            )
-            // Повторно жестко возвращаем каждому столу ровно width x height!
-            for (i in 0 until count) {
-                container.getChildAt(i).measure(childWidthSpec, childHeightSpec)
-            }
-        } else {
-            for (i in 0 until childCount) {
-                getChildAt(i).measure(childWidthSpec, childHeightSpec)
-            }
+        for (i in 0 until childCount) {
+            getChildAt(i).measure(childWidthSpec, childHeightSpec)
         }
     }
 
@@ -93,21 +69,12 @@ class DesktopPagerView @JvmOverloads constructor(
         val width = r - l
         val height = b - t
 
-        if (childCount == 1 && getChildAt(0) is ViewGroup) {
-            val container = getChildAt(0) as ViewGroup
-            val count = container.childCount
-            container.layout(0, 0, width * count, height)
-            for (i in 0 until count) {
-                val child = container.getChildAt(i)
-                val childLeft = i * width
-                child.layout(childLeft, 0, childLeft + width, height)
-            }
-        } else {
-            for (i in 0 until childCount) {
-                val child = getChildAt(i)
-                val childLeft = i * width
-                child.layout(childLeft, 0, childLeft + width, height)
-            }
+        for (i in 0 until childCount) {
+            val child = getChildAt(i)
+            val childLeft = i * width
+            child.layout(childLeft, 0, childLeft + width, height)
+            child.pivotX = width / 2f
+            child.pivotY = height / 2f
         }
 
         if (!scroller.isFinished) {
@@ -115,6 +82,7 @@ class DesktopPagerView @JvmOverloads constructor(
         }
         val targetX = currentPage * width
         scrollTo(targetX, 0)
+        applyAppleDepthTransform(targetX)
     }
 
     override fun onInterceptTouchEvent(ev: MotionEvent): Boolean {
@@ -177,12 +145,20 @@ class DesktopPagerView @JvmOverloads constructor(
                     parent?.requestDisallowInterceptTouchEvent(true)
                 }
                 if (isBeingDragged) {
-                    val deltaX = lastX - x
+                    var deltaX = lastX - x
                     lastX = x
 
-                    val maxScroll = ((getTotalPages() - 1) * width).coerceAtLeast(0)
-                    val newScrollX = (scrollX + deltaX).coerceIn(-width * 0.15f, maxScroll + width * 0.15f)
+                    val maxScroll = ((childCount - 1) * width).coerceAtLeast(0)
+                    val currentScroll = scrollX
+
+                    // Apple Rubber-Banding: упругое сопротивление при выходе за границы
+                    if (currentScroll < 0 || currentScroll > maxScroll) {
+                        deltaX *= 0.38f
+                    }
+
+                    val newScrollX = (currentScroll + deltaX).coerceIn(-width * 0.28f, maxScroll + width * 0.28f)
                     scrollTo(newScrollX.toInt(), 0)
+                    applyAppleDepthTransform(newScrollX.toInt())
                 }
             }
             MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
@@ -204,11 +180,12 @@ class DesktopPagerView @JvmOverloads constructor(
     private fun snapToNearestPage(velocityX: Float) {
         val pageWidth = width
         if (pageWidth <= 0) return
-        val total = getTotalPages()
+        val total = childCount
         val currentScrollX = scrollX
 
         var targetPage = Math.round(currentScrollX.toFloat() / pageWidth).coerceIn(0, total - 1)
 
+        // Мягкий флинг с учетом направления скорости
         if (abs(velocityX) > minFlingVelocity) {
             targetPage = if (velocityX < 0) {
                 (currentPage + 1).coerceAtMost(total - 1)
@@ -217,21 +194,24 @@ class DesktopPagerView @JvmOverloads constructor(
             }
         }
 
-        scrollToPage(targetPage, smooth = true)
+        scrollToPage(targetPage, smooth = true, initialVelocity = velocityX)
     }
 
-    fun scrollToPage(pageIndex: Int, smooth: Boolean = true) {
-        val total = getTotalPages()
+    fun scrollToPage(pageIndex: Int, smooth: Boolean = true, initialVelocity: Float = 0f) {
+        val total = childCount
         val targetPage = pageIndex.coerceIn(0, total - 1)
         val targetX = targetPage * width
         val dx = targetX - scrollX
 
         if (smooth && width > 0) {
-            val duration = (abs(dx).toFloat() / width * 260f).toInt().coerceIn(180, 320)
+            // Длительность в стиле iOS (320-450 мс для естественного пружинного движения)
+            val distanceRatio = (abs(dx).toFloat() / width).coerceIn(0.1f, 1.0f)
+            val duration = (280 + distanceRatio * 140).toInt()
             scroller.startScroll(scrollX, 0, dx, 0, duration)
             postInvalidateOnAnimation()
         } else {
             scrollTo(targetX, 0)
+            applyAppleDepthTransform(targetX)
         }
 
         if (currentPage != targetPage) {
@@ -243,7 +223,39 @@ class DesktopPagerView @JvmOverloads constructor(
     override fun computeScroll() {
         if (scroller.computeScrollOffset()) {
             scrollTo(scroller.currX, scroller.currY)
+            applyAppleDepthTransform(scroller.currX)
             postInvalidateOnAnimation()
+        }
+    }
+
+    /**
+     * Плавная Apple-трансформация столов при листании:
+     * - Легкое масштабирование уходящего стола (Depth Scale 1.0 -> 0.955)
+     * - Плавная прозрачность (Alpha 1.0 -> 0.88)
+     */
+    private fun applyAppleDepthTransform(scrollXPos: Int) {
+        val pageWidth = width.toFloat()
+        if (pageWidth <= 0f) return
+
+        val scrollProgress = scrollXPos.toFloat() / pageWidth
+        onScrollProgressListener?.invoke(scrollProgress)
+
+        for (i in 0 until childCount) {
+            val child = getChildAt(i)
+            val pageOffset = (i * pageWidth - scrollXPos) / pageWidth
+            val absOffset = abs(pageOffset)
+
+            if (absOffset <= 1.0f) {
+                val scale = 1.0f - (0.045f * absOffset)
+                val alpha = 1.0f - (0.12f * absOffset)
+                child.scaleX = scale
+                child.scaleY = scale
+                child.alpha = alpha
+            } else {
+                child.scaleX = 0.955f
+                child.scaleY = 0.955f
+                child.alpha = 0.88f
+            }
         }
     }
 }
