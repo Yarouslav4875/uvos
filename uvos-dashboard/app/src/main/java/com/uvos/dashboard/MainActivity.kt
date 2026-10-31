@@ -182,6 +182,11 @@ class MainActivity : Activity() {
             updatePageIndicators(page)
         }
 
+        desktopPager.onScrollProgressListener = { progress ->
+            val nearestPage = Math.round(progress).coerceIn(0, 3)
+            updatePageIndicators(nearestPage)
+        }
+
         dotPage1.setOnClickListener { desktopPager.scrollToPage(0) }
         dotPage2.setOnClickListener { desktopPager.scrollToPage(1) }
         dotPage3.setOnClickListener { desktopPager.scrollToPage(2) }
@@ -466,6 +471,19 @@ class MainActivity : Activity() {
                     showSlotOptionsDialog(slot)
                     true
                 }
+            }
+
+            // Тактильный пружинный отклик как на Apple iOS
+            itemView.setOnTouchListener { v, event ->
+                when (event.actionMasked) {
+                    android.view.MotionEvent.ACTION_DOWN -> {
+                        v.animate().scaleX(0.93f).scaleY(0.93f).setDuration(110).start()
+                    }
+                    android.view.MotionEvent.ACTION_UP, android.view.MotionEvent.ACTION_CANCEL -> {
+                        v.animate().scaleX(1.0f).scaleY(1.0f).setDuration(220).setInterpolator(android.view.animation.OvershootInterpolator(1.2f)).start()
+                    }
+                }
+                false
             }
 
             targetRow.addView(itemView)
