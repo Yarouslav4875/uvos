@@ -1,0 +1,2039 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>UnderVoltOS (UVOS) — All Desktops & System Icon Pack v8</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Share+Tech+Mono&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg-system: #040406;
+    --tile-bg: #0D0E13;
+    --tile-sub: #13141B;
+    --tile-pressed: #1A1C24;
+    --ink: #121212;
+    --red: #E02020;
+    --meter-yellow: #F2E8A6;
+    --text-main: #D6D6DD;
+    --text-dim: #74747E;
+    --divider: #181922;
+  }
+
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    user-select: none;
+  }
+
+  body {
+    background: #020203;
+    color: var(--text-main);
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    padding: 24px 20px 36px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    min-height: 100vh;
+  }
+
+  header.project-header {
+    width: 100%;
+    max-width: 1640px;
+    margin-bottom: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    border-bottom: 1px solid #14151D;
+    padding-bottom: 14px;
+  }
+
+  .project-title h1 {
+    font-family: 'Oswald', sans-serif;
+    font-size: 28px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: #F0F0F5;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .badge-tag {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 11px;
+    background: #0B0C10;
+    border: 1px solid var(--red);
+    color: var(--red);
+    padding: 2px 7px;
+    border-radius: 5px;
+    letter-spacing: 1.5px;
+    font-weight: bold;
+  }
+
+  .project-sub {
+    font-size: 12.5px;
+    color: var(--text-dim);
+    margin-top: 4px;
+  }
+
+  .spec-tokens {
+    display: flex;
+    gap: 10px;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 11px;
+  }
+
+  .token-chip {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: #09090D;
+    padding: 4px 9px;
+    border-radius: 7px;
+    border: 1px solid #161720;
+  }
+
+  .token-swatch {
+    width: 10px;
+    height: 10px;
+    border-radius: 2px;
+  }
+
+  /* Presentation Board for 4 Phone Screens */
+  .screens-container {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    gap: 20px;
+    width: 100%;
+    max-width: 1640px;
+    flex-wrap: nowrap;
+  }
+
+  .screen-column {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 388px;
+    flex-shrink: 0;
+  }
+
+  .screen-label {
+    margin-bottom: 10px;
+    text-align: center;
+  }
+
+  .screen-label .num {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 10.5px;
+    color: var(--red);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    font-weight: bold;
+  }
+
+  .screen-label .name {
+    font-family: 'Oswald', sans-serif;
+    font-size: 18px;
+    color: #FFF;
+    letter-spacing: 0.5px;
+  }
+
+  .screen-label .desc {
+    font-size: 11px;
+    color: var(--text-dim);
+    margin-top: 2px;
+  }
+
+  /* Phone Chassis Mockup */
+  .phone-frame {
+    width: 388px;
+    height: 860px;
+    background: var(--bg-system);
+    border-radius: 44px;
+    box-shadow: 0 35px 80px -20px rgba(0,0,0,0.98), 0 0 0 8px #0A0A0E, 0 0 0 10px #1A1B24;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    border: 1px solid #1A1B24;
+  }
+
+  .phone-island {
+    position: absolute;
+    top: 9px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 92px;
+    height: 22px;
+    background: #000;
+    border-radius: 16px;
+    z-index: 100;
+  }
+
+  /* Status Bar */
+  .status-bar {
+    height: 44px;
+    padding: 10px 20px 2px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 11.5px;
+    color: var(--text-dim);
+    z-index: 90;
+    background: var(--bg-system);
+  }
+
+  .status-left {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .signal-bars {
+    display: flex;
+    gap: 2px;
+    align-items: flex-end;
+    height: 10px;
+  }
+
+  .signal-bar {
+    width: 3px;
+    background: #20222D;
+    border-radius: 1px;
+  }
+  .signal-bar:nth-child(1) { height: 3px; background: var(--red); }
+  .signal-bar:nth-child(2) { height: 5px; background: var(--red); }
+  .signal-bar:nth-child(3) { height: 8px; background: var(--red); }
+  .signal-bar:nth-child(4) { height: 10px; }
+
+  .status-center {
+    font-weight: 700;
+    color: var(--text-main);
+    letter-spacing: 1px;
+  }
+
+  .status-right {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+  }
+
+  .battery-pill {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .battery-icon {
+    width: 18px;
+    height: 9px;
+    border: 1px solid var(--text-dim);
+    border-radius: 2px;
+    padding: 1px;
+    position: relative;
+  }
+  .battery-icon::after {
+    content: '';
+    position: absolute;
+    right: -3px;
+    top: 2px;
+    width: 2px;
+    height: 3px;
+    background: var(--text-dim);
+    border-radius: 0 1px 1px 0;
+  }
+  .battery-fill {
+    height: 100%;
+    width: 82%;
+    background: var(--text-main);
+  }
+
+  /* Screen Content */
+  .phone-screen {
+    flex: 1;
+    overflow-y: auto;
+    padding: 6px 14px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .phone-screen::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* ИСПРАВЛЕННЫЙ ОТОБРАЖАТЕЛЬ СТРАНИЦЫ (ПАГИНАЦИЯ) */
+  .pagination-dots {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 6px;
+    margin-top: auto; /* Прижимает точки вниз к доку */
+    margin-bottom: 8px; /* Ровный аккуратный зазор перед доком */
+    width: 100%;
+  }
+
+  .page-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #222432;
+    transition: all 0.2s;
+  }
+
+  .page-dot.active {
+    width: 18px;
+    height: 6px;
+    border-radius: 3px;
+    background: var(--red);
+    box-shadow: 0 0 6px rgba(224, 32, 32, 0.6);
+  }
+
+  /* 2x2 Widgets Grid (Dashboard) */
+  .widgets-grid-2x2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    width: 100%;
+  }
+
+  .voltmeter-widget-2x2 {
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    border-radius: 24px;
+    box-shadow: 0 10px 24px rgba(0,0,0,0.7);
+  }
+
+  .meter-canvas {
+    width: 100%;
+    height: 100%;
+    border-radius: 24px;
+    display: block;
+  }
+
+  /* Tiles / Containers */
+  .uvos-tile {
+    background: var(--tile-bg);
+    border-radius: 22px;
+    padding: 12px 14px;
+    display: flex;
+    flex-direction: column;
+    border: 1px solid var(--divider);
+    position: relative;
+  }
+
+  .tile-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
+  }
+
+  .tile-title {
+    font-family: 'Oswald', sans-serif;
+    font-size: 11.5px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--text-dim);
+  }
+
+  /* Lamp component */
+  .lamp {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    border: 1px solid #08080C;
+    display: inline-block;
+    flex-shrink: 0;
+  }
+  .lamp.off {
+    background: #250505;
+    box-shadow: inset 0 1px 2px rgba(0,0,0,0.8);
+  }
+  .lamp.on {
+    background: var(--red);
+    box-shadow: 0 0 8px rgba(224, 32, 32, 0.8), inset 0 1px 1px rgba(255,255,255,0.4);
+  }
+
+  /* Segmented Control */
+  .segmented-control {
+    background: #06070A;
+    border-radius: 12px;
+    height: 38px;
+    display: flex;
+    padding: 3px;
+    gap: 3px;
+    position: relative;
+    border: 1px solid #161720;
+  }
+
+  .segment-btn {
+    flex: 1;
+    border-radius: 9px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 10.5px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    color: var(--text-dim);
+    cursor: pointer;
+  }
+
+  .segment-btn.active {
+    background: #181922;
+    color: #FFF;
+    border: 1px solid #2B2D3C;
+    font-weight: 700;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.5);
+  }
+
+  /* Buttons */
+  .btn-primary {
+    background: var(--red);
+    color: #FFF;
+    font-family: 'Oswald', sans-serif;
+    font-size: 13.5px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    font-weight: 600;
+    height: 42px;
+    border-radius: 13px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    box-shadow: 0 4px 12px rgba(224, 32, 32, 0.28);
+    cursor: pointer;
+  }
+
+  .btn-secondary {
+    background: var(--tile-bg);
+    color: var(--text-main);
+    font-family: 'Oswald', sans-serif;
+    font-size: 11.5px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    font-weight: 600;
+    height: 38px;
+    border-radius: 11px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--divider);
+    cursor: pointer;
+  }
+
+  .btn-small {
+    padding: 4px 9px;
+    border-radius: 8px;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 10px;
+    font-weight: bold;
+    letter-spacing: 0.5px;
+    border: 1px solid #1C1E29;
+    background: var(--tile-sub);
+    color: var(--text-main);
+    cursor: pointer;
+  }
+
+  .btn-small.danger {
+    border-color: rgba(224, 32, 32, 0.35);
+    color: var(--red);
+  }
+
+  /* 4x4 APP GRID STYLES (CLEAN DESKTOP) */
+  .app-grid-4x4 {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px 8px;
+    padding: 8px 4px 6px;
+    width: 100%;
+  }
+
+  .app-item-cell {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+    cursor: pointer;
+  }
+
+  .app-icon-pod {
+    width: 56px;
+    height: 56px;
+    border-radius: 17px;
+    background: #0E0F15;
+    border: 1px solid #222430;
+    box-shadow: 0 6px 14px rgba(0,0,0,0.6), inset 0 1px 1px rgba(255,255,255,0.06);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    transition: transform 0.15s;
+  }
+  .app-icon-pod:hover {
+    transform: scale(1.04);
+    border-color: #383B4E;
+  }
+
+  .app-icon-pod svg {
+    width: 30px;
+    height: 30px;
+  }
+
+  /* NATIVE APPS KEEP THEIR AUTHENTIC ORIGINAL ICONS AS-IS */
+  .app-icon-pod.native-icon {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: 0 5px 12px rgba(0,0,0,0.4) !important;
+    padding: 0;
+  }
+  .app-icon-pod.native-icon svg {
+    width: 100%;
+    height: 100%;
+    border-radius: 17px;
+  }
+
+  .drawer-app-icon.native-icon {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: 0 3px 8px rgba(0,0,0,0.3) !important;
+    padding: 0;
+  }
+  .drawer-app-icon.native-icon svg {
+    width: 100%;
+    height: 100%;
+    border-radius: 11px;
+  }
+
+  .app-item-cell .app-label {
+    font-size: 10.5px;
+    color: var(--text-main);
+    text-align: center;
+    font-weight: 500;
+    letter-spacing: 0.2px;
+    white-space: nowrap;
+  }
+
+  /* Fixed Bottom Dock */
+  .home-dock {
+    margin-top: 0;
+    background: #0B0C11;
+    border: 1px solid #1E202B;
+    border-radius: 26px;
+    padding: 8px 12px;
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    width: 100%;
+  }
+
+  /* APP DRAWER (SCREEN 3) */
+  .drawer-search-box {
+    background: #0E0F15;
+    border: 1px solid #222430;
+    border-radius: 16px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    padding: 0 14px;
+    gap: 10px;
+    font-size: 11.5px;
+    color: var(--text-dim);
+    margin-bottom: 2px;
+  }
+  .drawer-search-cursor {
+    width: 2px;
+    height: 14px;
+    background: var(--red);
+  }
+
+  .drawer-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .drawer-app-row {
+    background: var(--tile-bg);
+    border: 1px solid var(--divider);
+    border-radius: 16px;
+    padding: 8px 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .drawer-app-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .drawer-app-icon {
+    width: 38px;
+    height: 38px;
+    border-radius: 12px;
+    background: #0E0F15;
+    border: 1px solid #222430;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  .drawer-app-icon svg {
+    width: 22px;
+    height: 22px;
+  }
+  .drawer-app-meta .title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-main);
+  }
+  .drawer-app-meta .pkg {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 9.5px;
+    color: var(--text-dim);
+  }
+  .drawer-app-badge {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 9.5px;
+    padding: 2px 7px;
+    border-radius: 6px;
+    border: 1px solid #222430;
+    background: #12131C;
+    color: var(--text-dim);
+  }
+  .drawer-app-badge.isolated {
+    color: #81C784;
+    border-color: rgba(129, 199, 132, 0.3);
+    background: rgba(129, 199, 132, 0.1);
+  }
+  .drawer-app-badge.access {
+    color: #FFAAAA;
+    border-color: rgba(224, 32, 32, 0.4);
+    background: rgba(224, 32, 32, 0.15);
+  }
+
+  /* APP MANAGER SPECIFIC STYLES (SCREEN 4) */
+  .app-manager-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
+    margin-bottom: 2px;
+  }
+
+  .stat-card {
+    background: var(--tile-bg);
+    border-radius: 14px;
+    padding: 8px 6px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    border: 1px solid var(--divider);
+  }
+  .stat-card .val {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 14px;
+    font-weight: bold;
+    color: #FFF;
+  }
+  .stat-card .lbl {
+    font-size: 9.5px;
+    color: var(--text-dim);
+    margin-top: 2px;
+    text-transform: uppercase;
+  }
+
+  .app-manager-card {
+    background: var(--tile-bg);
+    border-radius: 18px;
+    padding: 10px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    border: 1px solid var(--divider);
+  }
+
+  .app-manager-main-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .app-meta {
+    flex: 1;
+    margin-left: 10px;
+  }
+  .app-meta .title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-main);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .app-meta .pkg {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 9.5px;
+    color: var(--text-dim);
+  }
+
+  .app-state-pill {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 9px;
+    padding: 1px 5px;
+    border-radius: 4px;
+    background: #14161E;
+    color: var(--text-dim);
+  }
+  .app-state-pill.running {
+    background: rgba(33, 160, 56, 0.15);
+    color: #4CAF50;
+    border: 1px solid rgba(76, 175, 80, 0.3);
+  }
+
+  .app-manager-details-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #07080B;
+    border-radius: 10px;
+    padding: 6px 10px;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 10px;
+    color: var(--text-dim);
+    gap: 8px;
+  }
+
+  .stat-metric-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .stat-metric-badge svg {
+    width: 12px;
+    height: 12px;
+    stroke: var(--text-dim);
+    fill: none;
+    stroke-width: 2;
+  }
+
+  .stat-channels-container {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .channel-pill-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    background: #12131C;
+    border: 1px solid #232532;
+    padding: 1px 6px;
+    border-radius: 5px;
+    font-size: 9px;
+    font-weight: bold;
+    color: var(--text-main);
+  }
+  .channel-pill-tag.active {
+    background: rgba(224, 32, 32, 0.15);
+    border-color: rgba(224, 32, 32, 0.4);
+    color: #FFAAAA;
+  }
+  .channel-pill-tag svg {
+    width: 10px;
+    height: 10px;
+    stroke: currentColor;
+    fill: none;
+    stroke-width: 2;
+  }
+
+  .app-manager-actions {
+    display: flex;
+    gap: 6px;
+    justify-content: flex-end;
+  }
+
+  /* ICON PACK SHOWCASE SECTION (BOTTOM) */
+  .icon-showcase-section {
+    width: 100%;
+    max-width: 1640px;
+    margin-top: 32px;
+    background: #08090D;
+    border: 1px solid #161720;
+    border-radius: 24px;
+    padding: 24px 28px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .showcase-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #161720;
+    padding-bottom: 12px;
+  }
+
+  .showcase-title {
+    font-family: 'Oswald', sans-serif;
+    font-size: 20px;
+    letter-spacing: 1px;
+    color: #FFF;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .icons-grid-showcase {
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+    gap: 16px;
+  }
+
+  .icon-card {
+    background: #0E0F16;
+    border: 1px solid #1C1E2A;
+    border-radius: 20px;
+    padding: 16px 12px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    text-align: center;
+  }
+
+  .icon-card-big {
+    width: 72px;
+    height: 72px;
+    border-radius: 22px;
+    background: #12131B;
+    border: 1px solid #2A2D3C;
+    box-shadow: 0 8px 18px rgba(0,0,0,0.6), inset 0 1px 1px rgba(255,255,255,0.08);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .icon-card-big svg {
+    width: 42px;
+    height: 42px;
+  }
+
+  .icon-card-name {
+    font-family: 'Oswald', sans-serif;
+    font-size: 13px;
+    color: #FFF;
+    letter-spacing: 0.5px;
+  }
+
+  .icon-card-desc {
+    font-size: 10px;
+    color: var(--text-dim);
+    line-height: 1.35;
+  }
+</style>
+</head>
+<body>
+
+<header class="project-header">
+  <div class="project-title">
+    <h1>UnderVoltOS (UVOS) <span class="badge-tag">COMPLETE DESKTOP SUITE & ICON PACK V9</span></h1>
+    <div class="project-sub">Штатные иконки установленных приложений сохранены без изменений • Ретро-пак для системных узлов • Точки пагинации над доком</div>
+  </div>
+  <div class="spec-tokens">
+    <div class="token-chip"><div class="token-swatch" style="background:#040406; border:1px solid #333;"></div> BG #040406</div>
+    <div class="token-chip"><div class="token-swatch" style="background:#0D0E13;"></div> TILE #0D0E13</div>
+    <div class="token-chip"><div class="token-swatch" style="background:#F2E8A6;"></div> SCALE #F2E8A6</div>
+    <div class="token-chip"><div class="token-swatch" style="background:#E02020;"></div> ACCENT #E02020</div>
+  </div>
+</header>
+
+<main class="screens-container">
+
+  <!-- ================= SCREEN 1: INSTRUMENT DASHBOARD ================= -->
+  <div class="screen-column">
+    <div class="screen-label">
+      <div class="num">СТОЛ 01</div>
+      <div class="name">Приборный стол (Dashboard)</div>
+      <div class="desc">Вольтметры 2×2, калиброванная шкала, профили защиты</div>
+    </div>
+
+    <div class="phone-frame">
+      <div class="phone-island"></div>
+
+      <!-- Status Bar -->
+      <div class="status-bar">
+        <div class="status-left">
+          <div class="signal-bars">
+            <div class="signal-bar"></div>
+            <div class="signal-bar"></div>
+            <div class="signal-bar"></div>
+            <div class="signal-bar"></div>
+          </div>
+          <span>UVOS-CORE</span>
+        </div>
+        <div class="status-center">19:58</div>
+        <div class="status-right">
+          <div class="lamp off"></div>
+          <div class="battery-pill">
+            <span>82%</span>
+            <div class="battery-icon"><div class="battery-fill"></div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Screen Body -->
+      <div class="phone-screen">
+
+        <!-- 2x2 Widgets Grid Row 1: CPU & MEM -->
+        <div class="widgets-grid-2x2">
+          <div class="voltmeter-widget-2x2">
+            <canvas id="meter-cpu" class="meter-canvas" width="176" height="176"></canvas>
+          </div>
+          <div class="voltmeter-widget-2x2">
+            <canvas id="meter-mem" class="meter-canvas" width="176" height="176"></canvas>
+          </div>
+        </div>
+
+        <!-- 2x2 Widgets Grid Row 2: BATT & NET -->
+        <div class="widgets-grid-2x2">
+          <div class="voltmeter-widget-2x2">
+            <canvas id="meter-batt" class="meter-canvas" width="176" height="176"></canvas>
+          </div>
+          <div class="voltmeter-widget-2x2">
+            <canvas id="meter-net" class="meter-canvas" width="176" height="176"></canvas>
+          </div>
+        </div>
+
+        <!-- Security Profile Selector -->
+        <div class="uvos-tile">
+          <div class="tile-header">
+            <span class="tile-title">ПРОФИЛЬ ОГРАНИЧЕНИЙ</span>
+            <span class="lamp on"></span>
+          </div>
+          <div class="segmented-control">
+            <div class="segment-btn">СТЕРИЛЬНО</div>
+            <div class="segment-btn active">СВЯЗЬ</div>
+            <div class="segment-btn">СВОЙ</div>
+          </div>
+        </div>
+
+        <!-- Daily Log Alert Card -->
+        <div class="uvos-tile" style="padding:10px 12px;">
+          <div style="display:flex; align-items:center; gap:10px;">
+            <div class="lamp on"></div>
+            <div style="flex:1;">
+              <div style="display:flex; justify-content:space-between;">
+                <span style="font-family:'Oswald',sans-serif; font-size:11.5px; color:var(--text-dim); text-transform:uppercase;">ЖУРНАЛ ЗА СУТКИ</span>
+                <span style="font-family:'Share Tech Mono',monospace; font-size:10px; color:var(--red);">14 БЛОК.</span>
+              </div>
+              <div style="font-family:'Share Tech Mono',monospace; font-size:11.5px; color:var(--text-main); margin-top:2px;">
+                Telegram • Заряд батареи (ACTION_BATTERY)
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Исправленная пагинация: внизу экрана -->
+        <div class="pagination-dots">
+          <div class="page-dot active"></div>
+          <div class="page-dot"></div>
+          <div class="page-dot"></div>
+          <div class="page-dot"></div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ================= SCREEN 2: SIMPLE DESKTOP (CLEAN HOME) ================= -->
+  <div class="screen-column">
+    <div class="screen-label">
+      <div class="num">СТОЛ 02</div>
+      <div class="name">Простой рабочий стол (Home)</div>
+      <div class="desc">Точки пагинации строго над доком, гармоничная сетка 4×4</div>
+    </div>
+
+    <div class="phone-frame">
+      <div class="phone-island"></div>
+
+      <!-- Status Bar -->
+      <div class="status-bar">
+        <div class="status-left">
+          <div class="signal-bars">
+            <div class="signal-bar"></div>
+            <div class="signal-bar"></div>
+            <div class="signal-bar"></div>
+            <div class="signal-bar"></div>
+          </div>
+          <span>UVOS-CORE</span>
+        </div>
+        <div class="status-center">19:58</div>
+        <div class="status-right">
+          <div class="lamp off"></div>
+          <div class="battery-pill">
+            <span>82%</span>
+            <div class="battery-icon"><div class="battery-fill"></div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Screen Body -->
+      <div class="phone-screen">
+
+        <!-- Top Clock/Date Clean Widget -->
+        <div class="uvos-tile" style="padding:14px 18px; align-items:center;">
+          <div style="font-family:'Oswald',sans-serif; font-size:42px; font-weight:700; color:#FFF; line-height:1; letter-spacing:1px;">
+            19:58
+          </div>
+          <div style="font-family:'Share Tech Mono',monospace; font-size:11.5px; color:var(--text-dim); margin-top:5px; letter-spacing:1px;">
+            ПЯТНИЦА • 30 ОКТЯБРЯ 2026
+          </div>
+        </div>
+
+        <!-- 4x4 System App Grid (Гармонично заполненные 4 ряда) -->
+        <div class="app-grid-4x4">
+
+          <!-- Row 1 -->
+          <div class="app-item-cell">
+            <div class="app-icon-pod">
+              <!-- Телефон -->
+              <svg viewBox="0 0 32 32">
+                <path d="M7 6c0-1.1.9-2 2-2h4l2 4-2.5 2a14 14 0 0 0 6.5 6.5l2-2.5 4 2v4c0 1.1-.9 2-2 2A18 18 0 0 1 7 8z" fill="none" stroke="#D8D8E0" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                <circle cx="10" cy="8" r="1.5" fill="#E02020"/>
+              </svg>
+            </div>
+            <span class="app-label">Телефон</span>
+          </div>
+
+          <div class="app-item-cell">
+            <div class="app-icon-pod">
+              <!-- Сообщения -->
+              <svg viewBox="0 0 32 32">
+                <rect x="5" y="7" width="22" height="18" rx="4" fill="none" stroke="#D8D8E0" stroke-width="2"/>
+                <path d="M5 11l11 7 11-7" fill="none" stroke="#D8D8E0" stroke-width="2" stroke-linecap="round"/>
+                <circle cx="23" cy="21" r="1.5" fill="#E02020"/>
+              </svg>
+            </div>
+            <span class="app-label">Сообщения</span>
+          </div>
+
+          <div class="app-item-cell">
+            <div class="app-icon-pod">
+              <!-- Радар-сеть (Сетевой сканер и браузер) -->
+              <svg viewBox="0 0 32 32">
+                <circle cx="16" cy="16" r="10" fill="none" stroke="#D8D8E0" stroke-width="2"/>
+                <circle cx="16" cy="16" r="5" fill="none" stroke="#D8D8E0" stroke-width="1.5" stroke-dasharray="2 2"/>
+                <line x1="16" y1="6" x2="16" y2="26" stroke="#D8D8E0" stroke-width="1.5"/>
+                <line x1="6" y1="16" x2="26" y2="16" stroke="#D8D8E0" stroke-width="1.5"/>
+                <line x1="16" y1="16" x2="23" y2="9" stroke="#E02020" stroke-width="2" stroke-linecap="round"/>
+              </svg>
+            </div>
+            <span class="app-label">Радар-сеть</span>
+          </div>
+
+          <div class="app-item-cell">
+            <div class="app-icon-pod">
+              <!-- Фото / Камера -->
+              <svg viewBox="0 0 32 32">
+                <path d="M6 10h4l2-3h8l2 3h4a2 2 0 0 1 2 2v13a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V12a2 2 0 0 1 2-2z" fill="none" stroke="#D8D8E0" stroke-width="2"/>
+                <circle cx="16" cy="17" r="5" fill="none" stroke="#D8D8E0" stroke-width="2"/>
+                <circle cx="16" cy="17" r="2" fill="#E02020"/>
+              </svg>
+            </div>
+            <span class="app-label">Камера</span>
+          </div>
+
+          <!-- Row 2 -->
+          <div class="app-item-cell">
+            <div class="app-icon-pod">
+              <!-- Файлы -->
+              <svg viewBox="0 0 32 32">
+                <path d="M5 8h7l2 3h13a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V10a2 2 0 0 1 2-2z" fill="none" stroke="#D8D8E0" stroke-width="2"/>
+                <rect x="11" y="15" width="10" height="5" rx="1" fill="none" stroke="#E02020" stroke-width="1.5"/>
+              </svg>
+            </div>
+            <span class="app-label">Файлы</span>
+          </div>
+
+          <div class="app-item-cell">
+            <div class="app-icon-pod">
+              <!-- Музыка / Плеер -->
+              <svg viewBox="0 0 32 32">
+                <rect x="5" y="7" width="22" height="18" rx="4" fill="none" stroke="#D8D8E0" stroke-width="2"/>
+                <circle cx="11" cy="14" r="3.5" fill="none" stroke="#D8D8E0" stroke-width="1.8"/>
+                <circle cx="21" cy="14" r="3.5" fill="none" stroke="#D8D8E0" stroke-width="1.8"/>
+                <line x1="11" y1="17.5" x2="21" y2="17.5" stroke="#E02020" stroke-width="1.5"/>
+              </svg>
+            </div>
+            <span class="app-label">Плеер</span>
+          </div>
+
+          <div class="app-item-cell">
+            <div class="app-icon-pod">
+              <!-- Калькулятор -->
+              <svg viewBox="0 0 32 32">
+                <rect x="7" y="5" width="18" height="22" rx="3" fill="none" stroke="#D8D8E0" stroke-width="2"/>
+                <rect x="10" y="8" width="12" height="4" fill="none" stroke="#E02020" stroke-width="1.5"/>
+                <circle cx="11" cy="16" r="1" fill="#D8D8E0"/>
+                <circle cx="16" cy="16" r="1" fill="#D8D8E0"/>
+                <circle cx="21" cy="16" r="1" fill="#D8D8E0"/>
+                <circle cx="11" cy="21" r="1" fill="#D8D8E0"/>
+                <circle cx="16" cy="21" r="1" fill="#D8D8E0"/>
+                <circle cx="21" cy="21" r="1" fill="#D8D8E0"/>
+              </svg>
+            </div>
+            <span class="app-label">Счётчик</span>
+          </div>
+
+          <div class="app-item-cell">
+            <div class="app-icon-pod">
+              <!-- НАСТРОЙКИ (ВИНТ СО ШЛИЦЕМ ДЛЯ МИНУСОВОЙ ОТВЕРТКИ) -->
+              <svg viewBox="0 0 32 32">
+                <circle cx="16" cy="16" r="11" fill="none" stroke="#D8D8E0" stroke-width="2"/>
+                <circle cx="16" cy="16" r="7.5" fill="none" stroke="#D8D8E0" stroke-width="1" stroke-dasharray="1.5 2"/>
+                <rect x="7" y="14.5" width="18" height="3" rx="0.5" fill="#E02020"/>
+              </svg>
+            </div>
+            <span class="app-label">Настройки</span>
+          </div>
+
+          <!-- Row 3: Установленные приложения (Штатные оригинальные иконки без рестайлинга) -->
+          <div class="app-item-cell">
+            <div class="app-icon-pod native-icon">
+              <svg viewBox="0 0 56 56">
+                <defs>
+                  <linearGradient id="tgGradHome" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stop-color="#2AABEE"/>
+                    <stop offset="100%" stop-color="#229ED9"/>
+                  </linearGradient>
+                </defs>
+                <rect width="56" height="56" rx="17" fill="url(#tgGradHome)"/>
+                <path d="M12 28.2l29.4-12.2c1.4-.6 2.6.4 2.1 2.5l-5 23.6c-.4 1.7-1.4 2.1-2.8 1.3l-7.7-5.7-3.7 3.6c-.4.4-.8.8-1.6.8l.5-7.9 14.5-13.1c.6-.6-.1-.9-1-.3L18.8 32.8l-7.7-2.4c-1.7-.5-1.7-1.7.3-2.2z" fill="#FFFFFF"/>
+              </svg>
+            </div>
+            <span class="app-label">Telegram</span>
+          </div>
+
+          <div class="app-item-cell">
+            <div class="app-icon-pod native-icon">
+              <svg viewBox="0 0 56 56">
+                <rect width="56" height="56" rx="17" fill="#FFFFFF"/>
+                <path d="M12 42c8-4 14-12 16-24" fill="none" stroke="#2688EB" stroke-width="4.5" stroke-linecap="round"/>
+                <path d="M28 10c-6.6 0-12 5.4-12 12 0 8.8 12 22 12 22s12-13.2 12-22c0-6.6-5.4-12-12-12z" fill="#FC3F1D"/>
+                <circle cx="28" cy="22" r="4.5" fill="#FFFFFF"/>
+              </svg>
+            </div>
+            <span class="app-label">Яндекс Карты</span>
+          </div>
+
+          <div class="app-item-cell">
+            <div class="app-icon-pod native-icon">
+              <svg viewBox="0 0 56 56">
+                <defs>
+                  <linearGradient id="sberGradHome" x1="0" y1="0" x2="1" y2="1">
+                    <stop offset="0%" stop-color="#22C34B"/>
+                    <stop offset="100%" stop-color="#158C32"/>
+                  </linearGradient>
+                </defs>
+                <rect width="56" height="56" rx="17" fill="url(#sberGradHome)"/>
+                <circle cx="28" cy="28" r="16" fill="none" stroke="#FFFFFF" stroke-width="4" stroke-dasharray="72 30" stroke-linecap="round" transform="rotate(-60 28 28)"/>
+                <path d="M20 28l6 6 13-13" fill="none" stroke="#FFFFFF" stroke-width="4.2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </div>
+            <span class="app-label">СберБанк</span>
+          </div>
+
+          <div class="app-item-cell">
+            <div class="app-icon-pod">
+              <svg viewBox="0 0 32 32">
+                <path d="M16 4l10 4v8c0 6-10 12-10 12S6 22 6 16V8z" fill="none" stroke="#E02020" stroke-width="2"/>
+                <circle cx="16" cy="15" r="2.5" fill="#E02020"/>
+              </svg>
+            </div>
+            <span class="app-label">Щиток UVOS</span>
+          </div>
+
+          <!-- Row 4 (Заполнение пространства для правильной посадки) -->
+          <div class="app-item-cell">
+            <div class="app-icon-pod">
+              <!-- Заметки / Бортжурнал -->
+              <svg viewBox="0 0 32 32">
+                <rect x="7" y="6" width="18" height="20" rx="3" fill="none" stroke="#D8D8E0" stroke-width="2"/>
+                <line x1="11" y1="11" x2="21" y2="11" stroke="#D8D8E0" stroke-width="1.5"/>
+                <line x1="11" y1="16" x2="21" y2="16" stroke="#D8D8E0" stroke-width="1.5"/>
+                <line x1="11" y1="21" x2="17" y2="21" stroke="#E02020" stroke-width="1.5"/>
+              </svg>
+            </div>
+            <span class="app-label">Журнал</span>
+          </div>
+
+          <div class="app-item-cell">
+            <div class="app-icon-pod">
+              <!-- Диктофон / Осциллограф -->
+              <svg viewBox="0 0 32 32">
+                <rect x="6" y="8" width="20" height="16" rx="3" fill="none" stroke="#D8D8E0" stroke-width="2"/>
+                <path d="M9 16h3l2-5 3 10 2-5h4" fill="none" stroke="#E02020" stroke-width="1.8" stroke-linecap="round"/>
+              </svg>
+            </div>
+            <span class="app-label">Осциллограф</span>
+          </div>
+
+          <div class="app-item-cell">
+            <div class="app-icon-pod">
+              <!-- Терминал -->
+              <svg viewBox="0 0 32 32">
+                <rect x="6" y="7" width="20" height="18" rx="3" fill="none" stroke="#D8D8E0" stroke-width="2"/>
+                <path d="M10 12l4 4-4 4" fill="none" stroke="#81C784" stroke-width="2" stroke-linecap="round"/>
+                <line x1="16" y1="20" x2="21" y2="20" stroke="#81C784" stroke-width="2"/>
+              </svg>
+            </div>
+            <span class="app-label">Терминал</span>
+          </div>
+
+          <div class="app-item-cell">
+            <div class="app-icon-pod">
+              <!-- Репозиторий F-Droid -->
+              <svg viewBox="0 0 32 32">
+                <rect x="7" y="10" width="18" height="15" rx="3" fill="none" stroke="#D8D8E0" stroke-width="2"/>
+                <path d="M11 6l2 4M21 6l-2 4" stroke="#D8D8E0" stroke-width="2" stroke-linecap="round"/>
+                <circle cx="16" cy="17" r="2.5" fill="#2AABEE"/>
+              </svg>
+            </div>
+            <span class="app-label">Пакеты</span>
+          </div>
+
+        </div>
+
+        <!-- ИСПРАВЛЕННЫЙ ОТОБРАЖАТЕЛЬ СТРАНИЦ: СТРОГО НАД НИЖНИМ ДОКОМ -->
+        <div class="pagination-dots">
+          <div class="page-dot"></div>
+          <div class="page-dot active"></div>
+          <div class="page-dot"></div>
+          <div class="page-dot"></div>
+        </div>
+
+        <!-- Fixed Bottom Dock -->
+        <div class="home-dock">
+          <div class="app-icon-pod" style="width:48px; height:48px; border-radius:15px;">
+            <svg viewBox="0 0 32 32" style="width:24px; height:24px;">
+              <path d="M7 6c0-1.1.9-2 2-2h4l2 4-2.5 2a14 14 0 0 0 6.5 6.5l2-2.5 4 2v4c0 1.1-.9 2-2 2A18 18 0 0 1 7 8z" fill="none" stroke="#D8D8E0" stroke-width="2"/>
+            </svg>
+          </div>
+          <div class="app-icon-pod" style="width:48px; height:48px; border-radius:15px;">
+            <svg viewBox="0 0 32 32" style="width:24px; height:24px;">
+              <rect x="5" y="7" width="22" height="18" rx="4" fill="none" stroke="#D8D8E0" stroke-width="2"/>
+              <path d="M5 11l11 7 11-7" fill="none" stroke="#D8D8E0" stroke-width="2"/>
+            </svg>
+          </div>
+          <div class="app-icon-pod" style="width:48px; height:48px; border-radius:15px;">
+            <svg viewBox="0 0 32 32" style="width:24px; height:24px;">
+              <circle cx="16" cy="16" r="9" fill="none" stroke="#D8D8E0" stroke-width="2"/>
+              <line x1="16" y1="16" x2="22" y2="10" stroke="#E02020" stroke-width="2"/>
+            </svg>
+          </div>
+          <div class="app-icon-pod" style="width:48px; height:48px; border-radius:15px; border-color:rgba(224,32,32,0.4);">
+            <svg viewBox="0 0 32 32" style="width:24px; height:24px;">
+              <path d="M16 4l10 4v8c0 6-10 12-10 12S6 22 6 16V8z" fill="none" stroke="#E02020" stroke-width="2"/>
+              <circle cx="16" cy="15" r="2" fill="#E02020"/>
+            </svg>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ================= SCREEN 3: APP DRAWER (СВАЙП ВПРАВО) ================= -->
+  <div class="screen-column">
+    <div class="screen-label">
+      <div class="num">СТОЛ 03</div>
+      <div class="name">Меню приложений (Свайп вправо)</div>
+      <div class="desc">Полный список ПО с проверкой прав Закрытой Территории</div>
+    </div>
+
+    <div class="phone-frame">
+      <div class="phone-island"></div>
+
+      <!-- Status Bar -->
+      <div class="status-bar">
+        <div class="status-left">
+          <span>&lt; СТОЛ</span>
+        </div>
+        <div class="status-center">ВСЕ ПРИЛОЖЕНИЯ</div>
+        <div class="status-right">
+          <div class="battery-pill"><span>82%</span></div>
+        </div>
+      </div>
+
+      <!-- Screen Body -->
+      <div class="phone-screen">
+
+        <!-- Search Bar with Red Blinking Cursor -->
+        <div class="drawer-search-box">
+          <span>ПОИСК ПО ПАКЕТАМ И СЛУЖБАМ</span>
+          <div class="drawer-search-cursor"></div>
+        </div>
+
+        <div style="font-family:'Oswald',sans-serif; font-size:11px; color:var(--text-dim); letter-spacing:1px; margin-top:2px;">
+          УСТАНОВЛЕННЫЕ ПРИЛОЖЕНИЯ (ЗАКРЫТАЯ ТЕРРИТОРИЯ)
+        </div>
+
+        <!-- Full App List with Security Flags -->
+        <div class="drawer-list">
+
+          <!-- Item 1: Telegram (Оригинальная иконка) -->
+          <div class="drawer-app-row">
+            <div class="drawer-app-left">
+              <div class="drawer-app-icon native-icon">
+                <svg viewBox="0 0 56 56">
+                  <defs>
+                    <linearGradient id="tgGradDrawer" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stop-color="#2AABEE"/>
+                      <stop offset="100%" stop-color="#229ED9"/>
+                    </linearGradient>
+                  </defs>
+                  <rect width="56" height="56" rx="14" fill="url(#tgGradDrawer)"/>
+                  <path d="M12 28.2l29.4-12.2c1.4-.6 2.6.4 2.1 2.5l-5 23.6c-.4 1.7-1.4 2.1-2.8 1.3l-7.7-5.7-3.7 3.6c-.4.4-.8.8-1.6.8l.5-7.9 14.5-13.1c.6-.6-.1-.9-1-.3L18.8 32.8l-7.7-2.4c-1.7-.5-1.7-1.7.3-2.2z" fill="#FFFFFF"/>
+                </svg>
+              </div>
+              <div class="drawer-app-meta">
+                <div class="title">Telegram</div>
+                <div class="pkg">org.telegram.messenger</div>
+              </div>
+            </div>
+            <div class="drawer-app-badge access">3 КАНАЛА</div>
+          </div>
+
+          <!-- Item 2: СберБанк Онлайн (Оригинальная иконка) -->
+          <div class="drawer-app-row">
+            <div class="drawer-app-left">
+              <div class="drawer-app-icon native-icon">
+                <svg viewBox="0 0 56 56">
+                  <defs>
+                    <linearGradient id="sberGradDrawer" x1="0" y1="0" x2="1" y2="1">
+                      <stop offset="0%" stop-color="#22C34B"/>
+                      <stop offset="100%" stop-color="#158C32"/>
+                    </linearGradient>
+                  </defs>
+                  <rect width="56" height="56" rx="14" fill="url(#sberGradDrawer)"/>
+                  <circle cx="28" cy="28" r="16" fill="none" stroke="#FFFFFF" stroke-width="4" stroke-dasharray="72 30" stroke-linecap="round" transform="rotate(-60 28 28)"/>
+                  <path d="M20 28l6 6 13-13" fill="none" stroke="#FFFFFF" stroke-width="4.2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </div>
+              <div class="drawer-app-meta">
+                <div class="title">СберБанк Онлайн</div>
+                <div class="pkg">ru.sberbankmobile</div>
+              </div>
+            </div>
+            <div class="drawer-app-badge access">1 КАНАЛ (СЕТЬ)</div>
+          </div>
+
+          <!-- Item 3: Яндекс Карты (Оригинальная иконка) -->
+          <div class="drawer-app-row">
+            <div class="drawer-app-left">
+              <div class="drawer-app-icon native-icon">
+                <svg viewBox="0 0 56 56">
+                  <rect width="56" height="56" rx="14" fill="#FFFFFF"/>
+                  <path d="M12 42c8-4 14-12 16-24" fill="none" stroke="#2688EB" stroke-width="4.5" stroke-linecap="round"/>
+                  <path d="M28 10c-6.6 0-12 5.4-12 12 0 8.8 12 22 12 22s12-13.2 12-22c0-6.6-5.4-12-12-12z" fill="#FC3F1D"/>
+                  <circle cx="28" cy="22" r="4.5" fill="#FFFFFF"/>
+                </svg>
+              </div>
+              <div class="drawer-app-meta">
+                <div class="title">Яндекс Карты</div>
+                <div class="pkg">ru.yandex.yandexmaps</div>
+              </div>
+            </div>
+            <div class="drawer-app-badge access">1 КАНАЛ (ГЕО)</div>
+          </div>
+
+          <!-- Item 4: VK Видео & Музыка (Оригинальная иконка) -->
+          <div class="drawer-app-row">
+            <div class="drawer-app-left">
+              <div class="drawer-app-icon native-icon">
+                <svg viewBox="0 0 56 56">
+                  <rect width="56" height="56" rx="14" fill="#0077FF"/>
+                  <path d="M31.2 38c-11.4 0-17.9-7.8-18.2-20.8h5.7c.2 9.5 4.3 13.5 7.7 14.4V17.2h5.4v8.2c3.3-.4 6.7-4 7.8-8.2h5.4c-1 5.2-4.8 8.8-7.5 10.4 2.7 1.3 7.1 4.5 8.6 10.4h-6c-1.2-3.8-4.3-6.8-8.3-7.2v7.2z" fill="#FFFFFF"/>
+                </svg>
+              </div>
+              <div class="drawer-app-meta">
+                <div class="title">VK Видео & Музыка</div>
+                <div class="pkg">com.vkontakte.android</div>
+              </div>
+            </div>
+            <div class="drawer-app-badge isolated">ИЗОЛИРОВАНО (0)</div>
+          </div>
+
+          <!-- Item 5: Google Play Services (Оригинальная иконка) -->
+          <div class="drawer-app-row">
+            <div class="drawer-app-left">
+              <div class="drawer-app-icon native-icon">
+                <svg viewBox="0 0 56 56">
+                  <rect width="56" height="56" rx="14" fill="#FFFFFF"/>
+                  <g transform="translate(13, 13) scale(0.62)">
+                    <path d="M23.5 3.5C21.6 3.5 20 5.1 20 7v3.5h-9C9.3 10.5 8 11.8 8 13.5v9c1.9 0 3.5 1.6 3.5 3.5S9.9 29.5 8 29.5v9c0 1.7 1.3 3 3 3h9v-3.5c0-1.9 1.6-3.5 3.5-3.5s3.5 1.6 3.5 3.5v3.5h9c1.7 0 3-1.3 3-3v-9c-1.9 0-3.5-1.6-3.5-3.5s1.6-3.5 3.5-3.5v-9c0-1.7-1.3-3-3-3h-9V7c0-1.9-1.6-3.5-3.5-3.5z" fill="#4285F4"/>
+                    <circle cx="23.5" cy="24" r="5" fill="#34A853"/>
+                  </g>
+                </svg>
+              </div>
+              <div class="drawer-app-meta">
+                <div class="title">Google Play Services</div>
+                <div class="pkg">com.google.android.gms</div>
+              </div>
+            </div>
+            <div class="drawer-app-badge isolated">ИЗОЛИРОВАНО (0)</div>
+          </div>
+
+          <!-- Item 6: Настройки системы -->
+          <div class="drawer-app-row">
+            <div class="drawer-app-left">
+              <div class="drawer-app-icon">
+                <svg viewBox="0 0 32 32"><circle cx="16" cy="16" r="10" fill="none" stroke="#D8D8E0" stroke-width="2"/><rect x="8" y="14.5" width="16" height="3" fill="#E02020"/></svg>
+              </div>
+              <div class="drawer-app-meta">
+                <div class="title">Настройки UVOS</div>
+                <div class="pkg">com.uvos.settings</div>
+              </div>
+            </div>
+            <div class="drawer-app-badge" style="color:var(--text-main);">СИСТЕМА</div>
+          </div>
+
+        </div>
+
+        <!-- Исправленная пагинация: внизу экрана -->
+        <div class="pagination-dots">
+          <div class="page-dot"></div>
+          <div class="page-dot"></div>
+          <div class="page-dot active"></div>
+          <div class="page-dot"></div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ================= SCREEN 4: APP & PROCESS MANAGER ================= -->
+  <div class="screen-column">
+    <div class="screen-label">
+      <div class="num">СТОЛ 04</div>
+      <div class="name">Менеджер процессов (Manager)</div>
+      <div class="desc">Автовставляемые значки каналов прямо в полосу статистики</div>
+    </div>
+
+    <div class="phone-frame">
+      <div class="phone-island"></div>
+
+      <!-- Status Bar -->
+      <div class="status-bar">
+        <div class="status-left">
+          <span>&lt; МЕНЮ</span>
+        </div>
+        <div class="status-center">МЕНЕДЖЕР ПО</div>
+        <div class="status-right">
+          <div class="lamp on"></div>
+          <div class="battery-pill"><span>82%</span></div>
+        </div>
+      </div>
+
+      <!-- Screen Body -->
+      <div class="phone-screen">
+
+        <!-- Top Overview Stats -->
+        <div class="app-manager-stats">
+          <div class="stat-card">
+            <span class="val">4 / 28</span>
+            <span class="lbl">АКТИВНЫХ</span>
+          </div>
+          <div class="stat-card">
+            <span class="val" style="color:var(--red);">6.8 ГБ</span>
+            <span class="lbl">ОЗУ (85%)</span>
+          </div>
+          <div class="stat-card">
+            <span class="val">4 КАН.</span>
+            <span class="lbl">СЕТЬ/ДАННЫЕ</span>
+          </div>
+        </div>
+
+        <!-- Filter Segments -->
+        <div class="segmented-control" style="height:34px;">
+          <div class="segment-btn active">АКТИВНЫЕ (4)</div>
+          <div class="segment-btn">С ДОСТУПОМ (3)</div>
+          <div class="segment-btn">ИЗОЛИРОВАНЫ (24)</div>
+        </div>
+
+        <!-- Applications Process List -->
+        <div style="display:flex; flex-direction:column; gap:8px;">
+
+          <!-- Process 1: Яндекс Карты (Оригинальная иконка) -->
+          <div class="app-manager-card">
+            <div class="app-manager-main-row">
+              <div class="app-icon-pod native-icon" style="width:36px; height:36px; border-radius:10px;">
+                <svg viewBox="0 0 56 56">
+                  <rect width="56" height="56" rx="14" fill="#FFFFFF"/>
+                  <path d="M12 42c8-4 14-12 16-24" fill="none" stroke="#2688EB" stroke-width="4.5" stroke-linecap="round"/>
+                  <path d="M28 10c-6.6 0-12 5.4-12 12 0 8.8 12 22 12 22s12-13.2 12-22c0-6.6-5.4-12-12-12z" fill="#FC3F1D"/>
+                  <circle cx="28" cy="22" r="4.5" fill="#FFFFFF"/>
+                </svg>
+              </div>
+              <div class="app-meta">
+                <div class="title">
+                  Яндекс Карты
+                  <span class="app-state-pill running">АКТИВЕН</span>
+                </div>
+                <div class="pkg">ru.yandex.yandexmaps</div>
+              </div>
+              <div class="lamp on"></div>
+            </div>
+
+            <!-- СТРОКА СТАТИСТИКИ С АВТОВСТАВЛЕННЫМИ ЗНАЧКАМИ -->
+            <div class="app-manager-details-row">
+              <span class="stat-metric-badge">
+                <svg viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="12" rx="2"/><path d="M6 10v4M10 10v4M14 10v4M18 10v4"/></svg>
+                <span>ОЗУ: <b style="color:#FFF;">440 МБ</b></span>
+              </span>
+
+              <span class="stat-metric-badge">
+                <svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M9 9h6v6H9zM9 1v3M15 1v3M9 20v3M15 20v3M20 9h3M20 15h3M1 9h3M1 15h3"/></svg>
+                <span>CPU: <b style="color:#FFF;">8.4%</b></span>
+              </span>
+
+              <span class="stat-channels-container">
+                <span class="channel-pill-tag active">
+                  <svg viewBox="0 0 24 24"><path d="M12 2a8 8 0 0 0-8 8c0 5.25 8 12 8 12s8-6.75 8-12a8 8 0 0 0-8-8z"/><circle cx="12" cy="10" r="3"/></svg>
+                  ГЕО (GPS)
+                </span>
+              </span>
+            </div>
+
+            <div class="app-manager-actions">
+              <button class="btn-small">ЩИТОК</button>
+              <button class="btn-small danger">ОСТАНОВИТЬ</button>
+            </div>
+          </div>
+
+          <!-- Process 2: Telegram (Оригинальная иконка) -->
+          <div class="app-manager-card">
+            <div class="app-manager-main-row">
+              <div class="app-icon-pod native-icon" style="width:36px; height:36px; border-radius:10px;">
+                <svg viewBox="0 0 56 56">
+                  <defs>
+                    <linearGradient id="tgGradMgr" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stop-color="#2AABEE"/>
+                      <stop offset="100%" stop-color="#229ED9"/>
+                    </linearGradient>
+                  </defs>
+                  <rect width="56" height="56" rx="14" fill="url(#tgGradMgr)"/>
+                  <path d="M12 28.2l29.4-12.2c1.4-.6 2.6.4 2.1 2.5l-5 23.6c-.4 1.7-1.4 2.1-2.8 1.3l-7.7-5.7-3.7 3.6c-.4.4-.8.8-1.6.8l.5-7.9 14.5-13.1c.6-.6-.1-.9-1-.3L18.8 32.8l-7.7-2.4c-1.7-.5-1.7-1.7.3-2.2z" fill="#FFFFFF"/>
+                </svg>
+              </div>
+              <div class="app-meta">
+                <div class="title">
+                  Telegram
+                  <span class="app-state-pill running">АКТИВЕН</span>
+                </div>
+                <div class="pkg">org.telegram.messenger</div>
+              </div>
+              <div class="lamp on"></div>
+            </div>
+
+            <!-- СТРОКА СТАТИСТИКИ С АВТОВСТАВЛЕННЫМИ ЗНАЧКАМИ -->
+            <div class="app-manager-details-row">
+              <span class="stat-metric-badge">
+                <svg viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="12" rx="2"/><path d="M6 10v4M10 10v4M14 10v4M18 10v4"/></svg>
+                <span>ОЗУ: <b style="color:#FFF;">385 МБ</b></span>
+              </span>
+
+              <span class="stat-metric-badge">
+                <svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M9 9h6v6H9zM9 1v3M15 1v3M9 20v3M15 20v3M20 9h3M20 15h3M1 9h3M1 15h3"/></svg>
+                <span>CPU: <b style="color:#FFF;">3.2%</b></span>
+              </span>
+
+              <span class="stat-channels-container">
+                <span class="channel-pill-tag active">
+                  <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                  СЕТЬ
+                </span>
+                <span class="channel-pill-tag active">
+                  <svg viewBox="0 0 24 24"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v3"/></svg>
+                  МИК
+                </span>
+                <span class="channel-pill-tag active">
+                  <svg viewBox="0 0 24 24"><path d="M4 4h6l2 2h8a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z"/></svg>
+                  ФАЙЛ
+                </span>
+              </span>
+            </div>
+
+            <div class="app-manager-actions">
+              <button class="btn-small">ЩИТОК</button>
+              <button class="btn-small">ТРАФИК</button>
+              <button class="btn-small danger">ЗАМОРОЗИТЬ</button>
+            </div>
+          </div>
+
+        </div>
+
+        <button class="btn-secondary" style="margin-top:auto;">
+          УСЫПИТЬ ВСЕ ФОНОВЫЕ СЛУЖБЫ
+        </button>
+
+        <!-- Исправленная пагинация: внизу экрана -->
+        <div class="pagination-dots">
+          <div class="page-dot"></div>
+          <div class="page-dot"></div>
+          <div class="page-dot"></div>
+          <div class="page-dot active"></div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+</main>
+
+
+<!-- ================= SECTION: INDUSTRIAL SYSTEM ICON PACK SHOWCASE ================= -->
+<section class="icon-showcase-section">
+  <div class="showcase-header">
+    <div class="showcase-title">
+      <span>ФИРМЕННЫЙ ПАК СИСТЕМНЫХ ИКОНОК UVOS (RETRO-INDUSTRIAL PACK)</span>
+      <span class="badge-tag">HARDWARE INSPIRED</span>
+    </div>
+    <div style="font-family:'Share Tech Mono',monospace; font-size:11px; color:var(--text-dim);">
+      МАТОВЫЙ САТИНОВЫЙ КОРПУС • ФАСКА 28% • ТОЛЩИНА ЛИНИИ 2DP
+    </div>
+  </div>
+
+  <div class="icons-grid-showcase">
+
+    <!-- Icon 1: Настройки -->
+    <div class="icon-card">
+      <div class="icon-card-big">
+        <svg viewBox="0 0 32 32">
+          <circle cx="16" cy="16" r="12" fill="none" stroke="#D8D8E0" stroke-width="2"/>
+          <circle cx="16" cy="16" r="8.5" fill="none" stroke="#D8D8E0" stroke-width="1" stroke-dasharray="2 2.5"/>
+          <rect x="6" y="14.5" width="20" height="3" rx="0.6" fill="#E02020"/>
+        </svg>
+      </div>
+      <div class="icon-card-name">Настройки</div>
+      <div class="icon-card-desc">Винт со шлицем для минусовой отвёртки и круговой юстировкой</div>
+    </div>
+
+    <!-- Icon 2: Камера / Фото -->
+    <div class="icon-card">
+      <div class="icon-card-big">
+        <svg viewBox="0 0 32 32">
+          <path d="M5 10h5l2-3.5h8l2 3.5h5a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V12a2 2 0 0 1 2-2z" fill="none" stroke="#D8D8E0" stroke-width="2"/>
+          <circle cx="16" cy="18" r="5.5" fill="none" stroke="#D8D8E0" stroke-width="2"/>
+          <circle cx="16" cy="18" r="2.5" fill="#E02020"/>
+          <circle cx="23" cy="13" r="1" fill="#D8D8E0"/>
+        </svg>
+      </div>
+      <div class="icon-card-name">Камера / Фото</div>
+      <div class="icon-card-desc">Объектив ретро-камеры с кольцом диафрагмы и видоискателем</div>
+    </div>
+
+    <!-- Icon 3: Телефон -->
+    <div class="icon-card">
+      <div class="icon-card-big">
+        <svg viewBox="0 0 32 32">
+          <path d="M7 6c0-1.1.9-2 2-2h4l2 4-2.5 2a14 14 0 0 0 6.5 6.5l2-2.5 4 2v4c0 1.1-.9 2-2 2A18 18 0 0 1 7 8z" fill="none" stroke="#D8D8E0" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <circle cx="10" cy="8" r="1.8" fill="#E02020"/>
+        </svg>
+      </div>
+      <div class="icon-card-name">Телефон</div>
+      <div class="icon-card-desc">Бакелитовая телефонная трубка с промышленными контактами</div>
+    </div>
+
+    <!-- Icon 4: Сообщения -->
+    <div class="icon-card">
+      <div class="icon-card-big">
+        <svg viewBox="0 0 32 32">
+          <rect x="5" y="7" width="22" height="18" rx="4" fill="none" stroke="#D8D8E0" stroke-width="2"/>
+          <path d="M5 11l11 7 11-7" fill="none" stroke="#D8D8E0" stroke-width="2" stroke-linecap="round"/>
+          <circle cx="23" cy="21" r="1.8" fill="#E02020"/>
+        </svg>
+      </div>
+      <div class="icon-card-name">Сообщения</div>
+      <div class="icon-card-desc">Индустриальный телетайпный конверт с рубиновым штампом</div>
+    </div>
+
+    <!-- Icon 5: Радар-сеть -->
+    <div class="icon-card">
+      <div class="icon-card-big">
+        <svg viewBox="0 0 32 32">
+          <circle cx="16" cy="16" r="11" fill="none" stroke="#D8D8E0" stroke-width="2"/>
+          <circle cx="16" cy="16" r="6" fill="none" stroke="#D8D8E0" stroke-width="1.5" stroke-dasharray="2 2"/>
+          <line x1="16" y1="5" x2="16" y2="27" stroke="#D8D8E0" stroke-width="1.2"/>
+          <line x1="5" y1="16" x2="27" y2="16" stroke="#D8D8E0" stroke-width="1.2"/>
+          <line x1="16" y1="16" x2="24" y2="8" stroke="#E02020" stroke-width="2.2" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <div class="icon-card-name">Радар-сеть</div>
+      <div class="icon-card-desc">Круговой экран радиолокатора с лучом сканирования частот</div>
+    </div>
+
+    <!-- Icon 6: Файлы / Архив -->
+    <div class="icon-card">
+      <div class="icon-card-big">
+        <svg viewBox="0 0 32 32">
+          <path d="M5 8h7l2 3h13a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V10a2 2 0 0 1 2-2z" fill="none" stroke="#D8D8E0" stroke-width="2"/>
+          <rect x="10" y="15" width="12" height="6" rx="1" fill="none" stroke="#E02020" stroke-width="1.8"/>
+          <circle cx="12" cy="18" r="0.8" fill="#D8D8E0"/>
+          <circle cx="20" cy="18" r="0.8" fill="#D8D8E0"/>
+        </svg>
+      </div>
+      <div class="icon-card-name">Проводник</div>
+      <div class="icon-card-desc">Стальной архивный кейс с выбивным шильдиком на заклёпках</div>
+    </div>
+
+    <!-- Icon 7: Плеер / Бобины -->
+    <div class="icon-card">
+      <div class="icon-card-big">
+        <svg viewBox="0 0 32 32">
+          <rect x="5" y="7" width="22" height="18" rx="4" fill="none" stroke="#D8D8E0" stroke-width="2"/>
+          <circle cx="11" cy="14" r="3.8" fill="none" stroke="#D8D8E0" stroke-width="1.8"/>
+          <circle cx="21" cy="14" r="3.8" fill="none" stroke="#D8D8E0" stroke-width="1.8"/>
+          <line x1="11" y1="17.8" x2="21" y2="17.8" stroke="#E02020" stroke-width="1.8"/>
+          <circle cx="16" cy="20" r="1.2" fill="#D8D8E0"/>
+        </svg>
+      </div>
+      <div class="icon-card-name">Аудиоплеер</div>
+      <div class="icon-card-desc">Катушечный бобинник с магнитной лентой и прижимным роликом</div>
+    </div>
+
+    <!-- Icon 8: Щиток UVOS -->
+    <div class="icon-card">
+      <div class="icon-card-big">
+        <svg viewBox="0 0 32 32">
+          <path d="M16 4l10 4v8c0 6-10 12-10 12S6 22 6 16V8z" fill="none" stroke="#E02020" stroke-width="2"/>
+          <circle cx="16" cy="15" r="3" fill="#E02020"/>
+          <circle cx="10" cy="10" r="1" fill="#D8D8E0"/>
+          <circle cx="22" cy="10" r="1" fill="#D8D8E0"/>
+        </svg>
+      </div>
+      <div class="icon-card-name">Щиток UVOS</div>
+      <div class="icon-card-desc">Бронированная панель доступа с угловыми винтами и рубином</div>
+    </div>
+
+  </div>
+</section>
+
+<script>
+  function renderAviationVoltmeter(canvasId, options) {
+    const canvas = document.getElementById(canvasId);
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    const w = canvas.width;
+    const h = canvas.height;
+
+    ctx.clearRect(0, 0, w, h);
+
+    const pad = 2;
+    const caseRadius = 24;
+
+    const bodyGrad = ctx.createLinearGradient(0, 0, w, h);
+    bodyGrad.addColorStop(0, '#262832');
+    bodyGrad.addColorStop(0.3, '#191A22');
+    bodyGrad.addColorStop(0.7, '#111218');
+    bodyGrad.addColorStop(1, '#0B0C10');
+
+    ctx.fillStyle = bodyGrad;
+    ctx.beginPath();
+    ctx.roundRect(pad, pad, w - pad * 2, h - pad * 2, caseRadius);
+    ctx.fill();
+
+    ctx.strokeStyle = '#3A3C4C';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+
+    function drawCockpitScrew(cx, cy, r, angleDeg) {
+      ctx.fillStyle = '#06070A';
+      ctx.beginPath();
+      ctx.arc(cx, cy + 0.8, r + 1.2, 0, Math.PI * 2);
+      ctx.fill();
+
+      const screwGrad = ctx.createRadialGradient(cx - r * 0.35, cy - r * 0.35, 0.5, cx, cy, r);
+      screwGrad.addColorStop(0, '#989BA8');
+      screwGrad.addColorStop(0.35, '#565A68');
+      screwGrad.addColorStop(0.75, '#282A34');
+      screwGrad.addColorStop(1, '#15161C');
+      ctx.fillStyle = screwGrad;
+      ctx.beginPath();
+      ctx.arc(cx, cy, r, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.strokeStyle = '#484B5A';
+      ctx.lineWidth = 0.8;
+      ctx.stroke();
+
+      const rad = angleDeg * Math.PI / 180;
+      const dx = r * 0.72 * Math.cos(rad);
+      const dy = r * 0.72 * Math.sin(rad);
+
+      ctx.strokeStyle = '#747788';
+      ctx.lineWidth = 1.6;
+      ctx.beginPath();
+      ctx.moveTo(cx - dx, cy - dy + 0.6);
+      ctx.lineTo(cx + dx, cy + dy + 0.6);
+      ctx.stroke();
+
+      ctx.strokeStyle = '#050608';
+      ctx.lineWidth = 1.3;
+      ctx.beginPath();
+      ctx.moveTo(cx - dx, cy - dy);
+      ctx.lineTo(cx + dx, cy + dy);
+      ctx.stroke();
+    }
+
+    const screwR = 5.0;
+    const screwMargin = 14;
+
+    const trScrewX = w - pad - screwMargin;
+    const trScrewY = pad + screwMargin;
+
+    drawCockpitScrew(pad + screwMargin, pad + screwMargin, screwR, 42);
+    drawCockpitScrew(trScrewX, trScrewY, screwR, 132);
+    drawCockpitScrew(pad + screwMargin, h - pad - screwMargin, screwR, 78);
+    drawCockpitScrew(w - pad - screwMargin, h - pad - screwMargin, screwR, 25);
+
+    const adjX = w / 2;
+    const adjY = h - pad - 12;
+    const adjR = 4.0;
+
+    ctx.fillStyle = '#060609';
+    ctx.beginPath();
+    ctx.arc(adjX, adjY, adjR + 1.5, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = '#22232E';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+    drawCockpitScrew(adjX, adjY, adjR, 0);
+
+    const dialCenterX = w / 2;
+    const dialCenterY = h * 0.46;
+    const dialRadius = Math.min(w, h) * 0.36;
+
+    const bezelGrad = ctx.createLinearGradient(dialCenterX - dialRadius, dialCenterY - dialRadius, dialCenterX + dialRadius, dialCenterY + dialRadius);
+    bezelGrad.addColorStop(0, '#5A5E70');
+    bezelGrad.addColorStop(0.3, '#2A2C38');
+    bezelGrad.addColorStop(0.7, '#161720');
+    bezelGrad.addColorStop(1, '#0C0D12');
+
+    ctx.beginPath();
+    ctx.arc(dialCenterX, dialCenterY, dialRadius + 5.5, 0, Math.PI * 2);
+    ctx.fillStyle = bezelGrad;
+    ctx.fill();
+
+    ctx.beginPath();
+    ctx.arc(dialCenterX, dialCenterY, dialRadius + 3.2, 0, Math.PI * 2);
+    ctx.strokeStyle = '#08080C';
+    ctx.lineWidth = 1.2;
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.arc(dialCenterX, dialCenterY, dialRadius + 1.2, 0, Math.PI * 2);
+    ctx.strokeStyle = '#444758';
+    ctx.lineWidth = 1.0;
+    ctx.stroke();
+
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(dialCenterX, dialCenterY, dialRadius, 0, Math.PI * 2);
+    const dialFaceGrad = ctx.createRadialGradient(dialCenterX, dialCenterY, dialRadius * 0.1, dialCenterX, dialCenterY, dialRadius);
+    dialFaceGrad.addColorStop(0, '#191B22');
+    dialFaceGrad.addColorStop(0.8, '#101116');
+    dialFaceGrad.addColorStop(1, '#08080B');
+    ctx.fillStyle = dialFaceGrad;
+    ctx.fill();
+
+    ctx.strokeStyle = 'rgba(0,0,0,0.6)';
+    ctx.lineWidth = 2.5;
+    ctx.stroke();
+
+    ctx.clip();
+
+    const startAngle = 215 * Math.PI / 180;
+    const sweepAngle = 110 * Math.PI / 180;
+    const endAngle = startAngle + sweepAngle;
+
+    const scaleRadiusOuter = dialRadius * 0.85;
+    const scaleRadiusInner = dialRadius * 0.70;
+
+    const redThreshold = 0.80;
+    const redStartAngle = startAngle + sweepAngle * redThreshold;
+
+    ctx.beginPath();
+    ctx.arc(dialCenterX, dialCenterY, scaleRadiusOuter, startAngle, redStartAngle, false);
+    ctx.strokeStyle = '#F2E8A6';
+    ctx.lineWidth = 1.4;
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.arc(dialCenterX, dialCenterY, scaleRadiusOuter, redStartAngle, endAngle, false);
+    ctx.strokeStyle = '#E02020';
+    ctx.lineWidth = 2.0;
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.arc(dialCenterX, dialCenterY, scaleRadiusInner, startAngle, redStartAngle, false);
+    ctx.strokeStyle = '#F2E8A6';
+    ctx.lineWidth = 1.1;
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.arc(dialCenterX, dialCenterY, scaleRadiusInner, redStartAngle, endAngle, false);
+    ctx.strokeStyle = '#E02020';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+
+    const totalTicks = 20;
+    for (let i = 0; i <= totalTicks; i++) {
+      const frac = i / totalTicks;
+      const a = startAngle + sweepAngle * frac;
+      const isRed = (frac >= redThreshold);
+      const isMajor = (i % 4 === 0);
+
+      const rOuter = scaleRadiusOuter + (isMajor ? 2.5 : 0);
+      const rInner = scaleRadiusInner - (isMajor ? 2.5 : 0);
+
+      ctx.beginPath();
+      ctx.moveTo(dialCenterX + rInner * Math.cos(a), dialCenterY + rInner * Math.sin(a));
+      ctx.lineTo(dialCenterX + rOuter * Math.cos(a), dialCenterY + rOuter * Math.sin(a));
+      ctx.strokeStyle = isRed ? '#E02020' : '#F2E8A6';
+      ctx.lineWidth = isMajor ? 1.8 : 0.9;
+      ctx.stroke();
+    }
+
+    ctx.font = '700 ' + (options.labelSize || '15px') + ' "Oswald", sans-serif';
+    ctx.fillStyle = '#F2E8A6';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(options.paramLabel || 'MEM', dialCenterX, dialCenterY - dialRadius * 0.12);
+
+    const pivotY = dialCenterY + dialRadius * 0.38;
+    const level = Math.max(0, Math.min(1, options.level));
+
+    const targetScaleAngle = startAngle + sweepAngle * level;
+    const targetX = dialCenterX + scaleRadiusOuter * 0.96 * Math.cos(targetScaleAngle);
+    const targetY = dialCenterY + scaleRadiusOuter * 0.96 * Math.sin(targetScaleAngle);
+
+    const needleAngle = Math.atan2(targetY - pivotY, targetX - dialCenterX);
+    const needleLen = Math.hypot(targetX - dialCenterX, targetY - pivotY);
+
+    ctx.save();
+    ctx.translate(dialCenterX, pivotY);
+    ctx.rotate(needleAngle);
+
+    ctx.beginPath();
+    ctx.moveTo(0, -1.8);
+    ctx.lineTo(needleLen, -0.5);
+    ctx.lineTo(needleLen, 0.5);
+    ctx.lineTo(0, 1.8);
+    ctx.closePath();
+    ctx.fillStyle = '#F4EEDA';
+    ctx.fill();
+
+    ctx.beginPath();
+    ctx.moveTo(0, -2);
+    ctx.lineTo(-7, -1.5);
+    ctx.lineTo(-7, 1.5);
+    ctx.lineTo(0, 2);
+    ctx.closePath();
+    ctx.fillStyle = '#383B46';
+    ctx.fill();
+    ctx.restore();
+
+    const maskY = dialCenterY + dialRadius * 0.30;
+    ctx.beginPath();
+    ctx.rect(dialCenterX - dialRadius, maskY, dialRadius * 2, dialRadius * 0.8);
+    const maskGrad = ctx.createLinearGradient(0, maskY, 0, dialCenterY + dialRadius);
+    maskGrad.addColorStop(0, '#1B1D26');
+    maskGrad.addColorStop(0.3, '#101117');
+    maskGrad.addColorStop(1, '#08080C');
+    ctx.fillStyle = maskGrad;
+    ctx.fill();
+
+    ctx.beginPath();
+    ctx.moveTo(dialCenterX - dialRadius, maskY);
+    ctx.lineTo(dialCenterX + dialRadius, maskY);
+    ctx.strokeStyle = '#2F3140';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.arc(dialCenterX, maskY, 6.5, Math.PI, 0, false);
+    ctx.fillStyle = '#0B0C10';
+    ctx.fill();
+    ctx.strokeStyle = '#252734';
+    ctx.lineWidth = 0.8;
+    ctx.stroke();
+
+    ctx.restore();
+
+    const isLampOn = level >= redThreshold;
+    const lampX = w - pad - 32;
+    const lampY = pad + 15;
+    const lampR = 4.0;
+
+    ctx.beginPath();
+    ctx.arc(lampX, lampY, lampR + 1.6, 0, Math.PI * 2);
+    ctx.fillStyle = '#060608';
+    ctx.fill();
+    ctx.strokeStyle = '#343644';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+
+    if (isLampOn) {
+      ctx.beginPath();
+      ctx.arc(lampX, lampY, lampR, 0, Math.PI * 2);
+      ctx.fillStyle = '#FF2424';
+      ctx.fill();
+
+      const glow = ctx.createRadialGradient(lampX, lampY, 1.2, lampX, lampY, 11);
+      glow.addColorStop(0, 'rgba(255, 36, 36, 0.85)');
+      glow.addColorStop(0.5, 'rgba(224, 32, 32, 0.35)');
+      glow.addColorStop(1, 'rgba(224, 32, 32, 0)');
+      ctx.fillStyle = glow;
+      ctx.beginPath();
+      ctx.arc(lampX, lampY, 11, 0, Math.PI * 2);
+      ctx.fill();
+    } else {
+      ctx.beginPath();
+      ctx.arc(lampX, lampY, lampR, 0, Math.PI * 2);
+      ctx.fillStyle = '#260505';
+      ctx.fill();
+      ctx.beginPath();
+      ctx.arc(lampX - 1, lampY - 1, 1, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(255,255,255,0.25)';
+      ctx.fill();
+    }
+  }
+
+  window.addEventListener('DOMContentLoaded', () => {
+    renderAviationVoltmeter('meter-cpu', { paramLabel: 'CPU', labelSize: '15px', level: 0.48 });
+    renderAviationVoltmeter('meter-mem', { paramLabel: 'MEM', labelSize: '15px', level: 0.85 });
+    renderAviationVoltmeter('meter-batt', { paramLabel: 'BATT', labelSize: '15px', level: 0.82 });
+    renderAviationVoltmeter('meter-net', { paramLabel: 'NET', labelSize: '15px', level: 0.35 });
+  });
+</script>
+
+</body>
+</html>
