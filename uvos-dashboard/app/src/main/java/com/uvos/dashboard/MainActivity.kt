@@ -25,7 +25,6 @@ import android.widget.FrameLayout
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
-import android.widget.Toast
 import com.uvos.dashboard.model.ProfileType
 import com.uvos.dashboard.repository.RuleRepositoryImpl
 import java.text.SimpleDateFormat
@@ -249,7 +248,6 @@ class MainActivity : Activity() {
 
         val onGaugeLongClick = View.OnLongClickListener { v ->
             v.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
-            Toast.makeText(this, "Прибор активен. Режим калибровки: авто", Toast.LENGTH_SHORT).show()
             true
         }
         gaugeCpu.setOnLongClickListener(onGaugeLongClick)
@@ -324,9 +322,8 @@ class MainActivity : Activity() {
                     2 -> GaugeWidgetType.SECURITY
                     else -> GaugeWidgetType.RADIO
                 }
-                val item = gaugeWidgetManager.addGauge(type)
+                gaugeWidgetManager.addGauge(type)
                 renderCustomGauges()
-                Toast.makeText(this, "Прибор «${item.title}» добавлен на панель", Toast.LENGTH_SHORT).show()
             }
             .setNegativeButton("Отмена", null)
             .show()
@@ -551,7 +548,6 @@ class MainActivity : Activity() {
                         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                         startActivity(intent)
                     } else {
-                        Toast.makeText(this, "Приложение не найдено", Toast.LENGTH_SHORT).show()
                     }
                 }
             }
@@ -561,12 +557,12 @@ class MainActivity : Activity() {
             "SYSTEM_CAMERA" -> safeStartIntent(Intent(MediaStore.INTENT_ACTION_STILL_IMAGE_CAMERA))
             "SYSTEM_FILES" -> safeStartIntent(Intent(Intent.ACTION_GET_CONTENT).apply { type = "*/*" })
             "SYSTEM_PLAYER" -> safeStartIntent(Intent(Intent.ACTION_MAIN).apply { addCategory(Intent.CATEGORY_APP_MUSIC) })
-            "SYSTEM_CALC" -> Toast.makeText(this, "Калькулятор UVOS", Toast.LENGTH_SHORT).show()
+            "SYSTEM_CALC" -> safeStartIntent(Intent(Intent.ACTION_MAIN).apply { addCategory(Intent.CATEGORY_APP_CALCULATOR) })
             "SYSTEM_SETTINGS" -> safeStartIntent(Intent(Settings.ACTION_SETTINGS))
             "SYSTEM_SHIELD" -> startActivity(Intent(this, ShieldActivity::class.java))
             "SYSTEM_LOG" -> startActivity(Intent(this, LogActivity::class.java))
-            "SYSTEM_OSC" -> Toast.makeText(this, "Осциллограф: мониторинг радиоканалов активен", Toast.LENGTH_SHORT).show()
-            "SYSTEM_TERM" -> Toast.makeText(this, "Терминал UVOS: tty1 готов", Toast.LENGTH_SHORT).show()
+            "SYSTEM_OSC" -> {}
+            "SYSTEM_TERM" -> {}
             "SYSTEM_PACKAGES" -> desktopPager.scrollToPage(2, smooth = true)
         }
     }
@@ -596,7 +592,6 @@ class MainActivity : Activity() {
                     "🗑️ Убрать с рабочего стола" -> {
                         homeManager.clearSlot(slot.slotIndex)
                         renderHomeGrid()
-                        Toast.makeText(this, "Ярлык удален с рабочего стола", Toast.LENGTH_SHORT).show()
                     }
                     "❌ Удалить приложение" -> requestUninstallApp(slot.packageName)
                 }
@@ -644,7 +639,6 @@ class MainActivity : Activity() {
 
                 homeManager.updateSlot(slotIndex, label, pkg, "APP", null)
                 renderHomeGrid()
-                Toast.makeText(this, "Ярлык $label добавлен на стол", Toast.LENGTH_SHORT).show()
             }
             .setNegativeButton("Отмена", null)
             .show()
@@ -664,14 +658,11 @@ class MainActivity : Activity() {
                         val freeIdx = slots.indexOfFirst { it.actionType == "EMPTY" }
                         if (freeIdx != -1) {
                             showAppChooserForSlot(freeIdx)
-                        } else {
-                            Toast.makeText(this, "Все 16 слотов рабочего стола заняты", Toast.LENGTH_SHORT).show()
                         }
                     }
                     1 -> {
                         homeManager.resetToDefaults()
                         renderHomeGrid()
-                        Toast.makeText(this, "Иконки сброшены к стандартным", Toast.LENGTH_SHORT).show()
                     }
                 }
             }
@@ -688,7 +679,6 @@ class MainActivity : Activity() {
             }
             startActivity(intent)
         } catch (e: Exception) {
-            Toast.makeText(this, "Не удалось открыть настройки приложения", Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -796,10 +786,7 @@ class MainActivity : Activity() {
                                 val slotIdx = homeManager.addAppToFirstFreeSlot(app.packageName, app.appName)
                                 if (slotIdx != -1) {
                                     renderHomeGrid()
-                                    Toast.makeText(this, "«${app.appName}» добавлено на рабочий стол", Toast.LENGTH_SHORT).show()
                                     desktopPager.scrollToPage(1, smooth = true)
-                                } else {
-                                    Toast.makeText(this, "Все слоты заняты! Удалите лишний ярлык на столе", Toast.LENGTH_LONG).show()
                                 }
                             }
                             1 -> openAppDetails(app.packageName)
@@ -875,7 +862,6 @@ class MainActivity : Activity() {
         btnKillAllServices.setOnClickListener {
             processList.removeAll { !it.pkg.contains("uvos.system") }
             renderProcessList { true }
-            Toast.makeText(this, "Все фоновые службы усыплены. Освобождено 1.5 ГБ ОЗУ.", Toast.LENGTH_LONG).show()
         }
 
         renderProcessList { true }
@@ -922,7 +908,6 @@ class MainActivity : Activity() {
             stopBtn.setOnClickListener {
                 processList.remove(proc)
                 renderProcessList(predicate)
-                Toast.makeText(this, "Служба ${proc.name} принудительно остановлена", Toast.LENGTH_SHORT).show()
             }
 
             managerProcessContainer.addView(row)
@@ -969,8 +954,7 @@ class MainActivity : Activity() {
         try {
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             startActivity(intent)
-        } catch (e: Exception) {
-            Toast.makeText(this, "Приложение недоступно: ${e.message}", Toast.LENGTH_SHORT).show()
+        } catch (_: Exception) {
         }
     }
 
