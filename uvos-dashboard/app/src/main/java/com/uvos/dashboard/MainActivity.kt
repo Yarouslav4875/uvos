@@ -1,6 +1,7 @@
 package com.uvos.dashboard
 
 import android.app.Activity
+import android.app.AlertDialog
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
@@ -12,8 +13,11 @@ import android.os.BatteryManager
 import android.os.Bundle
 import android.provider.MediaStore
 import android.provider.Settings
+import android.view.HapticFeedbackConstants
 import android.view.View
 import android.widget.Button
+import android.widget.EditText
+import android.widget.FrameLayout
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
@@ -28,7 +32,7 @@ import java.util.Locale
  * UVOS Dashboard - главная приборная панель и домашняя оболочка системы (Launcher).
  * Реализует все 4 рабочих стола UnderVoltOS:
  * - СТОЛ 01: ПРИБОРНЫЙ СТОЛ (ЩИТ / DASHBOARD - 4 ВОЛЬТМЕТРА 2x2)
- * - СТОЛ 02: ДОМАШНИЙ ЭКРАН (ДОМ / HOME - ЧАСЫ, СЕТКА 4x4 ИКОНОК, ДОК)
+ * - СТОЛ 02: ДОМАШНИЙ ЭКРАН (ДОМ / HOME - ЧАСЫ, СЕТКА 4x4 ИКОНОК, ДОК С РЕДАКТИРОВАНИЕМ)
  * - СТОЛ 03: МЕНЮ ПРИЛОЖЕНИЙ (МЕНЮ / DRAWER - ЗАКРЫТАЯ ТЕРРИТОРИЯ)
  * - СТОЛ 04: МЕНЕДЖЕР ПРОЦЕССОВ (ПРОЦЕССЫ / PROCESS MANAGER)
  */
@@ -62,6 +66,11 @@ class MainActivity : Activity() {
     // Стол 02: Home Clock & Grid
     private lateinit var homeClockTime: TextView
     private lateinit var homeClockDate: TextView
+    private lateinit var homeManager: HomeManager
+    private lateinit var homeRow1: LinearLayout
+    private lateinit var homeRow2: LinearLayout
+    private lateinit var homeRow3: LinearLayout
+    private lateinit var homeRow4: LinearLayout
 
     // Стол 03: App Drawer
     private lateinit var drawerAppsContainer: LinearLayout
@@ -92,6 +101,7 @@ class MainActivity : Activity() {
         setContentView(R.layout.activity_main)
 
         repository = RuleRepositoryImpl.getInstance(this)
+        homeManager = HomeManager(this)
 
         initTopBarAndPager()
         initDesktop1Dashboard()
@@ -109,6 +119,7 @@ class MainActivity : Activity() {
         registerReceiver(batteryReceiver, IntentFilter(Intent.ACTION_BATTERY_CHANGED))
         registerReceiver(timeTickReceiver, IntentFilter(Intent.ACTION_TIME_TICK))
         updateDailyLogStats()
+        renderHomeGrid()
         renderDrawerApps()
         updateClock()
     }
@@ -121,6 +132,7 @@ class MainActivity : Activity() {
 
     override fun onNewIntent(intent: Intent?) {
         super.onNewIntent(intent)
+        renderHomeGrid()
         renderDrawerApps()
     }
 
@@ -196,19 +208,16 @@ class MainActivity : Activity() {
         logLampDot = findViewById(R.id.log_lamp_dot)
         logBlockedText = findViewById(R.id.log_blocked_text)
 
-        // Установка значений вольтметров по эталону презентации
+        // Значения вольтметров
         gaugeCpu.setLevel(0.42f, "42%")
         valCpuBadge?.text = "42% • 8 ЯДЕР"
 
-        // ОЗУ находится в красной тревожной зоне (84%)
         gaugeMem.setLevel(0.84f, "84%")
         valMemBadge?.text = "84% • КРИТИЧ."
 
-        // Сеть 18%
         gaugeNet.setLevel(0.18f, "18%")
         valNetBadge?.text = "18% • 1.4 МБ/с"
 
-        // Селектор профилей
         val profileNames = listOf(
             getString(R.string.profile_sterile),
             getString(R.string.profile_comm),
@@ -234,134 +243,298 @@ class MainActivity : Activity() {
             renderDrawerApps()
         }
 
-        // Журнал
         logCard.setOnClickListener {
             startActivity(Intent(this, LogActivity::class.java))
         }
 
-        // Щиток доступа
         findViewById<Button>(R.id.open_shield).setOnClickListener {
             startActivity(Intent(this, ShieldActivity::class.java))
         }
     }
 
     // =========================================================================
-    // СТОЛ 02: ДОМАШНИЙ ЭКРАН (HOME)
+    // СТОЛ 02: ДОМАШНИЙ ЭКРАН (HOME) С РЕДАКТИРОВАНИЕМ ИКОНОК
     // =========================================================================
 
     private fun initDesktop2Home() {
         homeClockTime = findViewById(R.id.home_clock_time)
         homeClockDate = findViewById(R.id.home_clock_date)
 
+        homeRow1 = findViewById(R.id.home_row_1)
+        homeRow2 = findViewById(R.id.home_row_2)
+        homeRow3 = findViewById(R.id.home_row_3)
+        homeRow4 = findViewById(R.id.home_row_4)
+
+        // Долгий тап по часам/дате открывает общее меню настройки стола
+        val openHomeSettings = View.OnLongClickListener { v ->
+            v.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
+            showHomeSettingsDialog()
+            true
+        }
+        homeClockTime.setOnLongClickListener(openHomeSettings)
+        homeClockDate.setOnLongClickListener(openHomeSettings)
+
+        renderHomeGrid()
+    }
+
+    private fun renderHomeGrid() {
+        homeRow1.removeAllViews()
+        homeRow2.removeAllViews()
+        homeRow3.removeAllViews()
+        homeRow4.removeAllViews()
+
         val pm = packageManager
+        val slots = homeManager.getSlots()
 
-        // Системные иконки UVOS
-        findViewById<View>(R.id.app_phone).setOnClickListener {
-            safeStartIntent(Intent(Intent.ACTION_DIAL))
-        }
-        findViewById<View>(R.id.app_messages).setOnClickListener {
-            val intent = Intent(Intent.ACTION_MAIN).apply {
-                addCategory(Intent.CATEGORY_APP_MESSAGING)
+        slots.forEach { slot ->
+            val targetRow = when (slot.slotIndex / 4) {
+                0 -> homeRow1
+                1 -> homeRow2
+                2 -> homeRow3
+                else -> homeRow4
             }
-            safeStartIntent(intent)
-        }
-        findViewById<View>(R.id.app_radar).setOnClickListener {
-            val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://google.com"))
-            safeStartIntent(intent)
-        }
-        findViewById<View>(R.id.app_camera).setOnClickListener {
-            safeStartIntent(Intent(MediaStore.INTENT_ACTION_STILL_IMAGE_CAMERA))
-        }
-        findViewById<View>(R.id.app_files).setOnClickListener {
-            val intent = Intent(Intent.ACTION_GET_CONTENT).apply {
-                type = "*/*"
+
+            val itemView = layoutInflater.inflate(R.layout.item_home_slot, targetRow, false)
+            val iconView = itemView.findViewById<ImageView>(R.id.slot_icon)
+            val emptyBadge = itemView.findViewById<TextView>(R.id.slot_empty_badge)
+            val labelView = itemView.findViewById<TextView>(R.id.slot_label)
+
+            labelView.text = slot.title
+
+            if (slot.actionType == "EMPTY") {
+                iconView.visibility = View.GONE
+                emptyBadge.visibility = View.VISIBLE
+                labelView.setTextColor(Color.parseColor("#71768E"))
+
+                itemView.setOnClickListener {
+                    showAppChooserForSlot(slot.slotIndex)
+                }
+                itemView.setOnLongClickListener {
+                    it.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
+                    showAppChooserForSlot(slot.slotIndex)
+                    true
+                }
+            } else {
+                iconView.visibility = View.VISIBLE
+                emptyBadge.visibility = View.GONE
+                labelView.setTextColor(Color.parseColor("#E2E4EC"))
+
+                // Загрузка значка
+                if (slot.actionType == "APP" && slot.packageName != null) {
+                    try {
+                        val icon = pm.getApplicationIcon(slot.packageName!!)
+                        iconView.setImageDrawable(icon)
+                        iconView.setPadding(0, 0, 0, 0)
+                        iconView.setBackgroundColor(Color.TRANSPARENT)
+                    } catch (_: Exception) {
+                        iconView.setImageResource(android.R.drawable.sym_def_app_icon)
+                        iconView.setBackgroundResource(R.drawable.bg_tile_clickable)
+                        iconView.setPadding(24, 24, 24, 24)
+                    }
+                } else {
+                    val resId = getSystemIconRes(slot.iconResName)
+                    iconView.setImageResource(resId)
+                    iconView.setBackgroundResource(R.drawable.bg_tile_clickable)
+                    iconView.setPadding(26, 26, 26, 26)
+                }
+
+                // Клик - запуск
+                itemView.setOnClickListener {
+                    handleSlotClick(slot)
+                }
+
+                // Долгий тап - меню редактирования как на обычном Android
+                itemView.setOnLongClickListener {
+                    it.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
+                    showSlotOptionsDialog(slot)
+                    true
+                }
             }
-            safeStartIntent(intent)
-        }
-        findViewById<View>(R.id.app_player).setOnClickListener {
-            val intent = Intent(Intent.ACTION_MAIN).apply {
-                addCategory(Intent.CATEGORY_APP_MUSIC)
-            }
-            safeStartIntent(intent)
-        }
-        findViewById<View>(R.id.app_calc).setOnClickListener {
-            Toast.makeText(this, "Калькулятор UVOS", Toast.LENGTH_SHORT).show()
-        }
-        findViewById<View>(R.id.app_settings).setOnClickListener {
-            safeStartIntent(Intent(Settings.ACTION_SETTINGS))
-        }
 
-        // Нативные приложения с их подлинными значками
-        setupNativeAppSlot(
-            layoutId = R.id.home_app_tg,
-            iconId = R.id.home_icon_tg,
-            possiblePackages = listOf("org.telegram.messenger", "org.thunderdog.challegram", "org.telegram.plus"),
-            fallbackAction = { Toast.makeText(this, "Telegram не установлен", Toast.LENGTH_SHORT).show() }
-        )
-
-        setupNativeAppSlot(
-            layoutId = R.id.home_app_maps,
-            iconId = R.id.home_icon_maps,
-            possiblePackages = listOf("ru.yandex.yandexnavi", "ru.yandex.yandexmaps", "com.google.android.apps.maps"),
-            fallbackAction = { Toast.makeText(this, "Карты не установлены", Toast.LENGTH_SHORT).show() }
-        )
-
-        setupNativeAppSlot(
-            layoutId = R.id.home_app_bank,
-            iconId = R.id.home_icon_bank,
-            possiblePackages = listOf("ru.sberbankmobile", "com.idamob.tinkoff.android", "ru.vtb24.mobilebanking"),
-            fallbackAction = { Toast.makeText(this, "Банк не установлен", Toast.LENGTH_SHORT).show() }
-        )
-
-        // Инженерный блок
-        findViewById<View>(R.id.home_app_shield).setOnClickListener {
-            startActivity(Intent(this, ShieldActivity::class.java))
-        }
-        findViewById<View>(R.id.home_app_log).setOnClickListener {
-            startActivity(Intent(this, LogActivity::class.java))
-        }
-        findViewById<View>(R.id.home_app_osc).setOnClickListener {
-            Toast.makeText(this, "Осциллограф: мониторинг радиоканалов активен", Toast.LENGTH_SHORT).show()
-        }
-        findViewById<View>(R.id.home_app_term).setOnClickListener {
-            Toast.makeText(this, "Терминал UVOS: tty1 готов", Toast.LENGTH_SHORT).show()
-        }
-        findViewById<View>(R.id.home_app_packages).setOnClickListener {
-            // Переход на Стол 03 (Пакеты / Меню)
-            desktopPager.scrollToPage(2, smooth = true)
+            targetRow.addView(itemView)
         }
     }
 
-    private fun setupNativeAppSlot(
-        layoutId: Int,
-        iconId: Int,
-        possiblePackages: List<String>,
-        fallbackAction: () -> Unit
-    ) {
-        val layout = findViewById<View>(layoutId)
-        val iconView = findViewById<ImageView>(iconId)
-        val pm = packageManager
-
-        var foundPkg: String? = null
-        for (pkg in possiblePackages) {
-            try {
-                val appInfo = pm.getApplicationInfo(pkg, 0)
-                iconView.setImageDrawable(pm.getApplicationIcon(appInfo))
-                foundPkg = pkg
-                break
-            } catch (_: Exception) {
-            }
+    private fun getSystemIconRes(iconName: String?): Int {
+        return when (iconName) {
+            "ic_sys_phone" -> R.drawable.ic_sys_phone
+            "ic_sys_messages" -> R.drawable.ic_sys_messages
+            "ic_sys_radar" -> R.drawable.ic_sys_radar
+            "ic_sys_camera" -> R.drawable.ic_sys_camera
+            "ic_sys_files" -> R.drawable.ic_sys_files
+            "ic_sys_player" -> R.drawable.ic_sys_player
+            "ic_sys_calc" -> R.drawable.ic_sys_calc
+            "ic_sys_settings" -> R.drawable.ic_sys_settings
+            "ic_sys_shield" -> R.drawable.ic_sys_shield
+            "ic_sys_oscilloscope" -> R.drawable.ic_sys_oscilloscope
+            "ic_sys_terminal" -> R.drawable.ic_sys_terminal
+            "ic_sys_packages" -> R.drawable.ic_sys_packages
+            else -> R.drawable.ic_sys_shield
         }
+    }
 
-        layout.setOnClickListener {
-            if (foundPkg != null) {
-                val launchIntent = pm.getLaunchIntentForPackage(foundPkg)
-                if (launchIntent != null) {
-                    startActivity(launchIntent)
-                    return@setOnClickListener
+    private fun handleSlotClick(slot: HomeSlotItem) {
+        val pm = packageManager
+        when (slot.actionType) {
+            "APP" -> {
+                if (slot.packageName != null) {
+                    val intent = pm.getLaunchIntentForPackage(slot.packageName!!)
+                    if (intent != null) {
+                        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                        startActivity(intent)
+                    } else {
+                        Toast.makeText(this, "Приложение не найдено", Toast.LENGTH_SHORT).show()
+                    }
                 }
             }
-            fallbackAction()
+            "SYSTEM_PHONE" -> safeStartIntent(Intent(Intent.ACTION_DIAL))
+            "SYSTEM_MESSAGES" -> safeStartIntent(Intent(Intent.ACTION_MAIN).apply { addCategory(Intent.CATEGORY_APP_MESSAGING) })
+            "SYSTEM_RADAR" -> safeStartIntent(Intent(Intent.ACTION_VIEW, Uri.parse("https://google.com")))
+            "SYSTEM_CAMERA" -> safeStartIntent(Intent(MediaStore.INTENT_ACTION_STILL_IMAGE_CAMERA))
+            "SYSTEM_FILES" -> safeStartIntent(Intent(Intent.ACTION_GET_CONTENT).apply { type = "*/*" })
+            "SYSTEM_PLAYER" -> safeStartIntent(Intent(Intent.ACTION_MAIN).apply { addCategory(Intent.CATEGORY_APP_MUSIC) })
+            "SYSTEM_CALC" -> Toast.makeText(this, "Калькулятор UVOS", Toast.LENGTH_SHORT).show()
+            "SYSTEM_SETTINGS" -> safeStartIntent(Intent(Settings.ACTION_SETTINGS))
+            "SYSTEM_SHIELD" -> startActivity(Intent(this, ShieldActivity::class.java))
+            "SYSTEM_LOG" -> startActivity(Intent(this, LogActivity::class.java))
+            "SYSTEM_OSC" -> Toast.makeText(this, "Осциллограф: мониторинг радиоканалов активен", Toast.LENGTH_SHORT).show()
+            "SYSTEM_TERM" -> Toast.makeText(this, "Терминал UVOS: tty1 готов", Toast.LENGTH_SHORT).show()
+            "SYSTEM_PACKAGES" -> desktopPager.scrollToPage(2, smooth = true)
+        }
+    }
+
+    /**
+     * Контекстное меню редактирования иконки (как на обычном Android Launcher)
+     */
+    private fun showSlotOptionsDialog(slot: HomeSlotItem) {
+        val options = mutableListOf<String>()
+        options.add("✏️ Переименовать ярлык")
+        options.add("🔄 Заменить приложение")
+        if (slot.actionType == "APP" && slot.packageName != null) {
+            options.add("ℹ️ О приложении")
+        }
+        options.add("🗑️ Убрать с рабочего стола")
+        if (slot.actionType == "APP" && slot.packageName != null) {
+            options.add("❌ Удалить приложение")
+        }
+
+        AlertDialog.Builder(this)
+            .setTitle(slot.title)
+            .setItems(options.toTypedArray()) { _, which ->
+                when (options[which]) {
+                    "✏️ Переименовать ярлык" -> showRenameDialog(slot)
+                    "🔄 Заменить приложение" -> showAppChooserForSlot(slot.slotIndex)
+                    "ℹ️ О приложении" -> openAppDetails(slot.packageName)
+                    "🗑️ Убрать с рабочего стола" -> {
+                        homeManager.clearSlot(slot.slotIndex)
+                        renderHomeGrid()
+                        Toast.makeText(this, "Ярлык удален с рабочего стола", Toast.LENGTH_SHORT).show()
+                    }
+                    "❌ Удалить приложение" -> requestUninstallApp(slot.packageName)
+                }
+            }
+            .setNegativeButton("Отмена", null)
+            .show()
+    }
+
+    private fun showRenameDialog(slot: HomeSlotItem) {
+        val input = EditText(this)
+        input.setText(slot.title)
+        input.setSelection(slot.title.length)
+
+        AlertDialog.Builder(this)
+            .setTitle("Переименовать ярлык")
+            .setView(input)
+            .setPositiveButton("Сохранить") { _, _ ->
+                val newName = input.text.toString().trim()
+                if (newName.isNotEmpty()) {
+                    slot.title = newName
+                    homeManager.updateSlot(slot.slotIndex, newName, slot.packageName, slot.actionType, slot.iconResName)
+                    renderHomeGrid()
+                }
+            }
+            .setNegativeButton("Отмена", null)
+            .show()
+    }
+
+    private fun showAppChooserForSlot(slotIndex: Int) {
+        val pm = packageManager
+        val intent = Intent(Intent.ACTION_MAIN, null).apply {
+            addCategory(Intent.CATEGORY_LAUNCHER)
+        }
+        val resolveList = pm.queryIntentActivities(intent, 0)
+        resolveList.sortBy { it.loadLabel(pm).toString().lowercase(Locale.getDefault()) }
+
+        val labels = resolveList.map { it.loadLabel(pm).toString() }.toTypedArray()
+
+        AlertDialog.Builder(this)
+            .setTitle("Выберите приложение для слота")
+            .setItems(labels) { _, which ->
+                val selected = resolveList[which]
+                val pkg = selected.activityInfo.packageName
+                val label = selected.loadLabel(pm).toString()
+
+                homeManager.updateSlot(slotIndex, label, pkg, "APP", null)
+                renderHomeGrid()
+                Toast.makeText(this, "Ярлык $label добавлен на стол", Toast.LENGTH_SHORT).show()
+            }
+            .setNegativeButton("Отмена", null)
+            .show()
+    }
+
+    private fun showHomeSettingsDialog() {
+        val options = arrayOf(
+            "➕ Добавить ярлык в свободный слот",
+            "🔄 Восстановить стандартные иконки UVOS"
+        )
+        AlertDialog.Builder(this)
+            .setTitle("Настройка рабочего стола")
+            .setItems(options) { _, which ->
+                when (which) {
+                    0 -> {
+                        val slots = homeManager.getSlots()
+                        val freeIdx = slots.indexOfFirst { it.actionType == "EMPTY" }
+                        if (freeIdx != -1) {
+                            showAppChooserForSlot(freeIdx)
+                        } else {
+                            Toast.makeText(this, "Все 16 слотов рабочего стола заняты", Toast.LENGTH_SHORT).show()
+                        }
+                    }
+                    1 -> {
+                        homeManager.resetToDefaults()
+                        renderHomeGrid()
+                        Toast.makeText(this, "Иконки сброшены к стандартным", Toast.LENGTH_SHORT).show()
+                    }
+                }
+            }
+            .setNegativeButton("Закрыть", null)
+            .show()
+    }
+
+    private fun openAppDetails(packageName: String?) {
+        if (packageName == null) return
+        try {
+            val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                data = Uri.parse("package:$packageName")
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            }
+            startActivity(intent)
+        } catch (e: Exception) {
+            Toast.makeText(this, "Не удалось открыть настройки приложения", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    private fun requestUninstallApp(packageName: String?) {
+        if (packageName == null) return
+        try {
+            val intent = Intent(Intent.ACTION_UNINSTALL_PACKAGE).apply {
+                data = Uri.parse("package:$packageName")
+                putExtra(Intent.EXTRA_RETURN_RESULT, true)
+            }
+            startActivity(intent)
+        } catch (_: Exception) {
+            val intent = Intent(Intent.ACTION_DELETE, Uri.parse("package:$packageName"))
+            startActivity(intent)
         }
     }
 
@@ -390,7 +563,6 @@ class MainActivity : Activity() {
             titleView.text = app.appName
             pkgView.text = app.packageName
 
-            // Загрузка настоящей системной иконки приложения
             try {
                 val icon = pm.getApplicationIcon(app.packageName)
                 iconView.setImageDrawable(icon)
@@ -398,7 +570,6 @@ class MainActivity : Activity() {
                 iconView.setImageResource(android.R.drawable.sym_def_app_icon)
             }
 
-            // Бейджи безопасности UnderVoltOS
             val openCount = app.openChannelsCount
             val isSystem = try {
                 val ai = pm.getApplicationInfo(app.packageName, 0)
@@ -430,7 +601,7 @@ class MainActivity : Activity() {
                 }
             }
 
-            // Нажатие запускает приложение
+            // Нажатие - запуск приложения
             row.setOnClickListener {
                 val launchIntent = pm.getLaunchIntentForPackage(app.packageName)
                 if (launchIntent != null) {
@@ -439,6 +610,37 @@ class MainActivity : Activity() {
                 } else {
                     openAppShield(app.packageName)
                 }
+            }
+
+            // Долгий тап в Drawer - меню добавления на рабочий стол как на обычном Android!
+            row.setOnLongClickListener {
+                it.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
+                val options = arrayOf(
+                    "➕ Добавить на рабочий стол",
+                    "ℹ️ О приложении",
+                    "❌ Удалить приложение"
+                )
+                AlertDialog.Builder(this)
+                    .setTitle(app.appName)
+                    .setItems(options) { _, which ->
+                        when (which) {
+                            0 -> {
+                                val slotIdx = homeManager.addAppToFirstFreeSlot(app.packageName, app.appName)
+                                if (slotIdx != -1) {
+                                    renderHomeGrid()
+                                    Toast.makeText(this, "«${app.appName}» добавлено на рабочий стол", Toast.LENGTH_SHORT).show()
+                                    desktopPager.scrollToPage(1, smooth = true)
+                                } else {
+                                    Toast.makeText(this, "Все слоты заняты! Удалите лишний ярлык на столе", Toast.LENGTH_LONG).show()
+                                }
+                            }
+                            1 -> openAppDetails(app.packageName)
+                            2 -> requestUninstallApp(app.packageName)
+                        }
+                    }
+                    .setNegativeButton("Отмена", null)
+                    .show()
+                true
             }
 
             // Щиток каналов приложения
@@ -578,7 +780,6 @@ class MainActivity : Activity() {
             safeStartIntent(intent)
         }
         findViewById<View>(R.id.dock_shield).setOnClickListener {
-            // Переключает на Стол 01 (Щит)
             desktopPager.scrollToPage(0, smooth = true)
         }
     }
