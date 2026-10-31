@@ -3,8 +3,9 @@
 
     <!-- Системная оболочка (Launcher): опрос и запуск установленных приложений -->
     <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES" />
-    <!-- Тактильный отклик для аналогового лимба сейфа -->
-    <uses-permission android:name="android.permission.VIBRATE" />
+    <uses-permission android:name="android.permission.BLUETOOTH" android:maxSdkVersion="30" />
+    <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" android:maxSdkVersion="30" />
+    <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
 
     <application
         android:label="@string/app_name"
