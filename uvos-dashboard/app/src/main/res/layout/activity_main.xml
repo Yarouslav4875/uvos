@@ -28,17 +28,16 @@
             android:letterSpacing="0.06"
             android:fontFamily="monospace" />
 
+        <View
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:layout_weight="1" />
+
         <TextView
             android:id="@+id/top_bar_center"
-            android:layout_width="0dp"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:gravity="center"
-            android:text="СТОЛ 01 • ЩИТ"
-            android:textColor="@color/uvos_text"
-            android:textSize="11sp"
-            android:letterSpacing="0.08"
-            android:textStyle="bold" />
+            android:visibility="gone" />
 
         <TextView
             android:id="@+id/top_bar_battery"
