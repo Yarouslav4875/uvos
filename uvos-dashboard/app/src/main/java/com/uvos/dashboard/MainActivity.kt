@@ -410,13 +410,6 @@ class MainActivity : Activity() {
         homeRow4 = findViewById(R.id.home_row_4)
 
         batteryQuadWidget = findViewById(R.id.battery_quad_widget)
-        batteryQuadWidget?.onSlotClickListener = { slotIdx, slot ->
-            if (slot.isConnected) {
-                Toast.makeText(this, "${slot.deviceName}: заряд ${slot.percent}%, активен", Toast.LENGTH_SHORT).show()
-            } else {
-                Toast.makeText(this, "${slot.deviceName}: устройство отключено (поиск Bluetooth...)", Toast.LENGTH_SHORT).show()
-            }
-        }
 
         bluetoothDeviceManager = BluetoothDeviceManager(this).apply {
             onDevicesChangedListener = { devices ->
