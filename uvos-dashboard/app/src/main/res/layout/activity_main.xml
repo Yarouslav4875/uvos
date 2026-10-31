@@ -411,6 +411,45 @@
                             android:fontFamily="monospace" />
                     </LinearLayout>
 
+                    <!-- БАТАРЕЙНЫЙ ВИДЖЕТ М4200 MICRO (4x1) ИЗ uvos_battery_widget.html -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:layout_marginBottom="6dp"
+                        android:paddingStart="4dp"
+                        android:paddingEnd="4dp">
+
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="ЩИТОК ПИТАНИЯ (АКСЕССУАРЫ)"
+                            android:textColor="@color/uvos_text_dim"
+                            android:textSize="10sp"
+                            android:letterSpacing="0.08"
+                            android:fontFamily="sans-serif-condensed"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:id="@+id/battery_widget_header_status"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="БЛЮТУЗ МОНИТОР"
+                            android:textColor="@color/uvos_text_dim"
+                            android:textSize="9.5sp"
+                            android:letterSpacing="0.06"
+                            android:fontFamily="monospace"
+                            android:textStyle="bold" />
+                    </LinearLayout>
+
+                    <com.uvos.dashboard.BatteryQuadWidgetView
+                        android:id="@+id/battery_quad_widget"
+                        android:layout_width="match_parent"
+                        android:layout_height="118dp"
+                        android:layout_marginBottom="14dp" />
+
                     <!-- СЕТКА ИКОНОК 4x4 (ДИНАМИЧЕСКИЙ РАБОЧИЙ СТОЛ С ПОДДЕРЖКОЙ РЕДАКТИРОВАНИЯ) -->
                     <LinearLayout
                         android:id="@+id/home_grid_container"

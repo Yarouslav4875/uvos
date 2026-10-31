@@ -224,10 +224,11 @@ class GaugeView @JvmOverloads constructor(
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
         val defaultSize = (160f * density).toInt()
         val w = resolveSize(defaultSize, widthMeasureSpec)
-        val h = resolveSize(defaultSize, heightMeasureSpec)
-        // Для квадратных вольтметров виджета 2x2 поддерживаем баланс
-        val finalSize = if (MeasureSpec.getMode(heightMeasureSpec) == MeasureSpec.UNSPECIFIED) w else h
-        setMeasuredDimension(w, finalSize)
+        val modeH = MeasureSpec.getMode(heightMeasureSpec)
+        val h = MeasureSpec.getSize(heightMeasureSpec)
+        // Строго квадратные пропорции 1:1 для приборов 2x2 кокпита (uvos_ui_presentation.html)
+        val finalSize = if (modeH == MeasureSpec.EXACTLY && h > 0) min(w, h) else w
+        setMeasuredDimension(finalSize, finalSize)
     }
 
     /** Винт корпуса со шлицем под минусовую отвёртку */

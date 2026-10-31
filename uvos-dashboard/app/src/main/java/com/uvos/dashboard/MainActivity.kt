@@ -1,6 +1,8 @@
 package com.uvos.dashboard
 
 import android.app.Activity
+import android.Manifest
+import android.content.pm.PackageManager
 import android.app.AlertDialog
 import android.content.BroadcastReceiver
 import android.content.Context
@@ -11,6 +13,7 @@ import android.content.pm.ApplicationInfo
 import android.graphics.Color
 import android.net.Uri
 import android.os.BatteryManager
+import android.os.Build
 import android.os.Bundle
 import android.provider.MediaStore
 import android.provider.Settings
@@ -68,6 +71,9 @@ class MainActivity : Activity() {
     private lateinit var btnAddGaugeWidget: View
 
     // Стол 02: Home Clock & Grid
+    private var batteryQuadWidget: BatteryQuadWidgetView? = null
+    private var batteryWidgetHeaderStatus: TextView? = null
+    private var bluetoothDeviceManager: BluetoothDeviceManager? = null
     private lateinit var homeClockTime: TextView
     private lateinit var homeClockDate: TextView
     private lateinit var homeManager: HomeManager
@@ -127,12 +133,15 @@ class MainActivity : Activity() {
         renderHomeGrid()
         renderDrawerApps()
         updateClock()
+        checkBluetoothPermission()
+        bluetoothDeviceManager?.start()
     }
 
     override fun onPause() {
         super.onPause()
         unregisterReceiver(batteryReceiver)
         unregisterReceiver(timeTickReceiver)
+        bluetoothDeviceManager?.stop()
     }
 
     override fun onNewIntent(intent: Intent?) {
@@ -171,11 +180,22 @@ class MainActivity : Activity() {
         )
 
         fun updatePageIndicators(page: Int) {
-            // topBarCenter.text = "" (подпись стола отключена по запросу)
-            dotPage1.setBackgroundResource(if (page == 0) R.drawable.bg_dot_active else R.drawable.bg_dot_inactive)
-            dotPage2.setBackgroundResource(if (page == 1) R.drawable.bg_dot_active else R.drawable.bg_dot_inactive)
-            dotPage3.setBackgroundResource(if (page == 2) R.drawable.bg_dot_active else R.drawable.bg_dot_inactive)
-            dotPage4.setBackgroundResource(if (page == 3) R.drawable.bg_dot_active else R.drawable.bg_dot_inactive)
+            val dots = listOf(dotPage1, dotPage2, dotPage3, dotPage4)
+            val density = resources.displayMetrics.density
+            val activeW = (18f * density).toInt()
+            val inactiveW = (6f * density).toInt()
+            val dotH = (6f * density).toInt()
+
+            dots.forEachIndexed { index, dot ->
+                val isActive = (index == page)
+                dot.setBackgroundResource(if (isActive) R.drawable.bg_dot_active else R.drawable.bg_dot_inactive)
+                val lp = dot.layoutParams
+                if (lp != null) {
+                    lp.width = if (isActive) activeW else inactiveW
+                    lp.height = dotH
+                    dot.layoutParams = lp
+                }
+            }
         }
 
         desktopPager.onPageSelectedListener = { page ->
@@ -192,8 +212,11 @@ class MainActivity : Activity() {
         dotPage3.setOnClickListener { desktopPager.scrollToPage(2) }
         dotPage4.setOnClickListener { desktopPager.scrollToPage(3) }
 
-        // Стартовое состояние - Стол 01 (Щит)
-        updatePageIndicators(0)
+        // Стартовое состояние - Стол 02 (Главный домашний экран с виджетами)
+        desktopPager.post {
+            desktopPager.scrollToPage(1, smooth = false)
+            updatePageIndicators(1)
+        }
     }
 
     // =========================================================================
@@ -381,6 +404,31 @@ class MainActivity : Activity() {
         homeRow2 = findViewById(R.id.home_row_2)
         homeRow3 = findViewById(R.id.home_row_3)
         homeRow4 = findViewById(R.id.home_row_4)
+
+        batteryWidgetHeaderStatus = findViewById(R.id.battery_widget_header_status)
+        batteryQuadWidget = findViewById(R.id.battery_quad_widget)
+        batteryQuadWidget?.onSlotClickListener = { slotIdx, slot ->
+            if (slot.isConnected) {
+                Toast.makeText(this, "${slot.deviceName}: заряд ${slot.percent}%, активен", Toast.LENGTH_SHORT).show()
+            } else {
+                Toast.makeText(this, "${slot.deviceName}: устройство отключено (поиск Bluetooth...)", Toast.LENGTH_SHORT).show()
+            }
+        }
+
+        bluetoothDeviceManager = BluetoothDeviceManager(this).apply {
+            onDevicesChangedListener = { devices ->
+                runOnUiThread {
+                    batteryQuadWidget?.setConnectedBluetoothDevices(devices)
+                    if (devices.isEmpty()) {
+                        batteryWidgetHeaderStatus?.text = "БЛЮТУЗ МОНИТОР"
+                        batteryWidgetHeaderStatus?.setTextColor(Color.parseColor("#71768E"))
+                    } else {
+                        batteryWidgetHeaderStatus?.text = "ПОДКЛЮЧЕНО: ${devices.size}"
+                        batteryWidgetHeaderStatus?.setTextColor(Color.parseColor("#44CC66"))
+                    }
+                }
+            }
+        }
 
         // Долгий тап по часам/дате открывает общее меню настройки стола
         val openHomeSettings = View.OnLongClickListener { v ->
@@ -964,6 +1012,14 @@ class MainActivity : Activity() {
     private fun batteryIntent(): Intent? =
         registerReceiver(null, IntentFilter(Intent.ACTION_BATTERY_CHANGED))
 
+    private fun checkBluetoothPermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            if (checkSelfPermission(Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
+                requestPermissions(arrayOf(Manifest.permission.BLUETOOTH_CONNECT), 201)
+            }
+        }
+    }
+
     private fun updateFromBatteryIntent(intent: Intent) {
         val level = intent.getIntExtra(BatteryManager.EXTRA_LEVEL, -1)
         val scale = intent.getIntExtra(BatteryManager.EXTRA_SCALE, 100)
@@ -975,6 +1031,12 @@ class MainActivity : Activity() {
         gaugeBattery.setLevel(percent / 100f, "$percent%")
         valBatteryBadge?.text = String.format("%d%% • %.2fV", percent, voltageV)
         topBarBattery.text = "$percent% ⚡"
+        val btName = try {
+            val bm = getSystemService(Context.BLUETOOTH_SERVICE) as? android.bluetooth.BluetoothManager
+            bm?.adapter?.name
+        } catch (_: Exception) { null }
+        val friendlyHostName = btName ?: if (Build.MODEL.contains("23124RA7EO")) "REDMI NOTE 13" else Build.MODEL
+        batteryQuadWidget?.setHostBattery(percent, voltageV, friendlyHostName)
 
         val status = when (intent.getIntExtra(BatteryManager.EXTRA_STATUS, -1)) {
             BatteryManager.BATTERY_STATUS_CHARGING -> "заряжается"
