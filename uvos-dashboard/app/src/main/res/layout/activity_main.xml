@@ -227,6 +227,36 @@
                         </LinearLayout>
                     </LinearLayout>
 
+                    <!-- Панель управления виджетами / добавление прибора -->
+                    <LinearLayout
+                        android:id="@+id/btn_add_gauge_widget"
+                        android:layout_width="match_parent"
+                        android:layout_height="40dp"
+                        android:background="@drawable/bg_tile_clickable"
+                        android:gravity="center"
+                        android:orientation="horizontal"
+                        android:layout_marginBottom="12dp"
+                        android:clickable="true"
+                        android:focusable="true">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="+ ДОБАВИТЬ ПРИБОР / ВИДЖЕТ"
+                            android:textColor="@color/uvos_text"
+                            android:textSize="11sp"
+                            android:fontFamily="monospace"
+                            android:textStyle="bold"
+                            android:letterSpacing="0.08" />
+                    </LinearLayout>
+
+                    <!-- Контейнер пользовательских виджетов / приборов на Столе 01 -->
+                    <LinearLayout
+                        android:id="@+id/custom_gauges_container"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical" />
+
                     <!-- Профиль ограничений -->
                     <LinearLayout
                         android:layout_width="match_parent"
