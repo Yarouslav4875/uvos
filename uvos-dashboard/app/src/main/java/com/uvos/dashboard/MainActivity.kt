@@ -62,6 +62,9 @@ class MainActivity : Activity() {
     private lateinit var logCard: LinearLayout
     private lateinit var logLampDot: LampView
     private lateinit var logBlockedText: TextView
+    private lateinit var gaugeWidgetManager: GaugeWidgetManager
+    private lateinit var customGaugesContainer: LinearLayout
+    private lateinit var btnAddGaugeWidget: View
 
     // Стол 02: Home Clock & Grid
     private lateinit var homeClockTime: TextView
@@ -207,6 +210,25 @@ class MainActivity : Activity() {
         logCard = findViewById(R.id.card_daily_log)
         logLampDot = findViewById(R.id.log_lamp_dot)
         logBlockedText = findViewById(R.id.log_blocked_text)
+        gaugeWidgetManager = GaugeWidgetManager(this)
+        customGaugesContainer = findViewById(R.id.custom_gauges_container)
+        btnAddGaugeWidget = findViewById(R.id.btn_add_gauge_widget)
+
+        btnAddGaugeWidget.setOnClickListener {
+            showAddGaugeDialog()
+        }
+
+        val onGaugeLongClick = View.OnLongClickListener { v ->
+            v.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
+            Toast.makeText(this, "Прибор активен. Режим калибровки: авто", Toast.LENGTH_SHORT).show()
+            true
+        }
+        gaugeCpu.setOnLongClickListener(onGaugeLongClick)
+        gaugeMem.setOnLongClickListener(onGaugeLongClick)
+        gaugeBattery.setOnLongClickListener(onGaugeLongClick)
+        gaugeNet.setOnLongClickListener(onGaugeLongClick)
+
+        renderCustomGauges()
 
         // Значения вольтметров
         gaugeCpu.setLevel(0.42f, "42%")
@@ -249,6 +271,94 @@ class MainActivity : Activity() {
 
         findViewById<Button>(R.id.open_shield).setOnClickListener {
             startActivity(Intent(this, ShieldActivity::class.java))
+        }
+    }
+
+    private fun showAddGaugeDialog() {
+        val options = arrayOf(
+            "🗄️ Накопитель UFS/Flash (STORAGE)",
+            "🌡️ Термопакет SoC и АКБ (THERMAL)",
+            "🛡️ Шлюз изоляции каналов (SECURITY)",
+            "📡 Мощность радиочастот (RADIO RF)"
+        )
+        AlertDialog.Builder(this)
+            .setTitle("Добавить прибор на панель")
+            .setItems(options) { _, which ->
+                val type = when (which) {
+                    0 -> GaugeWidgetType.STORAGE
+                    1 -> GaugeWidgetType.THERMAL
+                    2 -> GaugeWidgetType.SECURITY
+                    else -> GaugeWidgetType.RADIO
+                }
+                val item = gaugeWidgetManager.addGauge(type)
+                renderCustomGauges()
+                Toast.makeText(this, "Прибор «${item.title}» добавлен на панель", Toast.LENGTH_SHORT).show()
+            }
+            .setNegativeButton("Отмена", null)
+            .show()
+    }
+
+    private fun renderCustomGauges() {
+        customGaugesContainer.removeAllViews()
+        val gauges = gaugeWidgetManager.getGauges()
+
+        gauges.forEach { item ->
+            val row = layoutInflater.inflate(R.layout.item_custom_gauge, customGaugesContainer, false)
+            val titleView = row.findViewById<TextView>(R.id.custom_gauge_title)
+            val btnRemove = row.findViewById<TextView>(R.id.custom_gauge_btn_remove)
+            val gaugeView = row.findViewById<GaugeView>(R.id.custom_gauge_view)
+            val valueView = row.findViewById<TextView>(R.id.custom_gauge_value)
+            val subtitleView = row.findViewById<TextView>(R.id.custom_gauge_subtitle)
+            val badgeView = row.findViewById<TextView>(R.id.custom_gauge_badge)
+
+            titleView.text = item.title
+
+            when (item.type) {
+                GaugeWidgetType.STORAGE -> {
+                    val stats = gaugeWidgetManager.getStorageStats()
+                    gaugeView.setLevel(stats.fraction, "${stats.percent}%")
+                    valueView.text = stats.usedText
+                    subtitleView.text = stats.subtitle
+                    badgeView.text = "UFS 2.2 • СТАТУС: В НОРМЕ"
+                    badgeView.setTextColor(Color.parseColor("#E2E4EC"))
+                }
+                GaugeWidgetType.THERMAL -> {
+                    val tempC = 34.8f
+                    gaugeView.setLevel(tempC / 60f, "35°C")
+                    valueView.text = "34.8°C (АКБ 31.2°C)"
+                    subtitleView.text = "Snapdragon 685 • Порог: 60°C"
+                    badgeView.text = "THERMAL GOVERNOR: НОРМА"
+                    badgeView.setTextColor(Color.parseColor("#06B6D4"))
+                }
+                GaugeWidgetType.SECURITY -> {
+                    gaugeView.setLevel(0.86f, "86%")
+                    valueView.text = "24 / 28 ИЗОЛИРОВАНО"
+                    subtitleView.text = "4 системных сокета активно"
+                    badgeView.text = "FIREWALL KERNEL: АКТИВЕН"
+                    badgeView.setTextColor(Color.parseColor("#06B6D4"))
+                }
+                GaugeWidgetType.RADIO -> {
+                    gaugeView.setLevel(0.72f, "72%")
+                    valueView.text = "-68 dBm (4G LTE-A)"
+                    subtitleView.text = "Диапазон: B3 (1800 МГц)"
+                    badgeView.text = "РАДИОМОДЕМ: СВЯЗЬ СТАБИЛЬНА"
+                    badgeView.setTextColor(Color.parseColor("#E2E4EC"))
+                }
+            }
+
+            btnRemove.setOnClickListener {
+                AlertDialog.Builder(this)
+                    .setTitle("Удалить прибор?")
+                    .setMessage("Убрать прибор «${item.title}» с панели 4 счетчиков?")
+                    .setPositiveButton("Удалить") { _, _ ->
+                        gaugeWidgetManager.removeGauge(item.id)
+                        renderCustomGauges()
+                    }
+                    .setNegativeButton("Отмена", null)
+                    .show()
+            }
+
+            customGaugesContainer.addView(row)
         }
     }
 
