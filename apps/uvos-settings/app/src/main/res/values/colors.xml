@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Цветовая палитра консоли M4200 -->
+    <color name="uvos_background">#0E0E12</color>
+    <color name="uvos_tile">#1C1E26</color>
+    <color name="uvos_tile_border">#242838</color>
+    <color name="uvos_dial">#E8E4D8</color>
+    <color name="uvos_dial_text">#1A1A1A</color>
+    <color name="uvos_red">#E02020</color>
+    <color name="uvos_green_lamp">#00FF66</color>
+    <color name="uvos_amber_lamp">#FFB000</color>
+    <color name="uvos_text_primary">#E2E4EC</color>
+    <color name="uvos_text_secondary">#71768E</color>
+</resources>

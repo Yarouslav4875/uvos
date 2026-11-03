@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">UVOS Terminal</string>
+    <string name="terminal_prompt_root">root@sapphire:/ #</string>
+    <string name="terminal_prompt_user">shell@sapphire:$</string>
+    <string name="macro_panel_title">SYSTEM MACROS &amp; ACTIONS</string>
+</resources>

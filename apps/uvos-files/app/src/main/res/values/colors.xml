@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="uvos_bg">#0E0E12</color>
+    <color name="uvos_panel">#1C1E26</color>
+    <color name="gauge_dial_bg">#E8E4D8</color>
+    <color name="gauge_needle_red">#E02020</color>
+</resources>

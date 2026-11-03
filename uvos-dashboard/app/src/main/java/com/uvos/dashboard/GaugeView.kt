@@ -190,6 +190,12 @@ class GaugeView @JvmOverloads constructor(
         val pad = 2f * scale
         val caseRadius = 24f * scale
 
+        // Гарантируем сброс прозрачности и шейдеров перед каждым кадром отрисовки
+        fillPaint.shader = null
+        fillPaint.alpha = 255
+        strokePaint.shader = null
+        strokePaint.alpha = 255
+
         // =====================================================================
         // 1. Корпус прибора (тёмный градиент #262832 -> #0B0C10)
         // =====================================================================
@@ -296,6 +302,7 @@ class GaugeView @JvmOverloads constructor(
         strokePaint.color = Color.argb(153, 0, 0, 0)
         strokePaint.strokeWidth = 2.5f * scale
         canvas.drawCircle(dialCenterX, dialCenterY, dialRadius, strokePaint)
+        strokePaint.alpha = 255
 
         // =====================================================================
         // 5. Дуги и засечки шкалы
@@ -522,6 +529,7 @@ class GaugeView @JvmOverloads constructor(
 
             fillPaint.color = Color.argb((0.25f * 255).toInt(), 255, 255, 255)
             canvas.drawCircle(lampX - 1f * scale, lampY - 1f * scale, 1f * scale, fillPaint)
+            fillPaint.alpha = 255
         }
     }
 }

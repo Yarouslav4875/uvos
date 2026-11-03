@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="uvos_crimson">#E02020</color>
+    <color name="uvos_crimson_glow">#FF4040</color>
+    <color name="uvos_bg_matte">#0E0E12</color>
+    <color name="uvos_bezel">#1C1E26</color>
+    <color name="uvos_gauge_ivory">#E8E4D8</color>
+    <color name="uvos_amber">#FFB000</color>
+    <color name="uvos_green">#33FF33</color>
+</resources>

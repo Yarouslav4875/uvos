@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">UVOS Gallery</string>
+    <string name="app_subtitle">M4200 Media Core</string>
+    <string name="tab_public">ХРАНИЛИЩЕ</string>
+    <string name="tab_vault">КРИПТО-СЕЙФ</string>
+    <string name="status_air_gapped">AIR-GAPPED // ZERO-NET</string>
+    <string name="filter_all">ВСЕ</string>
+    <string name="filter_images">ФОТО</string>
+    <string name="filter_videos">ВИДЕО</string>
+    <string name="filter_danger">GPS УТЕЧКА</string>
+    <string name="scrub_now">ОЧИСТИТЬ EXIF / GPS СЕЙЧАС</string>
+    <string name="move_to_vault">ПЕРЕМЕСТИТЬ В КРИПТО-СЕЙФ (AES-256)</string>
+    <string name="vault_locked">КРИПТО-СЕЙФ ЗАБЛОКИРОВАН</string>
+    <string name="vault_unlock_prompt">Приложите палец или введите PIN для расшифровки ключа AES-256</string>
+    <string name="vault_empty">Сейф пуст. Конфиденциальные медиафайлы не обнаружены.</string>
+</resources>

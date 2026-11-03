@@ -4,8 +4,11 @@
 *.keystore
 !debug.keystore
 .gradle/
+**/.gradle/
 build/
+**/build/
 local.properties
+**/local.properties
 captures/
 .externalNativeBuild/
 .cxx/

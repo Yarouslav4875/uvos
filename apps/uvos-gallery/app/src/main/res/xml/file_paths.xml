@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<paths>
+    <!-- Access permitted ONLY to scrubbed sanitized temporary cache copies -->
+    <cache-path name="scrubbed_media" path="scrubbed/" />
+</paths>

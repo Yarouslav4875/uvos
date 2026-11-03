@@ -1,0 +1,11 @@
+<resources>
+    <color name="m4200_chassis_bg">#0E0E12</color>
+    <color name="m4200_chassis_card">#1C1E26</color>
+    <color name="m4200_dial_ivory">#F2E8A6</color>
+    <color name="m4200_dial_warm">#E8E4D8</color>
+    <color name="m4200_needle_black">#1A1A1A</color>
+    <color name="m4200_overload_red">#E02020</color>
+    <color name="m4200_amber_glow">#FFAA33</color>
+    <color name="m4200_metal_silver">#A0A5B5</color>
+    <color name="m4200_accent_blue">#00E5FF</color>
+</resources>

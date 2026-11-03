@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- Camera lens aperture / safe symbol in dial ivory & green sterile -->
+    <path
+        android:fillColor="#1C1E26"
+        android:strokeColor="#4ECCA3"
+        android:strokeWidth="3"
+        android:pathData="M24,28h60a6,6 0 0,1 6,6v42a6,6 0 0,1 -6,6h-60a6,6 0 0,1 -6,-6v-42a6,6 0 0,1 6,-6z" />
+    <path
+        android:fillColor="#0E0E12"
+        android:strokeColor="#E8E4D8"
+        android:strokeWidth="2.5"
+        android:pathData="M54,54m-18,0a18,18 0 1,1 36,0a18,18 0 1,1 -36,0" />
+    <path
+        android:fillColor="#4ECCA3"
+        android:pathData="M54,54m-7,0a7,7 0 1,1 14,0a7,7 0 1,1 -14,0" />
+    <!-- Red alert LED dot in upper corner -->
+    <path
+        android:fillColor="#E02020"
+        android:pathData="M75,37m-4,0a4,4 0 1,1 8,0a4,4 0 1,1 -8,0" />
+</vector>
