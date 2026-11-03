@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- Zero-Network Invariant: 100% Offline. android.permission.INTERNET is STRICTLY FORBIDDEN -->
+
+    <!-- Local media storage access -->
+    <uses-permission android:name="android.permission.READ_MEDIA_AUDIO" />
+    <uses-permission
+        android:name="android.permission.READ_EXTERNAL_STORAGE"
+        android:maxSdkVersion="32" />
+
+    <!-- Foreground audio playback service & wakelock -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+
+    <!-- Tactile haptic feedback for vintage rotary knobs and switches -->
+    <uses-permission android:name="android.permission.VIBRATE" />
+
+    <application
+        android:name=".UvosMusicApp"
+        android:allowBackup="false"
+        android:icon="@drawable/ic_launcher_music"
+        android:label="@string/app_name"
+        android:roundIcon="@drawable/ic_launcher_music_round"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.Uvos.Music">
+
+        <service
+            android:name=".service.MusicPlaybackService"
+            android:exported="true"
+            android:foregroundServiceType="mediaPlayback">
+            <intent-filter>
+                <action android:name="androidx.media3.session.MediaSessionService" />
+            </intent-filter>
+        </service>
+
+        <activity
+            android:name=".feature.main.MainActivity"
+            android:exported="true"
+            android:launchMode="singleTop"
+            android:theme="@style/Theme.Uvos.Music">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+                <category android:name="android.intent.category.APP_MUSIC" />
+            </intent-filter>
+        </activity>
+    </application>
+
+</manifest>

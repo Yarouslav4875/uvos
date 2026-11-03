@@ -77,6 +77,62 @@ class HomeManager(private val context: Context) {
         updateSlot(slotIndex, "Добавить", null, "EMPTY", null)
     }
 
+    fun swapOrMoveSlot(fromIndex: Int, toIndex: Int): Boolean {
+        if (fromIndex == toIndex) return false
+        val slots = getSlots()
+        val fromItem = slots.find { it.slotIndex == fromIndex } ?: return false
+        val toItem = slots.find { it.slotIndex == toIndex } ?: return false
+
+        val tempTitle = toItem.title
+        val tempPkg = toItem.packageName
+        val tempAction = toItem.actionType
+        val tempIcon = toItem.iconResName
+
+        if (toItem.actionType == "EMPTY") {
+            // Перемещение в пустой слот
+            toItem.title = fromItem.title
+            toItem.packageName = fromItem.packageName
+            toItem.actionType = fromItem.actionType
+            toItem.iconResName = fromItem.iconResName
+
+            fromItem.title = "Добавить"
+            fromItem.packageName = null
+            fromItem.actionType = "EMPTY"
+            fromItem.iconResName = null
+        } else {
+            // Обмен местами (swap)
+            toItem.title = fromItem.title
+            toItem.packageName = fromItem.packageName
+            toItem.actionType = fromItem.actionType
+            toItem.iconResName = fromItem.iconResName
+
+            fromItem.title = tempTitle
+            fromItem.packageName = tempPkg
+            fromItem.actionType = tempAction
+            fromItem.iconResName = tempIcon
+        }
+
+        saveSlots(slots)
+        return true
+    }
+
+    fun removeAppPackage(packageName: String) {
+        val slots = getSlots()
+        var changed = false
+        slots.forEach { item ->
+            if (item.packageName == packageName) {
+                item.title = "Добавить"
+                item.packageName = null
+                item.actionType = "EMPTY"
+                item.iconResName = null
+                changed = true
+            }
+        }
+        if (changed) {
+            saveSlots(slots)
+        }
+    }
+
     fun addAppToFirstFreeSlot(packageName: String, label: String): Int {
         val slots = getSlots()
         val freeSlot = slots.find { it.actionType == "EMPTY" }

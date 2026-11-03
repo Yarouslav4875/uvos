@@ -1,0 +1,11 @@
+<resources>
+    <string name="app_name">Настройки UVOS</string>
+    <string name="console_title">UVOS КОНСОЛЬ УПРАВЛЕНИЯ</string>
+    <string name="console_subtitle">Штабной пульт настройки платформы UnderVoltOS</string>
+    <string name="profile_selector_title">СЕЛЕКТОР ПРОФИЛЯ UVOS</string>
+    <string name="profile_sterile">СТЕРИЛЬНО</string>
+    <string name="profile_comm">СВЯЗЬ</string>
+    <string name="profile_custom">СВОЙ</string>
+    <string name="telemetry_cpu_title">ТАКТОВЫЕ ЧАСТОТЫ ЯДЕР (SM6225)</string>
+    <string name="audit_title">РЕВИЗИЯ И АУДИТ ПРИЛОЖЕНИЙ</string>
+</resources>

@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">UVOS Files</string>
+    <string name="channel_file_ops">Файловые операции</string>
+    <string name="channel_file_ops_desc">Уведомления о копировании, перемещении и вычислении хэшей</string>
+</resources>

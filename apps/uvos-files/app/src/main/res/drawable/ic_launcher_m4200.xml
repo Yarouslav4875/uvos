@@ -1,0 +1,38 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- Корпус M4200 -->
+    <path
+        android:fillColor="#1C1E26"
+        android:pathData="M14,14 h80 a8,8 0 0 1 8,8 v64 a8,8 0 0 1 -8,8 h-80 a8,8 0 0 1 -8,-8 v-64 a8,8 0 0 1 8,-8 z" />
+    <!-- Циферблат цвета слоновой кости -->
+    <path
+        android:fillColor="#E8E4D8"
+        android:pathData="M22,24 h64 a4,4 0 0 1 4,4 v44 a4,4 0 0 1 -4,4 h-64 a4,4 0 0 1 -4,-4 v-44 a4,4 0 0 1 4,-4 z" />
+    <!-- Дуга шкалы -->
+    <path
+        android:strokeColor="#1A1A1A"
+        android:strokeWidth="2"
+        android:pathData="M30,62 A 28 28 0 0 1 78,62" />
+    <!-- Красный сектор перегрузки -->
+    <path
+        android:strokeColor="#E02020"
+        android:strokeWidth="3"
+        android:pathData="M68,44 A 28 28 0 0 1 78,62" />
+    <!-- Красная стрелка индикатора -->
+    <path
+        android:strokeColor="#E02020"
+        android:strokeWidth="2"
+        android:strokeLineCap="round"
+        android:pathData="M54,68 L66,42" />
+    <!-- Карболитовая ось прибора -->
+    <path
+        android:fillColor="#111111"
+        android:pathData="M54,68 m-4,0 a4,4 0 1,0 8,0 a4,4 0 1,0 -8,0" />
+    <!-- Название прибора -->
+    <path
+        android:fillColor="#2ECC71"
+        android:pathData="M50,84 h8 v4 h-8 z" />
+</vector>

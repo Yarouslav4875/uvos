@@ -1,0 +1,7 @@
+<resources>
+    <style name="Theme.Uvos.Music" parent="android:Theme.Material.NoActionBar">
+        <item name="android:statusBarColor">@color/m4200_chassis_bg</item>
+        <item name="android:navigationBarColor">@color/m4200_chassis_bg</item>
+        <item name="android:windowBackground">@color/m4200_chassis_bg</item>
+    </style>
+</resources>

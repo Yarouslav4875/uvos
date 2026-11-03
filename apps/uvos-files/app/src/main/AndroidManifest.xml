@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- Разрешения на доступ к хранилищу (100% ОФФЛАЙН - НЕТ android.permission.INTERNET!) -->
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="29" />
+    <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE" />
+
+    <!-- Доступ к уведомлениям для длительных файловых операций (копирование/хэши) -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
+    <application
+        android:name=".UvosFilesApplication"
+        android:allowBackup="false"
+        android:icon="@drawable/ic_launcher_m4200"
+        android:label="@string/app_name"
+        android:roundIcon="@drawable/ic_launcher_m4200"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.UvosFiles.Industrial"
+        android:requestLegacyExternalStorage="true">
+
+        <activity
+            android:name=".ui.MainActivity"
+            android:exported="true"
+            android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+
+            <!-- Регистрация в качестве системного проводника -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="*/*" />
+            </intent-filter>
+        </activity>
+
+        <!-- Встроенный сервис асинхронных операций (копирование крупных файлов, вычисление хэшей) -->
+        <service
+            android:name=".service.FileOperationForegroundService"
+            android:exported="false"
+            android:foregroundServiceType="dataSync" />
+
+    </application>
+</manifest>

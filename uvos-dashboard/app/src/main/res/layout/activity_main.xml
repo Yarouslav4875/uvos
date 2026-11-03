@@ -50,6 +50,75 @@
             android:textStyle="bold" />
     </LinearLayout>
 
+    <!-- ПАНЕЛЬ ЗОН СБРОСА ДЛЯ DRAG & DROP (КАК НА ОБЫЧНОМ ANDROID) -->
+    <LinearLayout
+        android:id="@+id/drop_target_bar"
+        android:layout_width="match_parent"
+        android:layout_height="54dp"
+        android:orientation="horizontal"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp"
+        android:paddingTop="2dp"
+        android:paddingBottom="6dp"
+        android:visibility="gone">
+
+        <!-- Левая зона: Убрать с экрана -->
+        <LinearLayout
+            android:id="@+id/drop_target_remove"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:layout_marginEnd="6dp"
+            android:background="@drawable/bg_drop_target_remove"
+            android:gravity="center"
+            android:orientation="horizontal">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="🗑️"
+                android:textSize="18sp" />
+
+            <TextView
+                android:id="@+id/drop_target_remove_label"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:text="Убрать с экрана"
+                android:textColor="@color/uvos_text"
+                android:textSize="12.5sp"
+                android:textStyle="bold" />
+        </LinearLayout>
+
+        <!-- Правая зона: Удалить приложение с телефона -->
+        <LinearLayout
+            android:id="@+id/drop_target_uninstall"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:layout_marginStart="6dp"
+            android:background="@drawable/bg_drop_target_uninstall"
+            android:gravity="center"
+            android:orientation="horizontal">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="❌"
+                android:textSize="16sp" />
+
+            <TextView
+                android:id="@+id/drop_target_uninstall_label"
+                android:layout_width="wrap_content"
+                android:layout_marginStart="8dp"
+                android:layout_height="wrap_content"
+                android:text="Удалить"
+                android:textColor="#FF6B6B"
+                android:textSize="12.5sp"
+                android:textStyle="bold" />
+        </LinearLayout>
+    </LinearLayout>
+
     <!-- ГОРИЗОНТАЛЬНЫЙ ПАГИНАТОР ВСЕХ 4 РАБОЧИХ СТОЛОВ -->
     <com.uvos.dashboard.DesktopPagerView
         android:id="@+id/desktop_pager"
@@ -220,6 +289,13 @@
                                 android:textStyle="bold" />
                         </LinearLayout>
                     </LinearLayout>
+
+                    <!-- БАТАРЕЙНЫЙ КВАДРО-ВИДЖЕТ М4200 MICRO (4x1) -->
+                    <com.uvos.dashboard.BatteryQuadWidgetView
+                        android:id="@+id/battery_quad_widget"
+                        android:layout_width="match_parent"
+                        android:layout_height="118dp"
+                        android:layout_marginBottom="14dp" />
 
                     <!-- Панель управления виджетами / добавление прибора -->
                     <LinearLayout
@@ -411,12 +487,6 @@
                             android:fontFamily="monospace" />
                     </LinearLayout>
 
-                    <!-- БАТАРЕЙНЫЙ ВИДЖЕТ М4200 MICRO (4x1) ИЗ uvos_battery_widget.html -->
-                    <com.uvos.dashboard.BatteryQuadWidgetView
-                        android:id="@+id/battery_quad_widget"
-                        android:layout_width="match_parent"
-                        android:layout_height="118dp"
-                        android:layout_marginBottom="14dp" />
 
                     <!-- СЕТКА ИКОНОК 4x4 (ДИНАМИЧЕСКИЙ РАБОЧИЙ СТОЛ С ПОДДЕРЖКОЙ РЕДАКТИРОВАНИЯ) -->
                     <LinearLayout
@@ -557,6 +627,7 @@
                             android:layout_marginEnd="4dp">
 
                             <TextView
+                                android:id="@+id/manager_summary_active_count"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:text="4 / 28"
@@ -588,6 +659,7 @@
                             android:layout_marginEnd="2dp">
 
                             <TextView
+                                android:id="@+id/manager_summary_ram"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:text="6.8 ГБ"
@@ -597,6 +669,7 @@
                                 android:textStyle="bold" />
 
                             <TextView
+                                android:id="@+id/manager_summary_ram_sub"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:text="ОЗУ (85%)"
@@ -618,6 +691,7 @@
                             android:layout_marginStart="4dp">
 
                             <TextView
+                                android:id="@+id/manager_summary_channels"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:text="4 КАН."

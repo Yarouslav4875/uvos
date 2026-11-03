@@ -1,0 +1,10 @@
+<resources>
+    <string name="app_name">UVOS Music</string>
+    <string name="app_subtitle">Studio Hi-Res Audio Player</string>
+    <string name="player_tab">Player</string>
+    <string name="library_tab">Library</string>
+    <string name="equalizer_tab">Mastering EQ</string>
+    <string name="permission_required">Audio permission is required to scan and play local music files.</string>
+    <string name="grant_permission">Grant Access</string>
+    <string name="empty_library">No audio files found. Add FLAC, WAV, or MP3 files to your storage.</string>
+</resources>
