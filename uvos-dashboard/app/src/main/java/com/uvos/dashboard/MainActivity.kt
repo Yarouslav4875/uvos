@@ -42,6 +42,7 @@ import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
 import com.uvos.dashboard.model.ProfileType
+import com.uvos.dashboard.model.AppRule
 import com.uvos.dashboard.repository.RuleRepositoryImpl
 import java.text.SimpleDateFormat
 import java.util.Date
