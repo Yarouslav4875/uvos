@@ -100,7 +100,8 @@ fun TerminalView(
                 }
         ) {
             // Read updateTick to ensure recomposition on terminal changes
-            val _ = updateTick
+            val currentTick = updateTick
+            if (currentTick < 0) return@Canvas
 
             val emulator = session.emulator
             val rows = emulator.getScreenSnapshot()

@@ -230,10 +230,18 @@ class RootStorageEngine : FileSystemEngine {
         }
 
         val escaped = escapeShellArg(path)
-        val ddCmd = "dd if=$escaped bs=1 skip=$offset count=$length 2>/dev/null"
-        val outStream = ByteArrayOutputStream()
-        Shell.cmd(ddCmd).to(outStream).exec()
-        outStream.toByteArray()
+        val ddCmd = "dd if=$escaped bs=1 skip=$offset count=$length 2>/dev/null | base64"
+        val result = Shell.cmd(ddCmd).exec()
+        if (result.isSuccess) {
+            val base64Str = result.out.joinToString("")
+            try {
+                android.util.Base64.decode(base64Str, android.util.Base64.NO_WRAP)
+            } catch (e: Exception) {
+                ByteArray(0)
+            }
+        } else {
+            ByteArray(0)
+        }
     }
 
     override suspend fun writeChunk(path: String, offset: Long, data: ByteArray): Boolean = withContext(Dispatchers.IO) {

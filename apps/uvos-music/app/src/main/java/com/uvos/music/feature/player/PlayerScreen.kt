@@ -162,7 +162,7 @@ fun PlayerScreen(
                 // Hi-Res Audio Format Badge
                 val formatText = track?.formatInfo?.let { fmt ->
                     val isLossless = fmt.isLossless
-                    val rate = fmt.sampleRate / 1000
+                    val rate = fmt.sampleRateHz / 1000
                     "${fmt.container.uppercase()} ${fmt.bitDepth}-bit / ${rate} kHz • ${if (isLossless) "LOSSLESS" else "${fmt.bitrateKbps} kbps"}"
                 } ?: "DIRECT BIT-PERFECT PCM"
 

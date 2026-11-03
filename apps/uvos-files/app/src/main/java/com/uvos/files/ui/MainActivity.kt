@@ -4,24 +4,20 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
-import com.uvos.files.data.engine.FileSystemEngine
 import com.uvos.files.data.engine.RootStorageEngine
 import com.uvos.files.data.engine.SafStorageEngine
 import com.uvos.files.data.engine.StorageEngineRouter
 import com.uvos.files.data.repository.StoragePartitionRepository
+import com.uvos.files.domain.model.FileItem
 import com.uvos.files.domain.usecase.BrowseDirectoryUseCase
-import com.uvos.files.domain.usecase.CalculateChecksumUseCase
 import com.uvos.files.domain.usecase.FileOperationsUseCase
 import com.uvos.files.ui.screens.FileBrowserScreen
 import com.uvos.files.ui.screens.HexViewerScreen
 import com.uvos.files.ui.screens.TextEditorScreen
-import com.uvos.files.ui.theme.UvosBackground
+import com.uvos.files.ui.theme.UvosBg
 import com.uvos.files.ui.theme.UvosFilesTheme
 import com.uvos.files.ui.viewmodel.FilesViewModel
 import com.uvos.files.ui.viewmodel.HexEditorViewModel
@@ -29,8 +25,8 @@ import com.uvos.files.ui.viewmodel.TextEditorViewModel
 
 sealed interface ScreenState {
     object Browser : ScreenState
-    data class HexViewer(val path: String) : ScreenState
-    data class TextEditor(val path: String) : ScreenState
+    data class HexViewer(val fileItem: FileItem) : ScreenState
+    data class TextEditor(val fileItem: FileItem) : ScreenState
 }
 
 class MainActivity : ComponentActivity() {
@@ -45,11 +41,10 @@ class MainActivity : ComponentActivity() {
         // Инициализация слоя движков
         val rootEngine = RootStorageEngine()
         val safEngine = SafStorageEngine(applicationContext)
-        val engineRouter = StorageEngineRouter(safEngine, rootEngine)
-        val partitionRepo = StoragePartitionRepository(applicationContext, engineRouter)
+        val engineRouter = StorageEngineRouter(applicationContext, safEngine, rootEngine)
+        val partitionRepo = StoragePartitionRepository(applicationContext)
         val browseUseCase = BrowseDirectoryUseCase(engineRouter)
         val fileOpsUseCase = FileOperationsUseCase(engineRouter)
-        val checksumUseCase = CalculateChecksumUseCase()
 
         viewModel = FilesViewModel(
             engineRouter = engineRouter,
@@ -58,14 +53,14 @@ class MainActivity : ComponentActivity() {
             fileOpsUseCase = fileOpsUseCase
         )
 
-        hexViewModel = HexEditorViewModel(engineRouter, checksumUseCase)
+        hexViewModel = HexEditorViewModel(engineRouter)
         textViewModel = TextEditorViewModel(engineRouter)
 
         setContent {
             UvosFilesTheme {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
-                    color = UvosBackground
+                    color = UvosBg
                 ) {
                     var currentScreen by remember { mutableStateOf<ScreenState>(ScreenState.Browser) }
 
@@ -73,26 +68,26 @@ class MainActivity : ComponentActivity() {
                         is ScreenState.Browser -> {
                             FileBrowserScreen(
                                 viewModel = viewModel,
-                                onOpenFileHex = { path ->
-                                    hexViewModel.loadFile(path)
-                                    currentScreen = ScreenState.HexViewer(path)
+                                onOpenFileHex = { fileItem ->
+                                    hexViewModel.loadFile(fileItem)
+                                    currentScreen = ScreenState.HexViewer(fileItem)
                                 },
-                                onOpenEditText = { path ->
-                                    textViewModel.loadFile(path)
-                                    currentScreen = ScreenState.TextEditor(path)
+                                onOpenEditText = { fileItem ->
+                                    textViewModel.loadFile(fileItem)
+                                    currentScreen = ScreenState.TextEditor(fileItem)
                                 }
                             )
                         }
                         is ScreenState.HexViewer -> {
                             HexViewerScreen(
                                 viewModel = hexViewModel,
-                                onNavigateBack = { currentScreen = ScreenState.Browser }
+                                onClose = { currentScreen = ScreenState.Browser }
                             )
                         }
                         is ScreenState.TextEditor -> {
                             TextEditorScreen(
                                 viewModel = textViewModel,
-                                onNavigateBack = { currentScreen = ScreenState.Browser }
+                                onClose = { currentScreen = ScreenState.Browser }
                             )
                         }
                     }
