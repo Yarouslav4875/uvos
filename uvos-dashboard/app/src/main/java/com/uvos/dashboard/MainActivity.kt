@@ -464,7 +464,7 @@ class MainActivity : Activity() {
     }
 
     // =========================================================================
-    // СТОЛ 02: ДОМАШНИЙ ЭКРАН (HOME) С РЕДАКТИРОВАНИЕМ ИКОНОК
+    // СТОЛ 02: ДОМАШНИЙ ЭКРАН (HOME) С ПОЛНОЦЕННЫМ DRAG & DROP И УДАЛЕНИЕМ
     // =========================================================================
 
     private fun initDesktop2Home() {
@@ -476,7 +476,13 @@ class MainActivity : Activity() {
         homeRow3 = findViewById(R.id.home_row_3)
         homeRow4 = findViewById(R.id.home_row_4)
 
+        dropTargetBar = findViewById(R.id.drop_target_bar)
+        dropTargetRemove = findViewById(R.id.drop_target_remove)
+        dropTargetUninstall = findViewById(R.id.drop_target_uninstall)
+        dropTargetRemoveLabel = findViewById(R.id.drop_target_remove_label)
+        dropTargetUninstallLabel = findViewById(R.id.drop_target_uninstall_label)
 
+        initDropTargetListeners()
 
         // Долгий тап по часам/дате открывает общее меню настройки стола
         val openHomeSettings = View.OnLongClickListener { v ->
@@ -488,6 +494,133 @@ class MainActivity : Activity() {
         homeClockDate.setOnLongClickListener(openHomeSettings)
 
         renderHomeGrid()
+    }
+
+    private fun initDropTargetListeners() {
+        // Зона 1: "Убрать с экрана" (Освободить слот рабочего стола)
+        dropTargetRemove?.setOnDragListener { v, event ->
+            when (event.action) {
+                DragEvent.ACTION_DRAG_STARTED -> true
+                DragEvent.ACTION_DRAG_ENTERED -> {
+                    hasMovedOutsideInitialSlot = true
+                    v.isActivated = true
+                    v.animate().scaleX(1.06f).scaleY(1.06f).setDuration(110).start()
+                    v.performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK)
+                    true
+                }
+                DragEvent.ACTION_DRAG_EXITED -> {
+                    v.isActivated = false
+                    v.animate().scaleX(1.0f).scaleY(1.0f).setDuration(110).start()
+                    true
+                }
+                DragEvent.ACTION_DROP -> {
+                    v.isActivated = false
+                    v.animate().scaleX(1.0f).scaleY(1.0f).setDuration(110).start()
+                    val payload = event.localState as? DragSlotPayload ?: return@setOnDragListener false
+                    v.performHapticFeedback(HapticFeedbackConstants.CONFIRM)
+                    if (payload.sourceType == "HOME_SLOT" && payload.fromSlotIndex != -1) {
+                        homeManager.clearSlot(payload.fromSlotIndex)
+                        renderHomeGrid()
+                        Toast.makeText(this, "Ярлык «${payload.title}» убран с экрана", Toast.LENGTH_SHORT).show()
+                    }
+                    true
+                }
+                DragEvent.ACTION_DRAG_ENDED -> {
+                    v.isActivated = false
+                    v.scaleX = 1.0f
+                    v.scaleY = 1.0f
+                    hideDropTargetBar()
+                    true
+                }
+                else -> true
+            }
+        }
+
+        // Зона 2: "Удалить" (Деинсталляция приложения с телефона)
+        dropTargetUninstall?.setOnDragListener { v, event ->
+            when (event.action) {
+                DragEvent.ACTION_DRAG_STARTED -> true
+                DragEvent.ACTION_DRAG_ENTERED -> {
+                    hasMovedOutsideInitialSlot = true
+                    v.isActivated = true
+                    v.animate().scaleX(1.06f).scaleY(1.06f).setDuration(110).start()
+                    v.performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK)
+                    true
+                }
+                DragEvent.ACTION_DRAG_EXITED -> {
+                    v.isActivated = false
+                    v.animate().scaleX(1.0f).scaleY(1.0f).setDuration(110).start()
+                    true
+                }
+                DragEvent.ACTION_DROP -> {
+                    v.isActivated = false
+                    v.animate().scaleX(1.0f).scaleY(1.0f).setDuration(110).start()
+                    val payload = event.localState as? DragSlotPayload ?: return@setOnDragListener false
+                    v.performHapticFeedback(HapticFeedbackConstants.CONFIRM)
+
+                    if (payload.packageName != null && !isSystemApp(payload.packageName)) {
+                        if (payload.sourceType == "HOME_SLOT" && payload.fromSlotIndex != -1) {
+                            homeManager.clearSlot(payload.fromSlotIndex)
+                            renderHomeGrid()
+                        }
+                        requestUninstallApp(payload.packageName)
+                    } else {
+                        Toast.makeText(this, "Системные утилиты UnderVoltOS нельзя удалить, но можно убрать с экрана", Toast.LENGTH_LONG).show()
+                    }
+                    true
+                }
+                DragEvent.ACTION_DRAG_ENDED -> {
+                    v.isActivated = false
+                    v.scaleX = 1.0f
+                    v.scaleY = 1.0f
+                    hideDropTargetBar()
+                    true
+                }
+                else -> true
+            }
+        }
+    }
+
+    private fun showDropTargetBar(canUninstall: Boolean) {
+        dropTargetBar?.apply {
+            visibility = View.VISIBLE
+            alpha = 0f
+            translationY = -60f
+            animate().alpha(1f).translationY(0f).setDuration(180).start()
+        }
+        dropTargetUninstall?.visibility = if (canUninstall) View.VISIBLE else View.GONE
+    }
+
+    private fun hideDropTargetBar() {
+        dropTargetBar?.apply {
+            if (visibility == View.VISIBLE) {
+                animate().alpha(0f).translationY(-50f).setDuration(160).withEndAction {
+                    visibility = View.GONE
+                }.start()
+            }
+        }
+        isDraggingSlot = false
+    }
+
+    private fun startSlotDrag(slot: HomeSlotItem, view: View) {
+        if (slot.actionType == "EMPTY") return
+        isDraggingSlot = true
+        dragStartSlotIndex = slot.slotIndex
+        hasMovedOutsideInitialSlot = false
+
+        val payload = DragSlotPayload(
+            sourceType = "HOME_SLOT",
+            fromSlotIndex = slot.slotIndex,
+            packageName = slot.packageName,
+            title = slot.title,
+            actionType = slot.actionType,
+            iconResName = slot.iconResName
+        )
+        val clipData = ClipData.newPlainText("UVOS_SLOT", slot.title)
+        val shadow = View.DragShadowBuilder(view)
+        val canUninstall = (slot.actionType == "APP" && slot.packageName != null && !isSystemApp(slot.packageName))
+        showDropTargetBar(canUninstall)
+        view.startDragAndDrop(clipData, shadow, payload, View.DRAG_FLAG_GLOBAL)
     }
 
     private fun renderHomeGrid() {
@@ -551,20 +684,76 @@ class MainActivity : Activity() {
                     iconView.setPadding(26, 26, 26, 26)
                 }
 
-                // Клик - запуск
+                // Клик - запуск приложения
                 itemView.setOnClickListener {
                     handleSlotClick(slot)
                 }
 
-                // Долгий тап - меню редактирования как на обычном Android
-                itemView.setOnLongClickListener {
-                    it.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
-                    showSlotOptionsDialog(slot)
+                // Долгий тап - запуск режима Drag & Drop (или показ контекстного меню если палец отпущен)
+                itemView.setOnLongClickListener { v ->
+                    v.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
+                    startSlotDrag(slot, v)
                     true
                 }
             }
 
-            // Тактильный пружинный отклик как на Apple iOS
+            // Drag & Drop слушатель для каждого слота сетки (перемещение, swap, вставка)
+            itemView.setOnDragListener { v, event ->
+                when (event.action) {
+                    DragEvent.ACTION_DRAG_STARTED -> true
+                    DragEvent.ACTION_DRAG_ENTERED -> {
+                        if (dragStartSlotIndex != slot.slotIndex) {
+                            hasMovedOutsideInitialSlot = true
+                        }
+                        v.animate().scaleX(1.08f).scaleY(1.08f).setDuration(100).start()
+                        v.setBackgroundResource(R.drawable.bg_slot_drop_target)
+                        v.performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK)
+                        true
+                    }
+                    DragEvent.ACTION_DRAG_EXITED -> {
+                        v.animate().scaleX(1.0f).scaleY(1.0f).setDuration(100).start()
+                        v.setBackgroundColor(Color.TRANSPARENT)
+                        true
+                    }
+                    DragEvent.ACTION_DROP -> {
+                        v.animate().scaleX(1.0f).scaleY(1.0f).setDuration(100).start()
+                        v.setBackgroundColor(Color.TRANSPARENT)
+                        val payload = event.localState as? DragSlotPayload ?: return@setOnDragListener false
+                        v.performHapticFeedback(HapticFeedbackConstants.CONFIRM)
+
+                        if (payload.sourceType == "HOME_SLOT") {
+                            if (payload.fromSlotIndex != slot.slotIndex) {
+                                hasMovedOutsideInitialSlot = true
+                                homeManager.swapOrMoveSlot(payload.fromSlotIndex, slot.slotIndex)
+                                renderHomeGrid()
+                            }
+                        } else if (payload.sourceType == "DRAWER_APP") {
+                            hasMovedOutsideInitialSlot = true
+                            homeManager.updateSlot(slot.slotIndex, payload.title, payload.packageName, "APP", null)
+                            renderHomeGrid()
+                            Toast.makeText(this@MainActivity, "Ярлык «${payload.title}» размещён на столе", Toast.LENGTH_SHORT).show()
+                        }
+                        true
+                    }
+                    DragEvent.ACTION_DRAG_ENDED -> {
+                        v.animate().scaleX(1.0f).scaleY(1.0f).setDuration(100).start()
+                        v.setBackgroundColor(Color.TRANSPARENT)
+                        hideDropTargetBar()
+
+                        // Если пользователь просто нажал и отпустил без перемещения в другой слот/корзину,
+                        // открываем всплывающее меню быстрых действий как на обычном Android!
+                        if (!hasMovedOutsideInitialSlot && dragStartSlotIndex == slot.slotIndex && slot.actionType != "EMPTY") {
+                            v.post {
+                                showAppQuickActionsDialog(slot)
+                            }
+                        }
+                        true
+                    }
+                    else -> true
+                }
+            }
+
+            // Тактильный пружинный отклик
             itemView.setOnTouchListener { v, event ->
                 when (event.actionMasked) {
                     android.view.MotionEvent.ACTION_DOWN -> {
@@ -609,6 +798,7 @@ class MainActivity : Activity() {
                         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                         startActivity(intent)
                     } else {
+                        Toast.makeText(this, "Приложение не найдено", Toast.LENGTH_SHORT).show()
                     }
                 }
             }
@@ -629,36 +819,89 @@ class MainActivity : Activity() {
     }
 
     /**
-     * Контекстное меню редактирования иконки (как на обычном Android Launcher)
+     * Контекстное меню быстрого доступа (Quick Actions Floating Card) как на обычном Android
      */
-    private fun showSlotOptionsDialog(slot: HomeSlotItem) {
-        val options = mutableListOf<String>()
-        options.add("✏️ Переименовать ярлык")
-        options.add("🔄 Заменить приложение")
+    private fun showAppQuickActionsDialog(slot: HomeSlotItem) {
+        val dialog = Dialog(this)
+        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE)
+        val dialogView = layoutInflater.inflate(R.layout.dialog_app_quick_actions, null)
+        dialog.setContentView(dialogView)
+        dialog.window?.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
+        val dialogWidth = (resources.displayMetrics.widthPixels * 0.90f).toInt()
+        dialog.window?.setLayout(dialogWidth, ViewGroup.LayoutParams.WRAP_CONTENT)
+
+        val iconView = dialogView.findViewById<ImageView>(R.id.dialog_app_icon)
+        val titleView = dialogView.findViewById<TextView>(R.id.dialog_app_title)
+        val subtitleView = dialogView.findViewById<TextView>(R.id.dialog_app_subtitle)
+
+        titleView.text = slot.title
+        subtitleView.text = slot.packageName ?: "Системный инструмент UnderVoltOS"
+
+        val pm = packageManager
         if (slot.actionType == "APP" && slot.packageName != null) {
-            options.add("ℹ️ О приложении")
-        }
-        options.add("🗑️ Убрать с рабочего стола")
-        if (slot.actionType == "APP" && slot.packageName != null) {
-            options.add("❌ Удалить приложение")
+            try {
+                iconView.setImageDrawable(pm.getApplicationIcon(slot.packageName!!))
+            } catch (_: Exception) {
+                iconView.setImageResource(android.R.drawable.sym_def_app_icon)
+            }
+        } else {
+            iconView.setImageResource(getSystemIconRes(slot.iconResName))
         }
 
-        AlertDialog.Builder(this)
-            .setTitle(slot.title)
-            .setItems(options.toTypedArray()) { _, which ->
-                when (options[which]) {
-                    "✏️ Переименовать ярлык" -> showRenameDialog(slot)
-                    "🔄 Заменить приложение" -> showAppChooserForSlot(slot.slotIndex)
-                    "ℹ️ О приложении" -> openAppDetails(slot.packageName)
-                    "🗑️ Убрать с рабочего стола" -> {
-                        homeManager.clearSlot(slot.slotIndex)
-                        renderHomeGrid()
-                    }
-                    "❌ Удалить приложение" -> requestUninstallApp(slot.packageName)
-                }
+        // Действие 1: Убрать с экрана
+        dialogView.findViewById<View>(R.id.action_remove_from_screen).setOnClickListener {
+            dialog.dismiss()
+            homeManager.clearSlot(slot.slotIndex)
+            renderHomeGrid()
+            Toast.makeText(this, "Ярлык «${slot.title}» убран с экрана", Toast.LENGTH_SHORT).show()
+        }
+
+        // Действие 2: Удалить приложение
+        val uninstallBtn = dialogView.findViewById<View>(R.id.action_uninstall_app)
+        val canUninstall = (slot.actionType == "APP" && slot.packageName != null && !isSystemApp(slot.packageName))
+        if (canUninstall) {
+            uninstallBtn.visibility = View.VISIBLE
+            uninstallBtn.setOnClickListener {
+                dialog.dismiss()
+                homeManager.clearSlot(slot.slotIndex)
+                renderHomeGrid()
+                requestUninstallApp(slot.packageName)
             }
-            .setNegativeButton("Отмена", null)
-            .show()
+        } else {
+            uninstallBtn.visibility = View.GONE
+        }
+
+        // Действие 3: О приложении
+        val appInfoBtn = dialogView.findViewById<View>(R.id.action_app_info)
+        if (slot.actionType == "APP" && slot.packageName != null) {
+            appInfoBtn.visibility = View.VISIBLE
+            appInfoBtn.setOnClickListener {
+                dialog.dismiss()
+                openAppDetails(slot.packageName)
+            }
+        } else {
+            appInfoBtn.visibility = View.GONE
+        }
+
+        // Действие 4: Переименовать
+        dialogView.findViewById<View>(R.id.action_rename_slot).setOnClickListener {
+            dialog.dismiss()
+            showRenameDialog(slot)
+        }
+
+        // Действие 5: Заменить приложение
+        dialogView.findViewById<View>(R.id.action_replace_app).setOnClickListener {
+            dialog.dismiss()
+            showAppChooserForSlot(slot.slotIndex)
+        }
+
+        // Действие 6: Перетащить
+        dialogView.findViewById<View>(R.id.action_start_drag).setOnClickListener {
+            dialog.dismiss()
+            Toast.makeText(this, "Зажмите ярлык на столе для перетаскивания в любой слот или в корзину", Toast.LENGTH_LONG).show()
+        }
+
+        dialog.show()
     }
 
     private fun showRenameDialog(slot: HomeSlotItem) {
@@ -719,6 +962,8 @@ class MainActivity : Activity() {
                         val freeIdx = slots.indexOfFirst { it.actionType == "EMPTY" }
                         if (freeIdx != -1) {
                             showAppChooserForSlot(freeIdx)
+                        } else {
+                            Toast.makeText(this, "Все 16 слотов заняты. Уберите ненужный ярлык.", Toast.LENGTH_SHORT).show()
                         }
                     }
                     1 -> {
@@ -731,6 +976,16 @@ class MainActivity : Activity() {
             .show()
     }
 
+    private fun isSystemApp(packageName: String?): Boolean {
+        if (packageName == null) return true
+        return try {
+            val ai = packageManager.getApplicationInfo(packageName, 0)
+            (ai.flags and ApplicationInfo.FLAG_SYSTEM) != 0
+        } catch (_: Exception) {
+            false
+        }
+    }
+
     private fun openAppDetails(packageName: String?) {
         if (packageName == null) return
         try {
@@ -739,7 +994,8 @@ class MainActivity : Activity() {
                 addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             }
             startActivity(intent)
-        } catch (e: Exception) {
+        } catch (_: Exception) {
+            Toast.makeText(this, "Не удалось открыть настройки приложения", Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -831,31 +1087,10 @@ class MainActivity : Activity() {
                 }
             }
 
-            // Долгий тап в Drawer - меню добавления на рабочий стол как на обычном Android!
-            row.setOnLongClickListener {
-                it.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
-                val options = arrayOf(
-                    "➕ Добавить на рабочий стол",
-                    "ℹ️ О приложении",
-                    "❌ Удалить приложение"
-                )
-                AlertDialog.Builder(this)
-                    .setTitle(app.appName)
-                    .setItems(options) { _, which ->
-                        when (which) {
-                            0 -> {
-                                val slotIdx = homeManager.addAppToFirstFreeSlot(app.packageName, app.appName)
-                                if (slotIdx != -1) {
-                                    renderHomeGrid()
-                                    desktopPager.scrollToPage(1, smooth = true)
-                                }
-                            }
-                            1 -> openAppDetails(app.packageName)
-                            2 -> requestUninstallApp(app.packageName)
-                        }
-                    }
-                    .setNegativeButton("Отмена", null)
-                    .show()
+            // Долгий тап в Drawer - всплывающее меню быстрых действий и перетаскивание на рабочий стол
+            row.setOnLongClickListener { v ->
+                v.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
+                showDrawerAppQuickActionsDialog(app)
                 true
             }
 
@@ -890,6 +1125,89 @@ class MainActivity : Activity() {
         ProcessItem("Банк", "ru.sberbankmobile", "PID: 12450 • u0_a77", "ОЗУ: 190 МБ", "CPU: 0.0%", hasNet = false, hasGeo = false, isIsolated = true),
         ProcessItem("UVOS-Core Daemon", "com.uvos.system", "PID: 1000 • system", "ОЗУ: 820 МБ", "CPU: 2.1%", hasNet = true, hasGeo = false, isIsolated = false)
     )
+
+    /**
+     * Контекстное меню приложения из меню приложений (Стол 03 Drawer)
+     */
+    private fun showDrawerAppQuickActionsDialog(app: AppRule) {
+        val dialog = Dialog(this)
+        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE)
+        val dialogView = layoutInflater.inflate(R.layout.dialog_app_quick_actions, null)
+        dialog.setContentView(dialogView)
+        dialog.window?.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
+        val dialogWidth = (resources.displayMetrics.widthPixels * 0.90f).toInt()
+        dialog.window?.setLayout(dialogWidth, ViewGroup.LayoutParams.WRAP_CONTENT)
+
+        val iconView = dialogView.findViewById<ImageView>(R.id.dialog_app_icon)
+        val titleView = dialogView.findViewById<TextView>(R.id.dialog_app_title)
+        val subtitleView = dialogView.findViewById<TextView>(R.id.dialog_app_subtitle)
+
+        titleView.text = app.appName
+        subtitleView.text = app.packageName
+
+        try {
+            iconView.setImageDrawable(packageManager.getApplicationIcon(app.packageName))
+        } catch (_: Exception) {
+            iconView.setImageResource(android.R.drawable.sym_def_app_icon)
+        }
+
+        // Действие 1: Добавить на рабочий стол (переиспользуем первую плашку)
+        val actionAddToHome = dialogView.findViewById<LinearLayout>(R.id.action_remove_from_screen)
+        val removeIcon = actionAddToHome.getChildAt(0) as? TextView
+        removeIcon?.text = "➕"
+        val removeTextContainer = actionAddToHome.getChildAt(1) as? LinearLayout
+        val actionTitle = removeTextContainer?.getChildAt(0) as? TextView
+        val actionSub = removeTextContainer?.getChildAt(1) as? TextView
+        actionTitle?.text = "Добавить на рабочий стол"
+        actionSub?.text = "Разместить ярлык в свободной ячейке"
+
+        actionAddToHome.setOnClickListener {
+            dialog.dismiss()
+            val slotIdx = homeManager.addAppToFirstFreeSlot(app.packageName, app.appName)
+            if (slotIdx != -1) {
+                renderHomeGrid()
+                desktopPager.scrollToPage(1, smooth = true)
+                Toast.makeText(this, "Ярлык «${app.appName}» добавлен на рабочий стол", Toast.LENGTH_SHORT).show()
+            } else {
+                Toast.makeText(this, "Все слоты на рабочем столе заняты", Toast.LENGTH_SHORT).show()
+            }
+        }
+
+        // Действие 2: Удалить приложение
+        val uninstallBtn = dialogView.findViewById<View>(R.id.action_uninstall_app)
+        if (!isSystemApp(app.packageName)) {
+            uninstallBtn.visibility = View.VISIBLE
+            uninstallBtn.setOnClickListener {
+                dialog.dismiss()
+                requestUninstallApp(app.packageName)
+            }
+        } else {
+            uninstallBtn.visibility = View.GONE
+        }
+
+        // Действие 3: О приложении
+        val appInfoBtn = dialogView.findViewById<View>(R.id.action_app_info)
+        appInfoBtn.setOnClickListener {
+            dialog.dismiss()
+            openAppDetails(app.packageName)
+        }
+
+        // Действие 4: Скрываем переименование и замену для Drawer
+        dialogView.findViewById<View>(R.id.action_rename_slot).visibility = View.GONE
+        dialogView.findViewById<View>(R.id.action_replace_app).visibility = View.GONE
+
+        // Действие 5: Перетащить на рабочий стол
+        val dragBtn = dialogView.findViewById<View>(R.id.action_start_drag)
+        val dragLabel = (dragBtn as? LinearLayout)?.getChildAt(1) as? TextView
+        dragLabel?.text = "Перейти к размещению на столе"
+        dragBtn.setOnClickListener {
+            dialog.dismiss()
+            desktopPager.scrollToPage(1, smooth = true)
+            Toast.makeText(this, "Нажмите на свободный слот (+) для добавления «${app.appName}»", Toast.LENGTH_SHORT).show()
+        }
+
+        dialog.show()
+    }
 
     private fun initDesktop4ProcessManager() {
         managerProcessContainer = findViewById(R.id.manager_process_container)
@@ -986,22 +1304,69 @@ class MainActivity : Activity() {
     // =========================================================================
 
     private fun initBottomDock() {
-        findViewById<View>(R.id.dock_phone).setOnClickListener {
+        val dockPhone = findViewById<View>(R.id.dock_phone)
+        val dockMessages = findViewById<View>(R.id.dock_messages)
+        val dockRadar = findViewById<View>(R.id.dock_radar)
+        val dockShield = findViewById<View>(R.id.dock_shield)
+
+        dockPhone.setOnClickListener {
             safeStartIntent(Intent(Intent.ACTION_DIAL))
         }
-        findViewById<View>(R.id.dock_messages).setOnClickListener {
+        dockPhone.setOnLongClickListener {
+            it.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
+            showDockAppDialog("Телефон", Intent(Intent.ACTION_DIAL))
+            true
+        }
+
+        dockMessages.setOnClickListener {
             val intent = Intent(Intent.ACTION_MAIN).apply {
                 addCategory(Intent.CATEGORY_APP_MESSAGING)
             }
             safeStartIntent(intent)
         }
-        findViewById<View>(R.id.dock_radar).setOnClickListener {
+        dockMessages.setOnLongClickListener {
+            it.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
+            showDockAppDialog("Сообщения", Intent(Intent.ACTION_MAIN).apply { addCategory(Intent.CATEGORY_APP_MESSAGING) })
+            true
+        }
+
+        dockRadar.setOnClickListener {
             val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://google.com"))
             safeStartIntent(intent)
         }
-        findViewById<View>(R.id.dock_shield).setOnClickListener {
+        dockRadar.setOnLongClickListener {
+            it.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
+            showDockAppDialog("Браузер / Радар", Intent(Intent.ACTION_VIEW, Uri.parse("https://google.com")))
+            true
+        }
+
+        dockShield.setOnClickListener {
             desktopPager.scrollToPage(0, smooth = true)
         }
+        dockShield.setOnLongClickListener {
+            it.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
+            startActivity(Intent(this, ShieldActivity::class.java))
+            true
+        }
+    }
+
+    private fun showDockAppDialog(title: String, launchIntent: Intent) {
+        val options = arrayOf(
+            "🚀 Запустить $title",
+            "🔄 Настроить ярлык",
+            "🛡️ Открыть Щит безопасности"
+        )
+        AlertDialog.Builder(this)
+            .setTitle("Док: $title")
+            .setItems(options) { _, which ->
+                when (which) {
+                    0 -> safeStartIntent(launchIntent)
+                    1 -> Toast.makeText(this, "Ярлык закреплен в защищенном доке", Toast.LENGTH_SHORT).show()
+                    2 -> desktopPager.scrollToPage(0, smooth = true)
+                }
+            }
+            .setNegativeButton("Закрыть", null)
+            .show()
     }
 
     // =========================================================================

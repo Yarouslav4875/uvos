@@ -2,6 +2,7 @@ package com.uvos.music.feature.equalizer
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -19,8 +20,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material3.AssistChip
-import androidx.compose.material3.AssistChipDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
@@ -205,25 +204,22 @@ fun EqualizerScreen(
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             for (preset in EqualizerPreset.PRESETS) {
-                AssistChip(
-                    onClick = { viewModel.applyPreset(preset) },
-                    label = {
-                        Text(
-                            text = preset.name,
-                            fontFamily = FontFamily.Monospace,
-                            fontSize = 11.sp,
-                            fontWeight = FontWeight.SemiBold
-                        )
-                    },
-                    colors = AssistChipDefaults.assistChipColors(
-                        containerColor = M4200ChassisBezel,
-                        labelColor = M4200TextPrimary
-                    ),
-                    border = AssistChipDefaults.assistChipBorder(
-                        borderColor = M4200ChassisBorder,
-                        borderWidth = 1.dp
+                Box(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(6.dp))
+                        .background(M4200ChassisBezel)
+                        .border(1.dp, M4200ChassisBorder, RoundedCornerShape(6.dp))
+                        .clickable { viewModel.applyPreset(preset) }
+                        .padding(horizontal = 12.dp, vertical = 6.dp)
+                ) {
+                    Text(
+                        text = preset.name,
+                        fontFamily = FontFamily.Monospace,
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = M4200TextPrimary
                     )
-                )
+                }
             }
         }
 

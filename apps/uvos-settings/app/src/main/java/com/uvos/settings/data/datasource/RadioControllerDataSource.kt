@@ -50,10 +50,10 @@ class RadioControllerDataSource(
             sensorPrivacyManager?.let { spm ->
                 try {
                     if (spm.supportsSensorToggle(SensorPrivacyManager.Sensors.CAMERA)) {
-                        spm.setSensorPrivacy(SensorPrivacyManager.Sensors.CAMERA, true)
+                        setSensorPrivacyState(SensorPrivacyManager.Sensors.CAMERA, true)
                     }
                     if (spm.supportsSensorToggle(SensorPrivacyManager.Sensors.MICROPHONE)) {
-                        spm.setSensorPrivacy(SensorPrivacyManager.Sensors.MICROPHONE, true)
+                        setSensorPrivacyState(SensorPrivacyManager.Sensors.MICROPHONE, true)
                     }
                 } catch (_: Exception) {}
             }
@@ -90,10 +90,10 @@ class RadioControllerDataSource(
                 try {
                     // Разрешить микрофон для голосовых вызовов, заглушить камеру
                     if (spm.supportsSensorToggle(SensorPrivacyManager.Sensors.CAMERA)) {
-                        spm.setSensorPrivacy(SensorPrivacyManager.Sensors.CAMERA, true)
+                        setSensorPrivacyState(SensorPrivacyManager.Sensors.CAMERA, true)
                     }
                     if (spm.supportsSensorToggle(SensorPrivacyManager.Sensors.MICROPHONE)) {
-                        spm.setSensorPrivacy(SensorPrivacyManager.Sensors.MICROPHONE, false)
+                        setSensorPrivacyState(SensorPrivacyManager.Sensors.MICROPHONE, false)
                     }
                 } catch (_: Exception) {}
             }
@@ -118,10 +118,10 @@ class RadioControllerDataSource(
             sensorPrivacyManager?.let { spm ->
                 try {
                     if (spm.supportsSensorToggle(SensorPrivacyManager.Sensors.CAMERA)) {
-                        spm.setSensorPrivacy(SensorPrivacyManager.Sensors.CAMERA, false)
+                        setSensorPrivacyState(SensorPrivacyManager.Sensors.CAMERA, false)
                     }
                     if (spm.supportsSensorToggle(SensorPrivacyManager.Sensors.MICROPHONE)) {
-                        spm.setSensorPrivacy(SensorPrivacyManager.Sensors.MICROPHONE, false)
+                        setSensorPrivacyState(SensorPrivacyManager.Sensors.MICROPHONE, false)
                     }
                 } catch (_: Exception) {}
             }
@@ -132,6 +132,34 @@ class RadioControllerDataSource(
             "iptables -P OUTPUT ACCEPT",
             "iptables -P INPUT ACCEPT"
         )
+    }
+
+    private fun setSensorPrivacyState(sensor: Int, enabled: Boolean) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            sensorPrivacyManager?.let { spm ->
+                try {
+                    val method = spm.javaClass.getMethod(
+                        "setSensorPrivacy",
+                        Int::class.javaPrimitiveType,
+                        Boolean::class.javaPrimitiveType
+                    )
+                    method.invoke(spm, sensor, enabled)
+                } catch (_: Exception) {
+                    try {
+                        val method3 = spm.javaClass.getMethod(
+                            "setSensorPrivacy",
+                            Int::class.javaPrimitiveType,
+                            Int::class.javaPrimitiveType,
+                            Boolean::class.javaPrimitiveType
+                        )
+                        method3.invoke(spm, 1, sensor, enabled)
+                    } catch (_: Exception) {
+                        val sensorName = if (sensor == SensorPrivacyManager.Sensors.CAMERA) "camera" else "microphone"
+                        runRootCommands("cmd sensor_privacy set $sensorName $enabled")
+                    }
+                }
+            }
+        }
     }
 
     private fun runRootCommands(vararg commands: String) {

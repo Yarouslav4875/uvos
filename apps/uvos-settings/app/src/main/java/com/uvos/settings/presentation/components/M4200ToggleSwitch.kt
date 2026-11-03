@@ -129,7 +129,7 @@ fun M4200ToggleSwitch(
                 modifier = Modifier
                     .fillMaxHeight()
                     .fillMaxWidth(0.33f)
-                    .align(Alignment(alignBias, 0f))
+                    .align(androidx.compose.ui.BiasAlignment(alignBias, 0f))
                     .clip(RoundedCornerShape(11.dp))
                     .background(
                         Brush.verticalGradient(

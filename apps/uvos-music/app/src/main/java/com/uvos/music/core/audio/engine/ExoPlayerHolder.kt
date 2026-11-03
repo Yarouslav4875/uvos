@@ -50,7 +50,6 @@ class ExoPlayerHolder(
         }.apply {
             setExtensionRendererMode(DefaultRenderersFactory.EXTENSION_RENDERER_MODE_PREFER)
             setEnableAudioFloatOutput(true)
-            setEnableAudioOffload(true)
         }
 
         val audioAttributes = AudioAttributes.Builder()

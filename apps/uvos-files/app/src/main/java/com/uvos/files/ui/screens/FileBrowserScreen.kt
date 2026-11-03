@@ -1,7 +1,5 @@
 package com.uvos.files.ui.screens
 
-import android.content.Intent
-import android.net.Uri
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -20,17 +18,16 @@ import com.uvos.files.domain.model.FileItem
 import com.uvos.files.domain.model.FileType
 import com.uvos.files.ui.components.BreadcrumbBar
 import com.uvos.files.ui.components.DiskStorageGaugeView
-import com.uvos.files.ui.theme.UvosBackground
-import com.uvos.files.ui.theme.UvosBorder
-import com.uvos.files.ui.theme.UvosRed
+import com.uvos.files.ui.theme.GaugeNeedleRed
+import com.uvos.files.ui.theme.UvosBg
 import com.uvos.files.ui.theme.UvosSurface
 import com.uvos.files.ui.viewmodel.FilesViewModel
 
 @Composable
 fun FileBrowserScreen(
     viewModel: FilesViewModel,
-    onOpenFileHex: (String) -> Unit,
-    onOpenEditText: (String) -> Unit,
+    onOpenFileHex: (FileItem) -> Unit,
+    onOpenEditText: (FileItem) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val leftState by viewModel.leftPaneState.collectAsState()
@@ -39,7 +36,7 @@ fun FileBrowserScreen(
     Column(
         modifier = modifier
             .fillMaxSize()
-            .background(UvosBackground)
+            .background(UvosBg)
             .padding(8.dp)
     ) {
         // Шапка с аналоговыми приборами свободного места M4200
@@ -51,8 +48,15 @@ fun FileBrowserScreen(
                 horizontalArrangement = Arrangement.SpaceEvenly
             ) {
                 partitions.take(3).forEach { part ->
+                    val usedPerc = if (part.totalBytes > 0) part.usedBytes.toFloat() / part.totalBytes else 0f
+                    val freeText = formatSize(part.freeBytes)
+                    val totalText = formatSize(part.totalBytes)
                     DiskStorageGaugeView(
-                        partition = part,
+                        title = part.label,
+                        usedPercentage = usedPerc,
+                        freeSpaceText = freeText,
+                        totalSpaceText = totalText,
+                        isMounted = part.isMounted,
                         modifier = Modifier
                             .weight(1f)
                             .height(130.dp)
@@ -65,8 +69,13 @@ fun FileBrowserScreen(
         // Хлебные крошки (Текущий путь)
         BreadcrumbBar(
             currentPath = leftState.currentPath,
-            onPathSegmentClicked = { segmentPath ->
-                viewModel.navigateTo(isLeftPane = true, path = segmentPath)
+            isRootActive = viewModel.isRootPath(leftState.currentPath),
+            onNavigate = { path ->
+                viewModel.navigateTo(isLeftPane = true, path = path)
+            },
+            onNavigateUp = {
+                val parent = leftState.currentPath.substringBeforeLast("/", "/")
+                viewModel.navigateTo(isLeftPane = true, path = if (parent.isEmpty()) "/" else parent)
             },
             modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)
         )
@@ -77,7 +86,7 @@ fun FileBrowserScreen(
                 modifier = Modifier.weight(1f).fillMaxWidth(),
                 contentAlignment = Alignment.Center
             ) {
-                CircularProgressIndicator(color = UvosRed)
+                CircularProgressIndicator(color = GaugeNeedleRed)
             }
         } else {
             LazyColumn(
@@ -92,10 +101,16 @@ fun FileBrowserScreen(
                             if (file.isDirectory) {
                                 viewModel.navigateTo(isLeftPane = true, path = file.absolutePath)
                             } else {
-                                if (file.fileType == FileType.TEXT || file.name.endsWith(".txt") || file.name.endsWith(".json") || file.name.endsWith(".xml") || file.name.endsWith(".conf")) {
-                                    onOpenEditText(file.absolutePath)
+                                val isTxt = file.name.endsWith(".txt") ||
+                                        file.name.endsWith(".json") ||
+                                        file.name.endsWith(".xml") ||
+                                        file.name.endsWith(".conf") ||
+                                        file.name.endsWith(".rc") ||
+                                        file.name.endsWith(".prop")
+                                if (isTxt) {
+                                    onOpenEditText(file)
                                 } else {
-                                    onOpenFileHex(file.absolutePath)
+                                    onOpenFileHex(file)
                                 }
                             }
                         }
@@ -122,7 +137,7 @@ private fun FileListItemRow(
     ) {
         Text(
             text = if (file.isDirectory) "[DIR]" else "[FILE]",
-            color = if (file.isDirectory) UvosRed else Color(0xFFE8E4D8),
+            color = if (file.isDirectory) GaugeNeedleRed else Color(0xFFE8E4D8),
             fontFamily = FontFamily.Monospace,
             fontSize = 12.sp,
             fontWeight = FontWeight.Bold,
@@ -137,8 +152,9 @@ private fun FileListItemRow(
                 fontWeight = FontWeight.Medium,
                 maxLines = 1
             )
+            val permStr = file.permissions?.toFormattedString() ?: "rw-r--r--"
             Text(
-                text = "${file.permissions.toRwxString()}  |  ${formatSize(file.sizeBytes)}",
+                text = "$permStr  |  ${formatSize(file.sizeBytes)}",
                 color = Color.Gray,
                 fontSize = 11.sp,
                 fontFamily = FontFamily.Monospace

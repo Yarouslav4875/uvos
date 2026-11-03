@@ -128,7 +128,8 @@ class ExifScrubberEngine(private val context: Context) {
         }
 
         // 3. Strip embedded EXIF thumbnail
-        exif.removeThumbnail()
+        exif.setAttribute(ExifInterface.TAG_JPEG_INTERCHANGE_FORMAT, null)
+        exif.setAttribute(ExifInterface.TAG_JPEG_INTERCHANGE_FORMAT_LENGTH, null)
 
         // 4. Save sanitized headers without pixel recompression
         exif.saveAttributes()
@@ -146,7 +147,8 @@ class ExifScrubberEngine(private val context: Context) {
             for (tag in criticalTags) {
                 exif.setAttribute(tag, null)
             }
-            exif.removeThumbnail()
+            exif.setAttribute(ExifInterface.TAG_JPEG_INTERCHANGE_FORMAT, null)
+            exif.setAttribute(ExifInterface.TAG_JPEG_INTERCHANGE_FORMAT_LENGTH, null)
             exif.saveAttributes()
             true
         } catch (e: Exception) {
@@ -165,7 +167,8 @@ class ExifScrubberEngine(private val context: Context) {
                 for (tag in criticalTags) {
                     exif.setAttribute(tag, null)
                 }
-                exif.removeThumbnail()
+                exif.setAttribute(ExifInterface.TAG_JPEG_INTERCHANGE_FORMAT, null)
+            exif.setAttribute(ExifInterface.TAG_JPEG_INTERCHANGE_FORMAT_LENGTH, null)
                 exif.saveAttributes()
             }
             true
