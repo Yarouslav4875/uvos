@@ -1,0 +1,7 @@
+<resources>
+    <style name="Theme.UVOSMail" parent="android:Theme.Material.NoActionBar">
+        <item name="android:windowBackground">@color/uvos_background</item>
+        <item name="android:statusBarColor">@color/uvos_background</item>
+        <item name="android:navigationBarColor">@color/uvos_background</item>
+    </style>
+</resources>
