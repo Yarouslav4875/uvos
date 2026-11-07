@@ -1,10 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:custom="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/main_root_frame"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/uvos_background"
-    android:orientation="vertical">
+    android:background="@color/uvos_background">
+
+    <!-- ОСНОВНОЙ КОНТЕЙНЕР РАБОЧИХ СТОЛОВ И ДОКА -->
+    <LinearLayout
+        android:id="@+id/main_content_container"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@color/uvos_background"
+        android:orientation="vertical">
 
     <!-- Верхний статус-бар UnderVoltOS (с учётом выреза под камеру 34dp) -->
     <LinearLayout
@@ -37,7 +45,17 @@
             android:id="@+id/top_bar_center"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:visibility="gone" />
+            android:text="▼ ШТОРКА"
+            android:textColor="@color/uvos_text_dim"
+            android:textSize="10sp"
+            android:fontFamily="monospace"
+            android:textStyle="bold"
+            android:background="@drawable/bg_tile_clickable"
+            android:paddingStart="8dp"
+            android:paddingEnd="8dp"
+            android:paddingTop="2dp"
+            android:paddingBottom="2dp"
+            android:visibility="visible" />
 
         <TextView
             android:id="@+id/top_bar_battery"
@@ -878,4 +896,9 @@
             android:src="@drawable/ic_sys_shield" />
     </LinearLayout>
 
-</LinearLayout>
+    </LinearLayout>
+
+    <!-- ПРИБОРНАЯ ШТОРКА ПАРАМЕТРОВ И УВЕДОМЛЕНИЙ UVOS -->
+    <include layout="@layout/view_system_shade" />
+
+</FrameLayout>

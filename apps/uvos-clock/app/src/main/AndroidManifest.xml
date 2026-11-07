@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- 100% OFFLINE INVARIANT: NO INTERNET PERMISSION -->
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
+    <uses-permission android:name="android.permission.USE_EXACT_ALARM" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <uses-permission android:name="android.permission.VIBRATE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
+    <application
+        android:name=".UvosClockApplication"
+        android:allowBackup="false"
+        android:icon="@drawable/ic_launcher_clock"
+        android:label="@string/app_name"
+        android:roundIcon="@drawable/ic_launcher_clock"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.UnderVoltOS.Dark">
+
+        <receiver
+            android:name=".receiver.AlarmBroadcastReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.TIME_SET" />
+                <action android:name="android.intent.action.TIMEZONE_CHANGED" />
+                <action android:name="com.uvos.clock.ACTION_ALARM_TRIGGER" />
+                <action android:name="com.uvos.clock.ACTION_TASK_REMINDER" />
+                <action android:name="com.uvos.clock.ACTION_TIMER_EXPIRED" />
+            </intent-filter>
+        </receiver>
+
+        <service
+            android:name=".service.TimerForegroundService"
+            android:exported="false"
+            android:foregroundServiceType="specialUse">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="UnderVoltOS high-precision instrument countdown timer service" />
+        </service>
+
+        <activity
+            android:name=".ui.main.ClockTasksActivity"
+            android:exported="true"
+            android:windowSoftInputMode="adjustResize">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <activity
+            android:name=".ui.alarm.AlarmRingingActivity"
+            android:exported="false"
+            android:showWhenLocked="true"
+            android:turnScreenOn="true"
+            android:excludeFromRecents="true"
+            android:theme="@style/Theme.UnderVoltOS.Dark" />
+
+    </application>
+
+</manifest>

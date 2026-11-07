@@ -1,0 +1,8 @@
+<resources>
+    <style name="Theme.UnderVoltOS.Dark" parent="android:Theme.Material.NoActionBar">
+        <item name="android:windowBackground">@color/uvos_background</item>
+        <item name="android:statusBarColor">@color/uvos_background</item>
+        <item name="android:navigationBarColor">@color/uvos_background</item>
+    </style>
+    <style name="Theme.UVOSClock" parent="Theme.UnderVoltOS.Dark" />
+</resources>

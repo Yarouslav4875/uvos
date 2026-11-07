@@ -844,6 +844,265 @@
     color: var(--text-dim);
     line-height: 1.35;
   }
+
+  /* =========================================================================
+     ANDROID DESKTOP DRAG & DROP AND QUICK ACTIONS STYLES
+     ========================================================================= */
+  .drop-target-bar {
+    display: none;
+    position: absolute;
+    top: 50px;
+    left: 12px;
+    right: 12px;
+    height: 52px;
+    z-index: 100;
+    gap: 8px;
+    animation: slideDownDropBar 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+
+  .drop-target-bar.active {
+    display: flex;
+  }
+
+  @keyframes slideDownDropBar {
+    from { transform: translateY(-20px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+  }
+
+  .drop-target-zone {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    border-radius: 14px;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+    box-shadow: 0 4px 14px rgba(0,0,0,0.6);
+    user-select: none;
+  }
+
+  .drop-zone-remove {
+    background: #141620;
+    border: 1px solid #2B2F44;
+    color: #D8D8E2;
+  }
+
+  .drop-zone-remove.drag-hover {
+    background: #252A3D;
+    border-color: #E2E4EC;
+    color: #FFF;
+    transform: scale(1.05);
+    box-shadow: 0 0 16px rgba(226, 228, 236, 0.35);
+  }
+
+  .drop-zone-uninstall {
+    background: #220B0E;
+    border: 1px solid #5A161B;
+    color: #FF8585;
+  }
+
+  .drop-zone-uninstall.drag-hover {
+    background: #4A0B12;
+    border-color: #E02020;
+    color: #FFF;
+    transform: scale(1.05);
+    box-shadow: 0 0 16px rgba(224, 32, 32, 0.5);
+  }
+
+  .drop-zone-icon {
+    font-size: 15px;
+  }
+
+  /* Dragging states for app cells */
+  .app-item-cell {
+    position: relative;
+    user-select: none;
+    transition: transform 0.15s ease, opacity 0.15s ease;
+  }
+
+  .app-item-cell[draggable="true"] {
+    cursor: grab;
+  }
+
+  .app-item-cell[draggable="true"]:active {
+    cursor: grabbing;
+  }
+
+  .app-item-cell.dragging {
+    opacity: 0.35;
+    transform: scale(0.92);
+  }
+
+  .app-item-cell.drag-over {
+    transform: scale(1.10);
+  }
+
+  .app-item-cell.drag-over .app-icon-pod {
+    border-color: #E02020 !important;
+    box-shadow: 0 0 14px rgba(224, 32, 32, 0.6) !important;
+    background: #1E2232 !important;
+  }
+
+  /* Empty slot styling */
+  .app-item-cell.is-empty .app-icon-pod {
+    border: 1px dashed #3A3E54;
+    background: #0B0C12;
+    color: #626782;
+    font-size: 20px;
+    font-weight: 300;
+  }
+
+  .app-item-cell.is-empty .app-label {
+    color: #555A72;
+  }
+
+  /* Quick Actions Floating Context Menu */
+  .quick-actions-popup {
+    position: fixed;
+    z-index: 1000;
+    background: #151722;
+    border: 1px solid #2B3046;
+    border-radius: 18px;
+    width: 230px;
+    padding: 8px;
+    box-shadow: 0 14px 40px rgba(0,0,0,0.85), 0 0 0 1px rgba(255,255,255,0.06);
+    display: none;
+    flex-direction: column;
+    gap: 4px;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    animation: popupFadeIn 0.15s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+
+  @keyframes popupFadeIn {
+    from { opacity: 0; transform: scale(0.92); }
+    to { opacity: 1; transform: scale(1); }
+  }
+
+  .qa-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 10px 10px;
+    border-bottom: 1px solid #222638;
+    margin-bottom: 4px;
+  }
+
+  .qa-icon-wrap {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .qa-icon-wrap svg {
+    width: 100%;
+    height: 100%;
+  }
+
+  .qa-title {
+    font-size: 13.5px;
+    font-weight: 700;
+    color: #FFF;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .qa-sub {
+    font-size: 10px;
+    color: #71768E;
+    font-family: 'Share Tech Mono', monospace;
+  }
+
+  .qa-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 12px;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: background 0.12s ease;
+    user-select: none;
+  }
+
+  .qa-item:hover {
+    background: #202436;
+  }
+
+  .qa-item-danger:hover {
+    background: #3B0E13;
+  }
+
+  .qa-item-icon {
+    font-size: 14px;
+    width: 18px;
+    text-align: center;
+  }
+
+  .qa-item-text {
+    font-size: 12.5px;
+    font-weight: 600;
+    color: #DDE0EC;
+  }
+
+  .qa-item-danger .qa-item-text {
+    color: #FF6B6B;
+  }
+
+  /* App Info Modal Overlay */
+  .uvos-modal-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0,0,0,0.75);
+    backdrop-filter: blur(4px);
+    z-index: 2000;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .uvos-modal-overlay.active {
+    display: flex;
+  }
+
+  .uvos-modal-card {
+    background: #13151F;
+    border: 1px solid #282D42;
+    border-radius: 20px;
+    width: 90%;
+    max-width: 380px;
+    padding: 22px;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.9);
+    color: #FFF;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  }
+
+  .modal-btn-close {
+    width: 100%;
+    margin-top: 18px;
+    padding: 11px;
+    background: #E02020;
+    color: #FFF;
+    border: none;
+    border-radius: 12px;
+    font-weight: 700;
+    font-size: 13px;
+    cursor: pointer;
+    transition: opacity 0.15s ease;
+  }
+
+  .modal-btn-close:hover {
+    opacity: 0.9;
+  }
+
 </style>
 </head>
 <body>
@@ -993,8 +1252,19 @@
       </div>
 
       <!-- Screen Body -->
-      <div class="phone-screen">
+      <div class="phone-screen" style="position:relative;">
 
+        <!-- Android Drop Target Bar (Выезжает при перетаскивании) -->
+        <div class="drop-target-bar" id="desktop2-drop-bar">
+          <div class="drop-target-zone drop-zone-remove" id="drop-zone-remove">
+            <span class="drop-zone-icon">🗑️</span>
+            <span class="drop-zone-text">Убрать с экрана</span>
+          </div>
+          <div class="drop-target-zone drop-zone-uninstall" id="drop-zone-uninstall">
+            <span class="drop-zone-icon">❌</span>
+            <span class="drop-zone-text">Удалить</span>
+          </div>
+        </div>
         <!-- Top Clock/Date Clean Widget -->
         <div class="uvos-tile" style="padding:14px 18px; align-items:center;">
           <div style="font-family:'Oswald',sans-serif; font-size:42px; font-weight:700; color:#FFF; line-height:1; letter-spacing:1px;">
@@ -2033,7 +2303,459 @@
     renderAviationVoltmeter('meter-batt', { paramLabel: 'BATT', labelSize: '15px', level: 0.82 });
     renderAviationVoltmeter('meter-net', { paramLabel: 'NET', labelSize: '15px', level: 0.35 });
   });
+
+  // =========================================================================
+  // INTERACTIVE ANDROID DESKTOP: DRAG & DROP, UNINSTALL, QUICK ACTIONS
+  // =========================================================================
+  (function initDesktopInteractions() {
+    let draggedCell = null;
+    let draggedIndex = -1;
+    let longPressTimer = null;
+    let activeCellForMenu = null;
+
+    const dropBar = document.getElementById('desktop2-drop-bar');
+    const dropZoneRemove = document.getElementById('drop-zone-remove');
+    const dropZoneUninstall = document.getElementById('drop-zone-uninstall');
+    const popup = document.getElementById('quick-actions-popup');
+    const modalOverlay = document.getElementById('uvos-modal-overlay');
+    const modalContent = document.getElementById('modal-content');
+    const modalClose = document.getElementById('modal-btn-close');
+
+    // Desktop 02 App Grid cells
+    const desktop2 = document.querySelector('.screen-column:nth-child(2)');
+    const grid = desktop2 ? desktop2.querySelector('.app-grid-4x4') : document.querySelector('.app-grid-4x4');
+    if (!grid) return;
+
+    const cells = Array.from(grid.querySelectorAll('.app-item-cell'));
+
+    // Initialize cells
+    cells.forEach((cell, idx) => {
+      cell.setAttribute('draggable', 'true');
+      cell.dataset.slotIndex = idx;
+      
+      const label = cell.querySelector('.app-label')?.innerText.trim() || 'Приложение';
+      cell.dataset.appName = label;
+      cell.dataset.appPkg = getPackageForApp(label);
+      cell.dataset.isSystem = isSystemApp(label) ? 'true' : 'false';
+
+      // 1. Drag & Drop Event Listeners
+      cell.addEventListener('dragstart', (e) => {
+        if (cell.classList.contains('is-empty')) {
+          e.preventDefault();
+          return;
+        }
+        draggedCell = cell;
+        draggedIndex = parseInt(cell.dataset.slotIndex);
+        cell.classList.add('dragging');
+        e.dataTransfer.effectAllowed = 'move';
+        e.dataTransfer.setData('text/plain', cell.dataset.appName);
+
+        if (dropBar) {
+          dropBar.classList.add('active');
+        }
+        hidePopup();
+      });
+
+      cell.addEventListener('dragend', () => {
+        cell.classList.remove('dragging');
+        cells.forEach(c => c.classList.remove('drag-over'));
+        if (dropBar) {
+          dropBar.classList.remove('active');
+        }
+        draggedCell = null;
+        draggedIndex = -1;
+      });
+
+      cell.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'move';
+        if (draggedCell && draggedCell !== cell) {
+          cell.classList.add('drag-over');
+        }
+      });
+
+      cell.addEventListener('dragleave', () => {
+        cell.classList.remove('drag-over');
+      });
+
+      cell.addEventListener('drop', (e) => {
+        e.preventDefault();
+        cell.classList.remove('drag-over');
+        if (!draggedCell || draggedCell === cell) return;
+
+        // Swap HTML and dataset attributes between draggedCell and target cell
+        swapCells(draggedCell, cell);
+        showToast(`Ярлык «${cell.dataset.appName}» перемещён`);
+      });
+
+      // 2. Right click / Context Menu
+      cell.addEventListener('contextmenu', (e) => {
+        e.preventDefault();
+        if (cell.classList.contains('is-empty')) {
+          showAppPicker(cell);
+        } else {
+          openQuickActionsMenu(cell, e.clientX, e.clientY);
+        }
+      });
+
+      // 3. Touch / Long Press for mobile / PC mouse hold
+      cell.addEventListener('mousedown', (e) => {
+        if (e.button !== 0) return;
+        longPressTimer = setTimeout(() => {
+          if (!cell.classList.contains('is-empty')) {
+            openQuickActionsMenu(cell, e.clientX, e.clientY);
+          } else {
+            showAppPicker(cell);
+          }
+        }, 450);
+      });
+
+      ['mouseup', 'mouseleave', 'dragstart'].forEach(evt => {
+        cell.addEventListener(evt, () => clearTimeout(longPressTimer));
+      });
+
+      // Click on empty cell
+      cell.addEventListener('click', (e) => {
+        if (cell.classList.contains('is-empty')) {
+          showAppPicker(cell);
+        }
+      });
+    });
+
+    // Drop Targets Handlers (Top bar)
+    if (dropZoneRemove) {
+      dropZoneRemove.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        dropZoneRemove.classList.add('drag-hover');
+      });
+      dropZoneRemove.addEventListener('dragleave', () => {
+        dropZoneRemove.classList.remove('drag-hover');
+      });
+      dropZoneRemove.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropZoneRemove.classList.remove('drag-hover');
+        if (draggedCell) {
+          const name = draggedCell.dataset.appName;
+          clearCellToEmpty(draggedCell);
+          showToast(`Ярлык «${name}» убран с экрана`);
+        }
+      });
+    }
+
+    if (dropZoneUninstall) {
+      dropZoneUninstall.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        dropZoneUninstall.classList.add('drag-hover');
+      });
+      dropZoneUninstall.addEventListener('dragleave', () => {
+        dropZoneUninstall.classList.remove('drag-hover');
+      });
+      dropZoneUninstall.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropZoneUninstall.classList.remove('drag-hover');
+        if (draggedCell) {
+          const name = draggedCell.dataset.appName;
+          const isSys = draggedCell.dataset.isSystem === 'true';
+          if (isSys) {
+            showToast(`Системные инструменты UnderVoltOS нельзя удалить, но можно убрать с экрана`);
+          } else {
+            confirmUninstall(draggedCell);
+          }
+        }
+      });
+    }
+
+    // Quick Actions Menu Actions
+    document.getElementById('qa-btn-remove')?.addEventListener('click', () => {
+      if (activeCellForMenu) {
+        const name = activeCellForMenu.dataset.appName;
+        clearCellToEmpty(activeCellForMenu);
+        showToast(`Ярлык «${name}» убран с экрана`);
+      }
+      hidePopup();
+    });
+
+    document.getElementById('qa-btn-uninstall')?.addEventListener('click', () => {
+      if (activeCellForMenu) {
+        if (activeCellForMenu.dataset.isSystem === 'true') {
+          showToast(`Системные инструменты UnderVoltOS нельзя удалить, но можно убрать с экрана`);
+        } else {
+          confirmUninstall(activeCellForMenu);
+        }
+      }
+      hidePopup();
+    });
+
+    document.getElementById('qa-btn-info')?.addEventListener('click', () => {
+      if (activeCellForMenu) {
+        showAppInfoModal(activeCellForMenu);
+      }
+      hidePopup();
+    });
+
+    document.getElementById('qa-btn-rename')?.addEventListener('click', () => {
+      if (activeCellForMenu) {
+        promptRename(activeCellForMenu);
+      }
+      hidePopup();
+    });
+
+    // Close popup on outside click
+    document.addEventListener('click', (e) => {
+      if (popup && !popup.contains(e.target) && !e.target.closest('.app-item-cell')) {
+        hidePopup();
+      }
+    });
+
+    modalClose?.addEventListener('click', () => {
+      modalOverlay?.classList.remove('active');
+    });
+
+    modalOverlay?.addEventListener('click', (e) => {
+      if (e.target === modalOverlay) modalOverlay.classList.remove('active');
+    });
+
+    // Helper functions
+    function openQuickActionsMenu(cell, clientX, clientY) {
+      activeCellForMenu = cell;
+      const title = cell.dataset.appName || 'Приложение';
+      const pkg = cell.dataset.appPkg || 'com.uvos.app';
+      const iconPod = cell.querySelector('.app-icon-pod');
+
+      document.getElementById('qa-title').innerText = title;
+      document.getElementById('qa-sub').innerText = pkg;
+      const iconWrap = document.getElementById('qa-icon-wrap');
+      if (iconWrap && iconPod) {
+        iconWrap.innerHTML = iconPod.innerHTML;
+      }
+
+      const uninstallBtn = document.getElementById('qa-btn-uninstall');
+      if (uninstallBtn) {
+        uninstallBtn.style.display = (cell.dataset.isSystem === 'true') ? 'none' : 'flex';
+      }
+
+      // Position popup safely inside viewport
+      popup.style.display = 'flex';
+      let x = clientX + 8;
+      let y = clientY + 8;
+      if (x + 240 > window.innerWidth) x = window.innerWidth - 250;
+      if (y + 220 > window.innerHeight) y = window.innerHeight - 230;
+
+      popup.style.left = `${Math.max(10, x)}px`;
+      popup.style.top = `${Math.max(10, y)}px`;
+    }
+
+    function hidePopup() {
+      if (popup) popup.style.display = 'none';
+      activeCellForMenu = null;
+    }
+
+    function swapCells(cellA, cellB) {
+      const htmlA = cellA.innerHTML;
+      const htmlB = cellB.innerHTML;
+      cellA.innerHTML = htmlB;
+      cellB.innerHTML = htmlA;
+
+      const dataKeys = ['appName', 'appPkg', 'isSystem'];
+      dataKeys.forEach(k => {
+        const valA = cellA.dataset[k];
+        cellA.dataset[k] = cellB.dataset[k];
+        cellB.dataset[k] = valA;
+      });
+
+      const emptyA = cellA.classList.contains('is-empty');
+      const emptyB = cellB.classList.contains('is-empty');
+      cellA.classList.toggle('is-empty', emptyB);
+      cellB.classList.toggle('is-empty', emptyA);
+    }
+
+    function clearCellToEmpty(cell) {
+      cell.classList.add('is-empty');
+      cell.dataset.appName = 'Свободный слот';
+      cell.dataset.appPkg = '';
+      cell.dataset.isSystem = 'false';
+      cell.innerHTML = `
+        <div class="app-icon-pod">➕</div>
+        <span class="app-label">Слот</span>
+      `;
+    }
+
+    function confirmUninstall(cell) {
+      const name = cell.dataset.appName;
+      modalContent.innerHTML = `
+        <div style="font-size:32px; margin-bottom:12px; text-align:center;">❌</div>
+        <div style="font-size:18px; font-weight:700; text-align:center; margin-bottom:8px;">Удалить приложение?</div>
+        <div style="font-size:13px; color:#A0A5BA; text-align:center; line-height:1.4; margin-bottom:18px;">
+          Вы действительно хотите удалить <strong>${name}</strong> (${cell.dataset.appPkg}) с устройства?
+        </div>
+        <button id="modal-btn-confirm-del" style="width:100%; padding:11px; background:#E02020; color:#FFF; border:none; border-radius:12px; font-weight:700; cursor:pointer; margin-bottom:8px;">
+          УДАЛИТЬ С ТЕЛЕФОНА
+        </button>
+      `;
+      modalOverlay.classList.add('active');
+
+      document.getElementById('modal-btn-confirm-del')?.addEventListener('click', () => {
+        clearCellToEmpty(cell);
+        modalOverlay.classList.remove('active');
+        showToast(`Приложение «${name}» удалено с телефона`);
+      });
+    }
+
+    function showAppInfoModal(cell) {
+      const name = cell.dataset.appName;
+      const pkg = cell.dataset.appPkg;
+      const isSys = cell.dataset.isSystem === 'true';
+
+      modalContent.innerHTML = `
+        <div style="display:flex; align-items:center; gap:12px; margin-bottom:14px;">
+          <div style="width:42px; height:42px;">${cell.querySelector('.app-icon-pod').innerHTML}</div>
+          <div>
+            <div style="font-size:17px; font-weight:700;">${name}</div>
+            <div style="font-size:11px; color:#71768E; font-family:'Share Tech Mono', monospace;">${pkg}</div>
+          </div>
+        </div>
+        <div style="background:#0C0D14; border:1px solid #1F2232; border-radius:12px; padding:12px; font-size:12px; color:#CAD0E4; line-height:1.6;">
+          <div><strong>Статус:</strong> ${isSys ? '<span style="color:#71768E;">СИСТЕМНЫЙ БЛОК</span>' : '<span style="color:#06B6D4;">ПОЛЬЗОВАТЕЛЬСКОЕ</span>'}</div>
+          <div><strong>Изоляция UVOS:</strong> 1 КАНАЛ (СЕТЬ)</div>
+          <div><strong>ОЗУ:</strong> 142 МБ • <strong>CPU:</strong> 1.2%</div>
+          <div><strong>Разрешения:</strong> Интернет (разрешён владельцем)</div>
+        </div>
+      `;
+      modalOverlay.classList.add('active');
+    }
+
+    function promptRename(cell) {
+      const oldName = cell.dataset.appName;
+      const newName = prompt('Новое название ярлыка на рабочем столе:', oldName);
+      if (newName && newName.trim() !== '') {
+        cell.dataset.appName = newName.trim();
+        const label = cell.querySelector('.app-label');
+        if (label) label.innerText = newName.trim();
+        showToast(`Ярлык переименован в «${newName.trim()}»`);
+      }
+    }
+
+    function showAppPicker(cell) {
+      const available = [
+        { name: 'Telegram', pkg: 'org.telegram.messenger' },
+        { name: 'Карты', pkg: 'ru.yandex.yandexnavi' },
+        { name: 'Банк', pkg: 'ru.sberbankmobile' },
+        { name: 'Браузер', pkg: 'org.mozilla.firefox' },
+        { name: 'Музыка', pkg: 'com.uvos.music' },
+        { name: 'Терминал', pkg: 'com.uvos.terminal' },
+        { name: 'Галерея', pkg: 'com.uvos.gallery' }
+      ];
+
+      modalContent.innerHTML = `
+        <div style="font-size:16px; font-weight:700; margin-bottom:12px;">➕ Добавить приложение в слот</div>
+        <div style="display:flex; flex-direction:column; gap:6px; max-height:260px; overflow-y:auto;">
+          ${available.map(a => `
+            <div class="picker-item" data-app="${a.name}" data-pkg="${a.pkg}" style="padding:9px 12px; background:#181A26; border-radius:10px; cursor:pointer; display:flex; justify-content:space-between; align-items:center;">
+              <span style="font-weight:600; font-size:13px;">${a.name}</span>
+              <span style="font-size:10px; color:#71768E; font-family:'Share Tech Mono', monospace;">${a.pkg}</span>
+            </div>
+          `).join('')}
+        </div>
+      `;
+      modalOverlay.classList.add('active');
+
+      document.querySelectorAll('.picker-item').forEach(item => {
+        item.addEventListener('click', () => {
+          const appName = item.dataset.app;
+          const pkg = item.dataset.pkg;
+          cell.classList.remove('is-empty');
+          cell.dataset.appName = appName;
+          cell.dataset.appPkg = pkg;
+          cell.dataset.isSystem = 'false';
+          cell.innerHTML = `
+            <div class="app-icon-pod">📱</div>
+            <span class="app-label">${appName}</span>
+          `;
+          modalOverlay.classList.remove('active');
+          showToast(`«${appName}» закреплено на рабочем столе`);
+        });
+      });
+    }
+
+    function showToast(msg) {
+      let toast = document.getElementById('uvos-ui-toast');
+      if (!toast) {
+        toast = document.createElement('div');
+        toast.id = 'uvos-ui-toast';
+        toast.style.cssText = 'position:fixed; bottom:24px; left:50%; transform:translateX(-50%); background:#1F2332; border:1px solid #373C54; color:#FFF; padding:10px 18px; border-radius:24px; font-size:12.5px; font-weight:600; z-index:9999; box-shadow:0 8px 24px rgba(0,0,0,0.6); pointer-events:none; transition:opacity 0.25s; opacity:0;';
+        document.body.appendChild(toast);
+      }
+      toast.innerText = msg;
+      toast.style.opacity = '1';
+      clearTimeout(toast.timer);
+      toast.timer = setTimeout(() => { toast.style.opacity = '0'; }, 2400);
+    }
+
+    function getPackageForApp(name) {
+      const map = {
+        'Телефон': 'com.android.dialer',
+        'Сообщения': 'com.uvos.messages',
+        'Радар-сеть': 'org.mozilla.firefox',
+        'Камера': 'com.android.camera',
+        'Файлы': 'com.uvos.files',
+        'Плеер': 'com.uvos.music',
+        'Счётчик': 'com.uvos.calculator',
+        'Настройки': 'com.uvos.settings',
+        'Telegram': 'org.telegram.messenger',
+        'Карты': 'ru.yandex.yandexnavi',
+        'Банк': 'ru.sberbankmobile',
+        'Щиток UVOS': 'com.uvos.security',
+        'Журнал': 'com.uvos.log',
+        'Осциллограф': 'com.uvos.oscilloscope',
+        'Терминал': 'com.uvos.terminal',
+        'Пакеты': 'com.uvos.packages'
+      };
+      return map[name] || 'com.uvos.app';
+    }
+
+    function isSystemApp(name) {
+      const nonSys = ['Telegram', 'Карты', 'Банк'];
+      return !nonSys.includes(name);
+    }
+  })();
+
 </script>
+
+
+<!-- Quick Actions Context Menu Popup (Floating Card) -->
+<div class="quick-actions-popup" id="quick-actions-popup">
+  <div class="qa-header">
+    <div class="qa-icon-wrap" id="qa-icon-wrap"></div>
+    <div style="flex:1; overflow:hidden;">
+      <div class="qa-title" id="qa-title">Приложение</div>
+      <div class="qa-sub" id="qa-sub">com.uvos.app</div>
+    </div>
+  </div>
+  <div class="qa-item" id="qa-btn-remove">
+    <span class="qa-item-icon">🗑️</span>
+    <span class="qa-item-text">Убрать с экрана</span>
+  </div>
+  <div class="qa-item qa-item-danger" id="qa-btn-uninstall">
+    <span class="qa-item-icon">❌</span>
+    <span class="qa-item-text">Удалить приложение</span>
+  </div>
+  <div class="qa-item" id="qa-btn-info">
+    <span class="qa-item-icon">ℹ️</span>
+    <span class="qa-item-text">О приложении</span>
+  </div>
+  <div class="qa-item" id="qa-btn-rename">
+    <span class="qa-item-icon">✏️</span>
+    <span class="qa-item-text">Переименовать</span>
+  </div>
+</div>
+
+<!-- Modal Dialog (App Info / Confirm / Picker) -->
+<div class="uvos-modal-overlay" id="uvos-modal-overlay">
+  <div class="uvos-modal-card" id="uvos-modal-card">
+    <div id="modal-content"></div>
+    <button class="modal-btn-close" id="modal-btn-close">ЗАКРЫТЬ</button>
+  </div>
+</div>
 
 </body>
 </html>

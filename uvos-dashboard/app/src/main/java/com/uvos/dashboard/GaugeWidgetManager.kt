@@ -10,8 +10,14 @@ import org.json.JSONObject
 enum class GaugeWidgetType {
     STORAGE,
     THERMAL,
-    SECURITY,
-    RADIO
+    LIGHT,
+    ACCELEROMETER,
+    GYROSCOPE,
+    PROXIMITY,
+    MAGNETIC,
+    BAROMETER,
+    RADIO,
+    SECURITY
 }
 
 data class CustomGaugeItem(
@@ -24,7 +30,7 @@ data class CustomGaugeItem(
 class GaugeWidgetManager(private val context: Context) {
 
     private val prefs: SharedPreferences = context.getSharedPreferences("uvos_gauges_prefs", Context.MODE_PRIVATE)
-    private val keyGauges = "custom_gauges_list_v1"
+    private val keyGauges = "custom_gauges_list_v2"
 
     fun getGauges(): MutableList<CustomGaugeItem> {
         val jsonStr = prefs.getString(keyGauges, null)
@@ -47,7 +53,18 @@ class GaugeWidgetManager(private val context: Context) {
             } catch (_: Exception) {
             }
         }
-        return mutableListOf()
+
+        // По умолчанию создаем набор ключевых аппаратных датчиков и системных приборов
+        val defaultList = mutableListOf(
+            CustomGaugeItem("gauge_storage_def", GaugeWidgetType.STORAGE, "STORAGE FLASH (НАКОПИТЕЛЬ)", "ROM"),
+            CustomGaugeItem("gauge_thermal_def", GaugeWidgetType.THERMAL, "THERMAL MONITOR (ТЕМПЕРАТУРА)", "TEMP"),
+            CustomGaugeItem("gauge_light_def", GaugeWidgetType.LIGHT, "AMBIENT LIGHT (ОСВЕЩЕННОСТЬ)", "LUX"),
+            CustomGaugeItem("gauge_accel_def", GaugeWidgetType.ACCELEROMETER, "ACCELEROMETER (ПЕРЕГРУЗКА)", "G"),
+            CustomGaugeItem("gauge_radio_def", GaugeWidgetType.RADIO, "RADIO RF RSSI (РАДИОКАНАЛ)", "RF"),
+            CustomGaugeItem("gauge_security_def", GaugeWidgetType.SECURITY, "SECURITY CHANNELS (ИЗОЛЯЦИЯ)", "SEC")
+        )
+        saveGauges(defaultList)
+        return defaultList
     }
 
     fun saveGauges(list: List<CustomGaugeItem>) {
@@ -68,8 +85,14 @@ class GaugeWidgetManager(private val context: Context) {
         val item = when (type) {
             GaugeWidgetType.STORAGE -> CustomGaugeItem("gauge_storage_${System.currentTimeMillis()}", type, "STORAGE FLASH (НАКОПИТЕЛЬ)", "ROM")
             GaugeWidgetType.THERMAL -> CustomGaugeItem("gauge_thermal_${System.currentTimeMillis()}", type, "THERMAL MONITOR (ТЕМПЕРАТУРА)", "TEMP")
-            GaugeWidgetType.SECURITY -> CustomGaugeItem("gauge_security_${System.currentTimeMillis()}", type, "SECURITY CHANNELS (ИЗОЛЯЦИЯ)", "SEC")
+            GaugeWidgetType.LIGHT -> CustomGaugeItem("gauge_light_${System.currentTimeMillis()}", type, "AMBIENT LIGHT (ОСВЕЩЕННОСТЬ)", "LUX")
+            GaugeWidgetType.ACCELEROMETER -> CustomGaugeItem("gauge_accel_${System.currentTimeMillis()}", type, "ACCELEROMETER (ПЕРЕГРУЗКА)", "G")
+            GaugeWidgetType.GYROSCOPE -> CustomGaugeItem("gauge_gyro_${System.currentTimeMillis()}", type, "GYROSCOPE (ГИРОСКОП)", "GYRO")
+            GaugeWidgetType.PROXIMITY -> CustomGaugeItem("gauge_prox_${System.currentTimeMillis()}", type, "PROXIMITY SENSOR (ПРИБЛИЖЕНИЕ)", "PROX")
+            GaugeWidgetType.MAGNETIC -> CustomGaugeItem("gauge_mag_${System.currentTimeMillis()}", type, "MAGNETOMETER (МАГНИТОМЕТР)", "MAG")
+            GaugeWidgetType.BAROMETER -> CustomGaugeItem("gauge_baro_${System.currentTimeMillis()}", type, "BAROMETER (ДАВЛЕНИЕ)", "HPA")
             GaugeWidgetType.RADIO -> CustomGaugeItem("gauge_radio_${System.currentTimeMillis()}", type, "RADIO RF RSSI (РАДИОКАНАЛ)", "RF")
+            GaugeWidgetType.SECURITY -> CustomGaugeItem("gauge_security_${System.currentTimeMillis()}", type, "SECURITY CHANNELS (ИЗОЛЯЦИЯ)", "SEC")
         }
         list.add(item)
         saveGauges(list)

@@ -1,0 +1,13 @@
+<resources>
+    <string name="app_name">UVOS Compass</string>
+    <string name="compass_title">COURSE</string>
+    <string name="compass_brand">UVOS · M4200</string>
+    <string name="accuracy_label">ACCURACY</string>
+    <string name="accuracy_unknown">N/A</string>
+    <string name="bank_title">BANK</string>
+    <string name="sensor_state_ok">SENSOR OK</string>
+    <string name="sensor_state_low_accuracy">LOW ACCURACY</string>
+    <string name="sensor_state_missing">NO SENSOR</string>
+    <string name="sensor_state_unreliable">UNRELIABLE</string>
+    <string name="heading_prepare">000°</string>
+</resources>

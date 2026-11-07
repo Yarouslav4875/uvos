@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- Zero-Network Invariant: 100% Offline. android.permission.INTERNET is STRICTLY FORBIDDEN -->
+
+    <!-- Sensors require no runtime permissions. No permissions are declared at all. -->
+
+    <application
+        android:name=".UvosCompassApp"
+        android:allowBackup="false"
+        android:icon="@drawable/ic_launcher_compass"
+        android:label="@string/app_name"
+        android:roundIcon="@drawable/ic_launcher_compass_round"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.Uvos.Compass">
+
+        <activity
+            android:name=".feature.main.MainActivity"
+            android:exported="true"
+            android:launchMode="singleTop"
+            android:theme="@style/Theme.Uvos.Compass">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+    </application>
+
+</manifest>

@@ -69,6 +69,7 @@ data class DragSlotPayload(
 class MainActivity : Activity() {
 
     // Пагинатор рабочих столов
+    private lateinit var systemShadeManager: SystemShadeManager
     private lateinit var desktopPager: DesktopPagerView
     private lateinit var topBarCenter: TextView
     private lateinit var topBarBattery: TextView
@@ -95,6 +96,16 @@ class MainActivity : Activity() {
     private lateinit var gaugeWidgetManager: GaugeWidgetManager
     private lateinit var customGaugesContainer: LinearLayout
     private lateinit var btnAddGaugeWidget: View
+    private lateinit var sensorTelemetryManager: SensorTelemetryManager
+    private val customGaugeHolders = mutableListOf<CustomGaugeViewHolder>()
+
+    private data class CustomGaugeViewHolder(
+        val item: CustomGaugeItem,
+        val gaugeView: GaugeView,
+        val valueView: TextView,
+        val subtitleView: TextView,
+        val badgeView: TextView
+    )
 
     // Стол 02: Home Clock & Grid
     private var batteryQuadWidget: BatteryQuadWidgetView? = null
@@ -179,6 +190,7 @@ class MainActivity : Activity() {
 
         repository = RuleRepositoryImpl.getInstance(this)
         homeManager = HomeManager(this)
+        sensorTelemetryManager = SensorTelemetryManager(this)
 
         initTopBarAndPager()
         initDesktop1Dashboard()
@@ -186,6 +198,19 @@ class MainActivity : Activity() {
         initDesktop3Drawer()
         initDesktop4ProcessManager()
         initBottomDock()
+
+        systemShadeManager = SystemShadeManager(this, findViewById(R.id.main_root_frame), repository).apply {
+            onProfileChangedListener = { newProfile ->
+                val idx = when (newProfile) {
+                    ProfileType.STERILE -> 0
+                    ProfileType.COMM -> 1
+                    ProfileType.CUSTOM -> 2
+                }
+                profileSelector.setSelectedIndex(idx, animate = true)
+                updateProfileDescription(newProfile)
+                renderDrawerApps()
+            }
+        }
 
         updateClock()
         batteryIntent()?.let { updateFromBatteryIntent(it) }
@@ -203,6 +228,7 @@ class MainActivity : Activity() {
         updateClock()
         checkBluetoothPermission()
         bluetoothDeviceManager?.start()
+        sensorTelemetryManager.startListening()
         systemStatsHandler.post(systemStatsRunnable)
     }
 
@@ -212,6 +238,7 @@ class MainActivity : Activity() {
         unregisterReceiver(timeTickReceiver)
         try { unregisterReceiver(packageRemovedReceiver) } catch (_: Exception) {}
         bluetoothDeviceManager?.stop()
+        sensorTelemetryManager.stopListening()
         systemStatsHandler.removeCallbacks(systemStatsRunnable)
     }
 
@@ -223,6 +250,10 @@ class MainActivity : Activity() {
 
     @Deprecated("Deprecated in Java")
     override fun onBackPressed() {
+        if (::systemShadeManager.isInitialized && systemShadeManager.isShadeOpen()) {
+            systemShadeManager.closeShade(animate = true)
+            return
+        }
         // Как домашняя оболочка UVOS не закрывается по Back, а возвращает на Стол 02 (Дом)
         if (desktopPager.currentPage != 1) {
             desktopPager.scrollToPage(1, smooth = true)
@@ -237,6 +268,13 @@ class MainActivity : Activity() {
         topBarCenter = findViewById(R.id.top_bar_center)
         topBarBattery = findViewById(R.id.top_bar_battery)
         desktopPager = findViewById(R.id.desktop_pager)
+
+        topBarCenter.setOnClickListener {
+            systemShadeManager.openShade(animate = true)
+        }
+        findViewById<View>(R.id.desktop_top_bar)?.setOnClickListener {
+            systemShadeManager.openShade(animate = true)
+        }
 
         dotPage1 = findViewById(R.id.dot_page_1)
         dotPage2 = findViewById(R.id.dot_page_2)
@@ -366,6 +404,9 @@ class MainActivity : Activity() {
             repository.setActiveProfile(selectedProfile)
             updateProfileDescription(selectedProfile)
             renderDrawerApps()
+            if (::systemShadeManager.isInitialized) {
+                systemShadeManager.syncProfile(selectedProfile)
+            }
         }
 
         logCard.setOnClickListener {
@@ -386,17 +427,29 @@ class MainActivity : Activity() {
         val options = arrayOf(
             "🗄️ Накопитель UFS/Flash (STORAGE)",
             "🌡️ Термопакет SoC и АКБ (THERMAL)",
-            "🛡️ Шлюз изоляции каналов (SECURITY)",
-            "📡 Мощность радиочастот (RADIO RF)"
+            "💡 Датчик освещенности (LIGHT LUX)",
+            "📐 Акселерометр и перегрузка (ACCEL G)",
+            "🔄 Гироскоп и угловая скорость (GYRO)",
+            "🖐️ Датчик приближения (PROXIMITY)",
+            "🧭 Магнитометр и датчик Холла (MAGNETIC)",
+            "⏱️ Барометр и давление (BAROMETER)",
+            "📡 Мощность радиочастот (RADIO RF)",
+            "🛡️ Шлюз изоляции каналов (SECURITY)"
         )
         AlertDialog.Builder(this)
-            .setTitle("Добавить прибор на панель")
+            .setTitle("Добавить датчик или прибор")
             .setItems(options) { _, which ->
                 val type = when (which) {
                     0 -> GaugeWidgetType.STORAGE
                     1 -> GaugeWidgetType.THERMAL
-                    2 -> GaugeWidgetType.SECURITY
-                    else -> GaugeWidgetType.RADIO
+                    2 -> GaugeWidgetType.LIGHT
+                    3 -> GaugeWidgetType.ACCELEROMETER
+                    4 -> GaugeWidgetType.GYROSCOPE
+                    5 -> GaugeWidgetType.PROXIMITY
+                    6 -> GaugeWidgetType.MAGNETIC
+                    7 -> GaugeWidgetType.BAROMETER
+                    8 -> GaugeWidgetType.RADIO
+                    else -> GaugeWidgetType.SECURITY
                 }
                 gaugeWidgetManager.addGauge(type)
                 renderCustomGauges()
@@ -407,6 +460,7 @@ class MainActivity : Activity() {
 
     private fun renderCustomGauges() {
         customGaugesContainer.removeAllViews()
+        customGaugeHolders.clear()
         val gauges = gaugeWidgetManager.getGauges()
 
         gauges.forEach { item ->
@@ -419,44 +473,16 @@ class MainActivity : Activity() {
             val badgeView = row.findViewById<TextView>(R.id.custom_gauge_badge)
 
             titleView.text = item.title
+            gaugeView.setTitle(item.gaugeTitle)
 
-            when (item.type) {
-                GaugeWidgetType.STORAGE -> {
-                    val stats = gaugeWidgetManager.getStorageStats()
-                    gaugeView.setLevel(stats.fraction, "${stats.percent}%")
-                    valueView.text = stats.usedText
-                    subtitleView.text = stats.subtitle
-                    badgeView.text = "UFS 2.2 • СТАТУС: В НОРМЕ"
-                    badgeView.setTextColor(Color.parseColor("#E2E4EC"))
-                }
-                GaugeWidgetType.THERMAL -> {
-                    val tempC = 34.8f
-                    gaugeView.setLevel(tempC / 60f, "35°C")
-                    valueView.text = "34.8°C (АКБ 31.2°C)"
-                    subtitleView.text = "Snapdragon 685 • Порог: 60°C"
-                    badgeView.text = "THERMAL GOVERNOR: НОРМА"
-                    badgeView.setTextColor(Color.parseColor("#06B6D4"))
-                }
-                GaugeWidgetType.SECURITY -> {
-                    gaugeView.setLevel(0.86f, "86%")
-                    valueView.text = "24 / 28 ИЗОЛИРОВАНО"
-                    subtitleView.text = "4 системных сокета активно"
-                    badgeView.text = "FIREWALL KERNEL: АКТИВЕН"
-                    badgeView.setTextColor(Color.parseColor("#06B6D4"))
-                }
-                GaugeWidgetType.RADIO -> {
-                    gaugeView.setLevel(0.72f, "72%")
-                    valueView.text = "-68 dBm (4G LTE-A)"
-                    subtitleView.text = "Диапазон: B3 (1800 МГц)"
-                    badgeView.text = "РАДИОМОДЕМ: СВЯЗЬ СТАБИЛЬНА"
-                    badgeView.setTextColor(Color.parseColor("#E2E4EC"))
-                }
-            }
+            val holder = CustomGaugeViewHolder(item, gaugeView, valueView, subtitleView, badgeView)
+            customGaugeHolders.add(holder)
+            updateCustomGaugeView(holder)
 
             btnRemove.setOnClickListener {
                 AlertDialog.Builder(this)
-                    .setTitle("Удалить прибор?")
-                    .setMessage("Убрать прибор «${item.title}» с панели 4 счетчиков?")
+                    .setTitle("Удалить датчик?")
+                    .setMessage("Убрать «${item.title}» с панели приборов?")
                     .setPositiveButton("Удалить") { _, _ ->
                         gaugeWidgetManager.removeGauge(item.id)
                         renderCustomGauges()
@@ -466,6 +492,103 @@ class MainActivity : Activity() {
             }
 
             customGaugesContainer.addView(row)
+        }
+    }
+
+    private fun updateCustomGaugesLive() {
+        customGaugeHolders.forEach { holder ->
+            updateCustomGaugeView(holder)
+        }
+    }
+
+    private fun updateCustomGaugeView(holder: CustomGaugeViewHolder) {
+        val item = holder.item
+        val gaugeView = holder.gaugeView
+        val valueView = holder.valueView
+        val subtitleView = holder.subtitleView
+        val badgeView = holder.badgeView
+
+        when (item.type) {
+            GaugeWidgetType.STORAGE -> {
+                val stats = gaugeWidgetManager.getStorageStats()
+                gaugeView.setLevel(stats.fraction, "${stats.percent}%")
+                valueView.text = stats.usedText
+                subtitleView.text = stats.subtitle
+                badgeView.text = "UFS 2.2 • СТАТУС: В НОРМЕ"
+                badgeView.setTextColor(Color.parseColor("#E2E4EC"))
+            }
+            GaugeWidgetType.THERMAL -> {
+                val data = sensorTelemetryManager.getThermalData()
+                gaugeView.setLevel(data.levelFraction, String.format(Locale.US, "%.0f°C", data.socTempC))
+                valueView.text = data.formattedValue
+                subtitleView.text = data.subtitle
+                badgeView.text = data.statusBadge
+                badgeView.setTextColor(data.statusColor)
+            }
+            GaugeWidgetType.LIGHT -> {
+                val data = sensorTelemetryManager.getLightData()
+                gaugeView.setLevel(data.levelFraction, "${data.lux.toInt()} LX")
+                valueView.text = data.formattedValue
+                subtitleView.text = data.subtitle
+                badgeView.text = "TMD2755 • ОСВЕЩЕННОСТЬ"
+                badgeView.setTextColor(Color.parseColor("#F59E0B"))
+            }
+            GaugeWidgetType.ACCELEROMETER -> {
+                val data = sensorTelemetryManager.getAccelData()
+                gaugeView.setLevel(data.levelFraction, String.format(Locale.US, "%.2fG", data.gForce))
+                valueView.text = data.formattedValue
+                subtitleView.text = data.subtitle
+                badgeView.text = "LSM6DSO • АКСЕЛЕРОМЕТР"
+                badgeView.setTextColor(Color.parseColor("#06B6D4"))
+            }
+            GaugeWidgetType.GYROSCOPE -> {
+                val data = sensorTelemetryManager.getGyroData()
+                gaugeView.setLevel(data.levelFraction, String.format(Locale.US, "%.0f°/с", data.degPerSec))
+                valueView.text = data.formattedValue
+                subtitleView.text = data.subtitle
+                badgeView.text = "LSM6DSO • ГИРОСКОП"
+                badgeView.setTextColor(Color.parseColor("#06B6D4"))
+            }
+            GaugeWidgetType.PROXIMITY -> {
+                val data = sensorTelemetryManager.getProximityData()
+                gaugeView.setLevel(data.levelFraction, if (data.isNear) "ЗАКРЫТ" else "ОТКРЫТ")
+                valueView.text = data.formattedValue
+                subtitleView.text = data.subtitle
+                badgeView.text = "TMD2755 • ПРИБЛИЖЕНИЕ"
+                badgeView.setTextColor(if (data.isNear) Color.parseColor("#E02020") else Color.parseColor("#06B6D4"))
+            }
+            GaugeWidgetType.MAGNETIC -> {
+                val data = sensorTelemetryManager.getMagneticData()
+                gaugeView.setLevel(data.levelFraction, String.format(Locale.US, "%.0f µT", data.fluxMicroTesla))
+                valueView.text = data.formattedValue
+                subtitleView.text = data.subtitle
+                badgeView.text = "МАГНИТОМЕТР • ДАТЧИК ХОЛЛА"
+                badgeView.setTextColor(Color.parseColor("#E2E4EC"))
+            }
+            GaugeWidgetType.BAROMETER -> {
+                val data = sensorTelemetryManager.getPressureData()
+                gaugeView.setLevel(data.levelFraction, String.format(Locale.US, "%.0f гПа", data.pressureHpa))
+                valueView.text = data.formattedValue
+                subtitleView.text = data.subtitle
+                badgeView.text = "БАРОМЕТР • ДАВЛЕНИЕ"
+                badgeView.setTextColor(Color.parseColor("#E2E4EC"))
+            }
+            GaugeWidgetType.RADIO -> {
+                val data = sensorTelemetryManager.getRadioData()
+                gaugeView.setLevel(data.levelFraction, "${(data.levelFraction * 100).toInt()}%")
+                valueView.text = data.formattedValue
+                subtitleView.text = data.subtitle
+                badgeView.text = data.statusBadge
+                badgeView.setTextColor(Color.parseColor("#E2E4EC"))
+            }
+            GaugeWidgetType.SECURITY -> {
+                val data = sensorTelemetryManager.getSecurityData()
+                gaugeView.setLevel(data.levelFraction, "${(data.levelFraction * 100).toInt()}%")
+                valueView.text = data.formattedValue
+                subtitleView.text = data.subtitle
+                badgeView.text = data.statusBadge
+                badgeView.setTextColor(Color.parseColor("#06B6D4"))
+            }
         }
     }
 
@@ -1656,6 +1779,9 @@ class MainActivity : Activity() {
 
         homeClockTime.text = timeFormat.format(now)
         homeClockDate.text = dateFormat.format(now).uppercase(Locale("ru"))
+        if (::systemShadeManager.isInitialized) {
+            systemShadeManager.updateTime(now)
+        }
     }
 
     private fun safeStartIntent(intent: Intent) {
@@ -1710,9 +1836,17 @@ class MainActivity : Activity() {
 
         val percent = if (level >= 0) (level * 100f / scale).toInt() else 82
 
+        val battTempRaw = intent.getIntExtra(BatteryManager.EXTRA_TEMPERATURE, 280)
+        sensorTelemetryManager.cachedBatteryTempC = battTempRaw / 10f
+        sensorTelemetryManager.cachedBatteryVoltageV = voltageV
+        sensorTelemetryManager.cachedBatteryPercent = percent
+
         gaugeBattery.setLevel(percent / 100f, "$percent%")
         valBatteryBadge?.text = String.format("%d%% • %.2fV", percent, voltageV)
         topBarBattery.text = "$percent% ⚡"
+        if (::systemShadeManager.isInitialized) {
+            systemShadeManager.updateBattery(percent, voltageV)
+        }
         val btName = try {
             val bm = getSystemService(Context.BLUETOOTH_SERVICE) as? android.bluetooth.BluetoothManager
             bm?.adapter?.name
@@ -1737,6 +1871,7 @@ class MainActivity : Activity() {
         updateRamMetrics()
         updateNetworkMetrics()
         batteryIntent()?.let { updateFromBatteryIntent(it) }
+        updateCustomGaugesLive()
     }
 
     /**
@@ -1744,38 +1879,10 @@ class MainActivity : Activity() {
      * Считывается из масштабирования частот ядра Linux (/sys/devices/system/cpu/cpufreq).
      */
     private fun updateCpuMetrics() {
-        val cores = Runtime.getRuntime().availableProcessors()
-        var curSum = 0L
-        var maxSum = 0L
-        var activeCores = 0
-
-        for (i in 0 until cores) {
-            try {
-                val curFile = File("/sys/devices/system/cpu/cpu$i/cpufreq/scaling_cur_freq")
-                val maxFile = File("/sys/devices/system/cpu/cpu$i/cpufreq/scaling_max_freq")
-                if (curFile.exists() && maxFile.exists()) {
-                    val cur = curFile.readText().trim().toLongOrNull() ?: continue
-                    val max = maxFile.readText().trim().toLongOrNull() ?: continue
-                    if (max > 0) {
-                        curSum += cur
-                        maxSum += max
-                        activeCores++
-                    }
-                }
-            } catch (_: Exception) {}
-        }
-
-        val usage = if (maxSum > 0) {
-            (curSum.toDouble() / maxSum.toDouble()).toFloat().coerceIn(0.04f, 1.0f)
-        } else {
-            0.18f
-        }
-
-        val percent = (usage * 100).toInt()
-        gaugeCpu.setLevel(usage, "$percent%")
-        val displayCores = if (activeCores > 0) activeCores else cores
-        valCpuBadge?.text = "$percent% • $displayCores ЯДЕР"
-        if (usage >= 0.80f) {
+        val cpuData = sensorTelemetryManager.getCpuUsageLoad()
+        gaugeCpu.setLevel(cpuData.usageFraction, cpuData.formattedValue)
+        valCpuBadge?.text = cpuData.subtitle
+        if (cpuData.usageFraction >= 0.80f) {
             valCpuBadge?.setTextColor(Color.parseColor("#E02020"))
         } else {
             valCpuBadge?.setTextColor(Color.parseColor("#E1E4EE"))

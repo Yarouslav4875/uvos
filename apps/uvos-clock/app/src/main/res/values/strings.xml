@@ -1,0 +1,9 @@
+<resources>
+    <string name="app_name">UVOS Часы и Задачи</string>
+    <string name="clock_title">ПРИБОР M4200</string>
+    <string name="tab_clock">ЧАСЫ</string>
+    <string name="tab_stopwatch">СЕКУНДОМЕР</string>
+    <string name="tab_timer">ТАЙМЕР</string>
+    <string name="tab_alarm">БУДИЛЬНИК</string>
+    <string name="tab_tasks">МАТРИЦА ЗАДАЧ</string>
+</resources>

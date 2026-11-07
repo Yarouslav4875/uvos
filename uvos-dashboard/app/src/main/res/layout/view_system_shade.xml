@@ -1,0 +1,936 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:custom="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/system_shade_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#FA040406"
+    android:clickable="true"
+    android:focusable="true"
+    android:visibility="gone">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical">
+
+        <!-- ВЕРХНЯЯ ШАПКА ШТОРКИ (С УЧЕТОМ ВЫРЕЗА КАМЕРЫ 34dp) -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:paddingStart="16dp"
+            android:paddingEnd="16dp"
+            android:paddingTop="34dp"
+            android:paddingBottom="10dp"
+            android:background="#0A0B10">
+
+            <!-- Крупное системное время и дата -->
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/shade_clock_time"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="20:45"
+                    android:textColor="@color/uvos_text"
+                    android:textSize="26sp"
+                    android:fontFamily="monospace"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/shade_clock_date"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="СБ, 7 НОЯБРЯ • UVOS-CORE 2.0"
+                    android:textColor="@color/uvos_text_dim"
+                    android:textSize="11sp"
+                    android:letterSpacing="0.04"
+                    android:fontFamily="monospace" />
+            </LinearLayout>
+
+            <!-- Батарея и кнопка закрытия -->
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:gravity="end|center_vertical"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/shade_battery_status"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="84% • 4.12V ⚡"
+                    android:textColor="@color/uvos_text"
+                    android:textSize="12sp"
+                    android:fontFamily="monospace"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/btn_close_shade"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:background="@drawable/bg_tile_clickable"
+                    android:paddingStart="10dp"
+                    android:paddingEnd="10dp"
+                    android:paddingTop="3dp"
+                    android:paddingBottom="3dp"
+                    android:text="▲ СВЕРНУТЬ"
+                    android:textColor="@color/uvos_text_dim"
+                    android:textSize="10sp"
+                    android:fontFamily="monospace"
+                    android:textStyle="bold" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- РАЗДЕЛИТЕЛЬНАЯ ПРИБОРНАЯ ЛИНИЯ -->
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="@color/uvos_divider" />
+
+        <!-- ОСНОВНОЙ СКРОЛЛЕР ПАРАМЕТРОВ И УВЕДОМЛЕНИЙ -->
+        <ScrollView
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:fillViewport="true"
+            android:overScrollMode="never"
+            android:scrollbars="none">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp"
+                android:paddingTop="12dp"
+                android:paddingBottom="24dp">
+
+                <!-- ЗАГОЛОВОК СЕКЦИИ: ПАРАМЕТРЫ ПУЛЬТА УПРАВЛЕНИЯ -->
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="8dp"
+                    android:text="ПУЛЬТ УПРАВЛЕНИЯ И ТУМБЛЕРЫ"
+                    android:textColor="@color/uvos_text_dim"
+                    android:textSize="11sp"
+                    android:letterSpacing="0.06"
+                    android:fontFamily="monospace"
+                    android:textStyle="bold" />
+
+                <!-- СЕТКА 6 БЫСТРЫХ ТУМБЛЕРОВ (РЯД 1: СЕТЬ, WI-FI, BLUETOOTH) -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:baselineAligned="false"
+                    android:layout_marginBottom="8dp">
+
+                    <!-- ТУМБЛЕР 1: МОБИЛЬНАЯ СЕТЬ -->
+                    <LinearLayout
+                        android:id="@+id/tile_quick_data"
+                        android:layout_width="0dp"
+                        android:layout_height="64dp"
+                        android:layout_weight="1"
+                        android:layout_marginEnd="4dp"
+                        android:background="@drawable/bg_tile_clickable"
+                        android:orientation="vertical"
+                        android:gravity="center"
+                        android:padding="6dp">
+
+                        <LinearLayout
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal"
+                            android:gravity="center_vertical">
+
+                            <com.uvos.dashboard.LampView
+                                android:id="@+id/lamp_quick_data"
+                                android:layout_width="10dp"
+                                android:layout_height="10dp"
+                                android:layout_marginEnd="6dp"
+                                custom:isLampOn="true" />
+
+                            <TextView
+                                android:id="@+id/txt_quick_data_title"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="СЕТЬ"
+                                android:textColor="@color/uvos_text"
+                                android:textSize="11sp"
+                                android:fontFamily="monospace"
+                                android:textStyle="bold" />
+                        </LinearLayout>
+
+                        <TextView
+                            android:id="@+id/txt_quick_data_status"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="2dp"
+                            android:text="4G LTE"
+                            android:textColor="@color/uvos_text_dim"
+                            android:textSize="9sp"
+                            android:fontFamily="monospace" />
+                    </LinearLayout>
+
+                    <!-- ТУМБЛЕР 2: WI-FI -->
+                    <LinearLayout
+                        android:id="@+id/tile_quick_wifi"
+                        android:layout_width="0dp"
+                        android:layout_height="64dp"
+                        android:layout_weight="1"
+                        android:layout_marginStart="2dp"
+                        android:layout_marginEnd="2dp"
+                        android:background="@drawable/bg_tile_clickable"
+                        android:orientation="vertical"
+                        android:gravity="center"
+                        android:padding="6dp">
+
+                        <LinearLayout
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal"
+                            android:gravity="center_vertical">
+
+                            <com.uvos.dashboard.LampView
+                                android:id="@+id/lamp_quick_wifi"
+                                android:layout_width="10dp"
+                                android:layout_height="10dp"
+                                android:layout_marginEnd="6dp"
+                                custom:isLampOn="true" />
+
+                            <TextView
+                                android:id="@+id/txt_quick_wifi_title"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="WI-FI"
+                                android:textColor="@color/uvos_text"
+                                android:textSize="11sp"
+                                android:fontFamily="monospace"
+                                android:textStyle="bold" />
+                        </LinearLayout>
+
+                        <TextView
+                            android:id="@+id/txt_quick_wifi_status"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="2dp"
+                            android:text="5 ГГЦ"
+                            android:textColor="@color/uvos_text_dim"
+                            android:textSize="9sp"
+                            android:fontFamily="monospace" />
+                    </LinearLayout>
+
+                    <!-- ТУМБЛЕР 3: BLUETOOTH -->
+                    <LinearLayout
+                        android:id="@+id/tile_quick_bt"
+                        android:layout_width="0dp"
+                        android:layout_height="64dp"
+                        android:layout_weight="1"
+                        android:layout_marginStart="4dp"
+                        android:background="@drawable/bg_tile_clickable"
+                        android:orientation="vertical"
+                        android:gravity="center"
+                        android:padding="6dp">
+
+                        <LinearLayout
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal"
+                            android:gravity="center_vertical">
+
+                            <com.uvos.dashboard.LampView
+                                android:id="@+id/lamp_quick_bt"
+                                android:layout_width="10dp"
+                                android:layout_height="10dp"
+                                android:layout_marginEnd="6dp"
+                                custom:isLampOn="true" />
+
+                            <TextView
+                                android:id="@+id/txt_quick_bt_title"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="BT 5.3"
+                                android:textColor="@color/uvos_text"
+                                android:textSize="11sp"
+                                android:fontFamily="monospace"
+                                android:textStyle="bold" />
+                        </LinearLayout>
+
+                        <TextView
+                            android:id="@+id/txt_quick_bt_status"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="2dp"
+                            android:text="АКТИВЕН"
+                            android:textColor="@color/uvos_text_dim"
+                            android:textSize="9sp"
+                            android:fontFamily="monospace" />
+                    </LinearLayout>
+                </LinearLayout>
+
+                <!-- СЕТКА 6 БЫСТРЫХ ТУМБЛЕРОВ (РЯД 2: ИЗОЛЯЦИЯ, ФОНАРИК, РАДИОТИШИНА) -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:baselineAligned="false"
+                    android:layout_marginBottom="14dp">
+
+                    <!-- ТУМБЛЕР 4: ИЗОЛЯЦИЯ (ЗАКРЫТАЯ ТЕРРИТОРИЯ) -->
+                    <LinearLayout
+                        android:id="@+id/tile_quick_isolation"
+                        android:layout_width="0dp"
+                        android:layout_height="64dp"
+                        android:layout_weight="1"
+                        android:layout_marginEnd="4dp"
+                        android:background="@drawable/bg_tile_clickable"
+                        android:orientation="vertical"
+                        android:gravity="center"
+                        android:padding="6dp">
+
+                        <LinearLayout
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal"
+                            android:gravity="center_vertical">
+
+                            <com.uvos.dashboard.LampView
+                                android:id="@+id/lamp_quick_isolation"
+                                android:layout_width="10dp"
+                                android:layout_height="10dp"
+                                android:layout_marginEnd="6dp"
+                                custom:isLampOn="false" />
+
+                            <TextView
+                                android:id="@+id/txt_quick_isolation_title"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="ЩИТ"
+                                android:textColor="@color/uvos_text"
+                                android:textSize="11sp"
+                                android:fontFamily="monospace"
+                                android:textStyle="bold" />
+                        </LinearLayout>
+
+                        <TextView
+                            android:id="@+id/txt_quick_isolation_status"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="2dp"
+                            android:text="ИЗОЛЯЦИЯ"
+                            android:textColor="@color/uvos_text_dim"
+                            android:textSize="9sp"
+                            android:fontFamily="monospace" />
+                    </LinearLayout>
+
+                    <!-- ТУМБЛЕР 5: ФОНАРИК (ФАКЕЛ) -->
+                    <LinearLayout
+                        android:id="@+id/tile_quick_torch"
+                        android:layout_width="0dp"
+                        android:layout_height="64dp"
+                        android:layout_weight="1"
+                        android:layout_marginStart="2dp"
+                        android:layout_marginEnd="2dp"
+                        android:background="@drawable/bg_tile_clickable"
+                        android:orientation="vertical"
+                        android:gravity="center"
+                        android:padding="6dp">
+
+                        <LinearLayout
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal"
+                            android:gravity="center_vertical">
+
+                            <com.uvos.dashboard.LampView
+                                android:id="@+id/lamp_quick_torch"
+                                android:layout_width="10dp"
+                                android:layout_height="10dp"
+                                android:layout_marginEnd="6dp"
+                                custom:isLampOn="false" />
+
+                            <TextView
+                                android:id="@+id/txt_quick_torch_title"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="ФОНАРЬ"
+                                android:textColor="@color/uvos_text"
+                                android:textSize="11sp"
+                                android:fontFamily="monospace"
+                                android:textStyle="bold" />
+                        </LinearLayout>
+
+                        <TextView
+                            android:id="@+id/txt_quick_torch_status"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="2dp"
+                            android:text="ВЫКЛ"
+                            android:textColor="@color/uvos_text_dim"
+                            android:textSize="9sp"
+                            android:fontFamily="monospace" />
+                    </LinearLayout>
+
+                    <!-- ТУМБЛЕР 6: РАДИОТИШИНА (СТЕРИЛЬНЫЙ РЕЖИМ) -->
+                    <LinearLayout
+                        android:id="@+id/tile_quick_sterile"
+                        android:layout_width="0dp"
+                        android:layout_height="64dp"
+                        android:layout_weight="1"
+                        android:layout_marginStart="4dp"
+                        android:background="@drawable/bg_tile_clickable"
+                        android:orientation="vertical"
+                        android:gravity="center"
+                        android:padding="6dp">
+
+                        <LinearLayout
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal"
+                            android:gravity="center_vertical">
+
+                            <com.uvos.dashboard.LampView
+                                android:id="@+id/lamp_quick_sterile"
+                                android:layout_width="10dp"
+                                android:layout_height="10dp"
+                                android:layout_marginEnd="6dp"
+                                custom:isLampOn="false" />
+
+                            <TextView
+                                android:id="@+id/txt_quick_sterile_title"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="ТИШИНА"
+                                android:textColor="@color/uvos_text"
+                                android:textSize="11sp"
+                                android:fontFamily="monospace"
+                                android:textStyle="bold" />
+                        </LinearLayout>
+
+                        <TextView
+                            android:id="@+id/txt_quick_sterile_status"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="2dp"
+                            android:text="ДЕЖУРНЫЙ"
+                            android:textColor="@color/uvos_text_dim"
+                            android:textSize="9sp"
+                            android:fontFamily="monospace" />
+                    </LinearLayout>
+                </LinearLayout>
+
+                <!-- ПРИБОРНЫЙ СЕЛЕКТОР ПРОФИЛЕЙ СИСТЕМЫ -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="14dp"
+                    android:background="@drawable/bg_tile"
+                    android:orientation="vertical"
+                    android:padding="12dp">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:layout_marginBottom="8dp">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="ПРОФИЛЬ БЕЗОПАСНОСТИ UVOS:"
+                            android:textColor="@color/uvos_text_dim"
+                            android:textSize="10sp"
+                            android:fontFamily="monospace"
+                            android:textStyle="bold" />
+
+                        <View
+                            android:layout_width="0dp"
+                            android:layout_height="0dp"
+                            android:layout_weight="1" />
+
+                        <TextView
+                            android:id="@+id/shade_active_profile_label"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="РЕЖИМ: СВЯЗЬ"
+                            android:textColor="@color/uvos_text"
+                            android:textSize="10sp"
+                            android:fontFamily="monospace"
+                            android:textStyle="bold" />
+                    </LinearLayout>
+
+                    <com.uvos.dashboard.SegmentedControl
+                        android:id="@+id/shade_profile_selector"
+                        android:layout_width="match_parent"
+                        android:layout_height="44dp" />
+                </LinearLayout>
+
+                <!-- ПРИБОРНЫЕ ЛИНЕЙНЫЕ СЛАЙДЕРЫ ЯРКОСТИ И ЗВУКА -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="14dp"
+                    android:background="@drawable/bg_tile"
+                    android:orientation="vertical"
+                    android:padding="12dp">
+
+                    <!-- Яркость экрана -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:layout_marginBottom="2dp">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="☀️ ЯРКОСТЬ ДИСПЛЕЯ"
+                            android:textColor="@color/uvos_text"
+                            android:textSize="11sp"
+                            android:fontFamily="monospace"
+                            android:textStyle="bold" />
+
+                        <View
+                            android:layout_width="0dp"
+                            android:layout_height="0dp"
+                            android:layout_weight="1" />
+
+                        <TextView
+                            android:id="@+id/shade_val_brightness"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="75%"
+                            android:textColor="@color/uvos_text"
+                            android:textSize="11sp"
+                            android:fontFamily="monospace"
+                            android:textStyle="bold" />
+                    </LinearLayout>
+
+                    <com.uvos.dashboard.SliderView
+                        android:id="@+id/shade_slider_brightness"
+                        android:layout_width="match_parent"
+                        android:layout_height="44dp"
+                        custom:progress="0.75" />
+
+                    <!-- Разделитель между слайдерами -->
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:layout_marginTop="4dp"
+                        android:layout_marginBottom="8dp"
+                        android:background="@color/uvos_divider" />
+
+                    <!-- Громкость мультимедиа -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:layout_marginBottom="2dp">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="🔊 АКУСТИЧЕСКАЯ ГРОМКОСТЬ"
+                            android:textColor="@color/uvos_text"
+                            android:textSize="11sp"
+                            android:fontFamily="monospace"
+                            android:textStyle="bold" />
+
+                        <View
+                            android:layout_width="0dp"
+                            android:layout_height="0dp"
+                            android:layout_weight="1" />
+
+                        <TextView
+                            android:id="@+id/shade_val_volume"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="60%"
+                            android:textColor="@color/uvos_text"
+                            android:textSize="11sp"
+                            android:fontFamily="monospace"
+                            android:textStyle="bold" />
+                    </LinearLayout>
+
+                    <com.uvos.dashboard.SliderView
+                        android:id="@+id/shade_slider_volume"
+                        android:layout_width="match_parent"
+                        android:layout_height="44dp"
+                        custom:progress="0.60" />
+                </LinearLayout>
+
+                <!-- СЕКЦИЯ: ЦЕНТР УВЕДОМЛЕНИЙ И ЖУРНАЛ СОБЫТИЙ -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:layout_marginBottom="8dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="ЖУРНАЛ СОБЫТИЙ И УВЕДОМЛЕНИЙ"
+                        android:textColor="@color/uvos_text_dim"
+                        android:textSize="11sp"
+                        android:letterSpacing="0.06"
+                        android:fontFamily="monospace"
+                        android:textStyle="bold" />
+
+                    <View
+                        android:layout_width="0dp"
+                        android:layout_height="0dp"
+                        android:layout_weight="1" />
+
+                    <TextView
+                        android:id="@+id/btn_clear_notifications"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:background="@drawable/bg_tile_clickable"
+                        android:paddingStart="8dp"
+                        android:paddingEnd="8dp"
+                        android:paddingTop="2dp"
+                        android:paddingBottom="2dp"
+                        android:text="ОЧИСТИТЬ"
+                        android:textColor="@color/uvos_text_dim"
+                        android:textSize="10sp"
+                        android:fontFamily="monospace"
+                        android:textStyle="bold" />
+                </LinearLayout>
+
+                <!-- КОНТЕЙНЕР КАРТОЧЕК УВЕДОМЛЕНИЙ -->
+                <LinearLayout
+                    android:id="@+id/shade_notifications_container"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
+
+                    <!-- КАРТОЧКА 1: ТРЕВОГА ИЗОЛЯЦИИ КАНАЛА (КРАСНАЯ ПОЛОСА 4dp) -->
+                    <LinearLayout
+                        android:id="@+id/notif_card_security"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="8dp"
+                        android:background="@drawable/bg_tile"
+                        android:orientation="horizontal">
+
+                        <!-- Красная тревожная вертикальная полоса 4dp слева -->
+                        <View
+                            android:layout_width="4dp"
+                            android:layout_height="match_parent"
+                            android:background="@color/uvos_red" />
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="vertical"
+                            android:padding="12dp">
+
+                            <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:orientation="horizontal"
+                                android:gravity="center_vertical"
+                                android:layout_marginBottom="4dp">
+
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="🛡️ ЩИТ ИЗОЛЯЦИИ · КАНАЛ ГЕОЛОКАЦИЯ"
+                                    android:textColor="@color/uvos_red"
+                                    android:textSize="10sp"
+                                    android:fontFamily="monospace"
+                                    android:textStyle="bold" />
+
+                                <View
+                                    android:layout_width="0dp"
+                                    android:layout_height="0dp"
+                                    android:layout_weight="1" />
+
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="19:42"
+                                    android:textColor="@color/uvos_text_dim"
+                                    android:textSize="10sp"
+                                    android:fontFamily="monospace" />
+                            </LinearLayout>
+
+                            <TextView
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:text="Telegram запросил доступ к точным координатам GPS. Попытка пресечена политикой профиля СВЯЗЬ."
+                                android:textColor="@color/uvos_text"
+                                android:textSize="12sp"
+                                android:lineSpacingExtra="2dp" />
+
+                            <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:orientation="horizontal"
+                                android:gravity="end"
+                                android:layout_marginTop="8dp">
+
+                                <TextView
+                                    android:id="@+id/btn_dismiss_notif_security"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:background="@drawable/bg_tile_clickable"
+                                    android:paddingStart="8dp"
+                                    android:paddingEnd="8dp"
+                                    android:paddingTop="3dp"
+                                    android:paddingBottom="3dp"
+                                    android:text="ПРИНЯТО"
+                                    android:textColor="@color/uvos_text_dim"
+                                    android:textSize="9sp"
+                                    android:fontFamily="monospace"
+                                    android:textStyle="bold" />
+                            </LinearLayout>
+                        </LinearLayout>
+                    </LinearLayout>
+
+                    <!-- КАРТОЧКА 2: СЕТЕВОЙ ФАЙРВОЛ -->
+                    <LinearLayout
+                        android:id="@+id/notif_card_network"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="8dp"
+                        android:background="@drawable/bg_tile"
+                        android:orientation="horizontal">
+
+                        <!-- Янтарная полоса предупреждения -->
+                        <View
+                            android:layout_width="4dp"
+                            android:layout_height="match_parent"
+                            android:background="@color/uvos_amber" />
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="vertical"
+                            android:padding="12dp">
+
+                            <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:orientation="horizontal"
+                                android:gravity="center_vertical"
+                                android:layout_marginBottom="4dp">
+
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="🌐 РЕГУЛЯТОР СЕТИ · ФАЙРВОЛ"
+                                    android:textColor="@color/uvos_amber"
+                                    android:textSize="10sp"
+                                    android:fontFamily="monospace"
+                                    android:textStyle="bold" />
+
+                                <View
+                                    android:layout_width="0dp"
+                                    android:layout_height="0dp"
+                                    android:layout_weight="1" />
+
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="18:30"
+                                    android:textColor="@color/uvos_text_dim"
+                                    android:textSize="10sp"
+                                    android:fontFamily="monospace" />
+                            </LinearLayout>
+
+                            <TextView
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:text="Фоновый трафик TikTok заблокирован: приложение вне белого списка разрешенных доменов."
+                                android:textColor="@color/uvos_text"
+                                android:textSize="12sp"
+                                android:lineSpacingExtra="2dp" />
+
+                            <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:orientation="horizontal"
+                                android:gravity="end"
+                                android:layout_marginTop="8dp">
+
+                                <TextView
+                                    android:id="@+id/btn_dismiss_notif_network"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:background="@drawable/bg_tile_clickable"
+                                    android:paddingStart="8dp"
+                                    android:paddingEnd="8dp"
+                                    android:paddingTop="3dp"
+                                    android:paddingBottom="3dp"
+                                    android:text="ПРИНЯТО"
+                                    android:textColor="@color/uvos_text_dim"
+                                    android:textSize="9sp"
+                                    android:fontFamily="monospace"
+                                    android:textStyle="bold" />
+                            </LinearLayout>
+                        </LinearLayout>
+                    </LinearLayout>
+
+                    <!-- КАРТОЧКА 3: ЗАЩИЩЕННЫЕ СООБЩЕНИЯ (ПРИВАТНОСТЬ OTP) -->
+                    <LinearLayout
+                        android:id="@+id/notif_card_privacy"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="8dp"
+                        android:background="@drawable/bg_tile"
+                        android:orientation="horizontal">
+
+                        <!-- Голубая полоса защищенного канала -->
+                        <View
+                            android:layout_width="4dp"
+                            android:layout_height="match_parent"
+                            android:background="@color/uvos_cyan" />
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="vertical"
+                            android:padding="12dp">
+
+                            <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:orientation="horizontal"
+                                android:gravity="center_vertical"
+                                android:layout_marginBottom="4dp">
+
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="💬 СООБЩЕНИЯ · МАСКИРОВАНИЕ ДАННЫХ"
+                                    android:textColor="@color/uvos_cyan"
+                                    android:textSize="10sp"
+                                    android:fontFamily="monospace"
+                                    android:textStyle="bold" />
+
+                                <View
+                                    android:layout_width="0dp"
+                                    android:layout_height="0dp"
+                                    android:layout_weight="1" />
+
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="17:15"
+                                    android:textColor="@color/uvos_text_dim"
+                                    android:textSize="10sp"
+                                    android:fontFamily="monospace" />
+                            </LinearLayout>
+
+                            <TextView
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:text="Банк: Одноразовый код безопасности: ****** (Защита экрана от чтения сторонними службами)."
+                                android:textColor="@color/uvos_text"
+                                android:textSize="12sp"
+                                android:lineSpacingExtra="2dp" />
+
+                            <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:orientation="horizontal"
+                                android:gravity="end"
+                                android:layout_marginTop="8dp">
+
+                                <TextView
+                                    android:id="@+id/btn_dismiss_notif_privacy"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:background="@drawable/bg_tile_clickable"
+                                    android:paddingStart="8dp"
+                                    android:paddingEnd="8dp"
+                                    android:paddingTop="3dp"
+                                    android:paddingBottom="3dp"
+                                    android:text="ПРИНЯТО"
+                                    android:textColor="@color/uvos_text_dim"
+                                    android:textSize="9sp"
+                                    android:fontFamily="monospace"
+                                    android:textStyle="bold" />
+                            </LinearLayout>
+                        </LinearLayout>
+                    </LinearLayout>
+                </LinearLayout>
+
+                <!-- СОСТОЯНИЕ: ВСЕ УВЕДОМЛЕНИЯ ОЧИЩЕНЫ (ПО УМОЛЧАНИЮ СКРЫТО) -->
+                <LinearLayout
+                    android:id="@+id/shade_empty_notifications"
+                    android:layout_width="match_parent"
+                    android:layout_height="90dp"
+                    android:layout_marginBottom="8dp"
+                    android:background="@drawable/bg_tile"
+                    android:gravity="center"
+                    android:orientation="vertical"
+                    android:visibility="gone">
+
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical">
+
+                        <com.uvos.dashboard.LampView
+                            android:layout_width="10dp"
+                            android:layout_height="10dp"
+                            android:layout_marginEnd="8dp"
+                            custom:isLampOn="false" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="СИСТЕМА ЧИСТА · СОБЫТИЙ НЕТ"
+                            android:textColor="@color/uvos_green"
+                            android:textSize="12sp"
+                            android:fontFamily="monospace"
+                            android:textStyle="bold" />
+                    </LinearLayout>
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:text="Все каналы под контролем щитка"
+                        android:textColor="@color/uvos_text_dim"
+                        android:textSize="10sp"
+                        android:fontFamily="monospace" />
+                </LinearLayout>
+
+            </LinearLayout>
+        </ScrollView>
+
+        <!-- ПРИБОРНАЯ РУЧКА ЗАКРЫТИЯ СНИЗУ ДЛЯ СВАЙПА ВВЕРХ -->
+        <LinearLayout
+            android:id="@+id/shade_drag_handle_bar"
+            android:layout_width="match_parent"
+            android:layout_height="28dp"
+            android:gravity="center"
+            android:background="#0A0B10"
+            android:clickable="true"
+            android:focusable="true">
+
+            <View
+                android:layout_width="48dp"
+                android:layout_height="4dp"
+                android:background="@drawable/bg_dot_inactive" />
+        </LinearLayout>
+
+    </LinearLayout>
+
+</FrameLayout>

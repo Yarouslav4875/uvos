@@ -1,0 +1,1 @@
+# UVOS Compass Proguard rules
