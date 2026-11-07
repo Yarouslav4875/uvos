@@ -498,6 +498,8 @@ class MainActivity : Activity() {
         }
         homeClockTime.setOnLongClickListener(openHomeSettings)
         homeClockDate.setOnLongClickListener(openHomeSettings)
+        findViewById<View>(R.id.desktop_2_home)?.setOnLongClickListener(openHomeSettings)
+        findViewById<View>(R.id.home_grid_container)?.setOnLongClickListener(openHomeSettings)
 
         renderHomeGrid()
     }
@@ -671,8 +673,14 @@ class MainActivity : Activity() {
                 emptyBadge.visibility = View.GONE
                 labelView.setTextColor(Color.parseColor("#E2E4EC"))
 
-                // Загрузка значка
-                if (slot.actionType == "APP" && slot.packageName != null) {
+                // Загрузка значка (Папка, Нативное приложение или Системный инструмент)
+                if (slot.actionType == "FOLDER") {
+                    iconView.setImageResource(R.drawable.ic_sys_folder)
+                    iconView.setBackgroundResource(R.drawable.bg_tile_clickable)
+                    iconView.setPadding(22, 22, 22, 22)
+                    val count = slot.folderItems.size
+                    labelView.text = if (count > 0) "${slot.title} ($count)" else slot.title
+                } else if (slot.actionType == "APP" && slot.packageName != null) {
                     try {
                         val icon = pm.getApplicationIcon(slot.packageName!!)
                         iconView.setImageDrawable(icon)
@@ -690,9 +698,13 @@ class MainActivity : Activity() {
                     iconView.setPadding(26, 26, 26, 26)
                 }
 
-                // Клик - запуск приложения
+                // Клик - запуск приложения или открытие папки
                 itemView.setOnClickListener {
-                    handleSlotClick(slot)
+                    if (slot.actionType == "FOLDER") {
+                        showFolderDialog(slot)
+                    } else {
+                        handleSlotClick(slot)
+                    }
                 }
 
                 // Долгий тап - запуск режима Drag & Drop (или показ контекстного меню если палец отпущен)
@@ -889,6 +901,15 @@ class MainActivity : Activity() {
             appInfoBtn.visibility = View.GONE
         }
 
+        // Действие: Создать папку
+        val createFolderBtn = dialogView.findViewById<View>(R.id.action_create_folder)
+        if (createFolderBtn != null) {
+            createFolderBtn.setOnClickListener {
+                dialog.dismiss()
+                promptCreateFolder(slot)
+            }
+        }
+
         // Действие 4: Переименовать
         dialogView.findViewById<View>(R.id.action_rename_slot).setOnClickListener {
             dialog.dismiss()
@@ -908,6 +929,241 @@ class MainActivity : Activity() {
         }
 
         dialog.show()
+    }
+
+
+    /**
+     * Диалоговое окно просмотра и управления содержимым папки
+     */
+    private fun showFolderDialog(slot: HomeSlotItem) {
+        val dialog = Dialog(this)
+        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE)
+        val dialogView = layoutInflater.inflate(R.layout.dialog_folder_view, null)
+        dialog.setContentView(dialogView)
+        dialog.window?.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
+        val dialogWidth = (resources.displayMetrics.widthPixels * 0.92f).toInt()
+        dialog.window?.setLayout(dialogWidth, ViewGroup.LayoutParams.WRAP_CONTENT)
+
+        val titleView = dialogView.findViewById<TextView>(R.id.folder_dialog_title)
+        val subtitleView = dialogView.findViewById<TextView>(R.id.folder_dialog_subtitle)
+        val container = dialogView.findViewById<LinearLayout>(R.id.folder_apps_container)
+        val btnRename = dialogView.findViewById<View>(R.id.btn_rename_folder)
+        val btnClose = dialogView.findViewById<View>(R.id.btn_close_folder)
+        val btnAddApp = dialogView.findViewById<View>(R.id.btn_folder_add_app)
+        val btnDissolve = dialogView.findViewById<View>(R.id.btn_folder_dissolve)
+
+        fun refreshFolderView() {
+            titleView.text = slot.title
+            subtitleView.text = "${slot.folderItems.size} приложений • Контейнер UVOS"
+            container.removeAllViews()
+
+            val pm = packageManager
+            val items = slot.folderItems
+
+            // Размещение по 4 элемента в ряд
+            val chunked = items.chunked(4)
+            chunked.forEach { rowItems ->
+                val rowLayout = LinearLayout(this).apply {
+                    layoutParams = LinearLayout.LayoutParams(
+                        LinearLayout.LayoutParams.MATCH_PARENT,
+                        LinearLayout.LayoutParams.WRAP_CONTENT
+                    ).apply {
+                        bottomMargin = 10
+                    }
+                    orientation = LinearLayout.HORIZONTAL
+                }
+
+                rowItems.forEach { appItem ->
+                    val appView = layoutInflater.inflate(R.layout.item_folder_app, rowLayout, false)
+                    val iconV = appView.findViewById<ImageView>(R.id.folder_item_icon)
+                    val titleV = appView.findViewById<TextView>(R.id.folder_item_title)
+
+                    titleV.text = appItem.title
+                    try {
+                        iconV.setImageDrawable(pm.getApplicationIcon(appItem.packageName))
+                        iconV.setPadding(0, 0, 0, 0)
+                        iconV.setBackgroundColor(Color.TRANSPARENT)
+                    } catch (_: Exception) {
+                        iconV.setImageResource(android.R.drawable.sym_def_app_icon)
+                    }
+
+                    // Клик по приложению внутри папки - запуск
+                    appView.setOnClickListener {
+                        val launchIntent = pm.getLaunchIntentForPackage(appItem.packageName)
+                        if (launchIntent != null) {
+                            launchIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                            dialog.dismiss()
+                            startActivity(launchIntent)
+                        } else {
+                            Toast.makeText(this@MainActivity, "Приложение не найдено", Toast.LENGTH_SHORT).show()
+                        }
+                    }
+
+                    // Долгий тап по приложению внутри папки - действия
+                    appView.setOnLongClickListener {
+                        it.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
+                        val options = arrayOf(
+                            "🚀 Запустить",
+                            "📤 Извлечь на рабочий стол",
+                            "ℹ️ О приложении",
+                            "❌ Удалить приложение"
+                        )
+                        AlertDialog.Builder(this@MainActivity)
+                            .setTitle(appItem.title)
+                            .setItems(options) { _, which ->
+                                when (which) {
+                                    0 -> {
+                                        dialog.dismiss()
+                                        val li = pm.getLaunchIntentForPackage(appItem.packageName)
+                                        if (li != null) startActivity(li)
+                                    }
+                                    1 -> {
+                                        val freeIdx = homeManager.addAppToFirstFreeSlot(appItem.packageName, appItem.title)
+                                        if (freeIdx != -1) {
+                                            homeManager.removeAppFromFolder(slot.slotIndex, appItem.packageName)
+                                            refreshFolderView()
+                                            renderHomeGrid()
+                                            Toast.makeText(this@MainActivity, "Ярлык извлечен на рабочий стол", Toast.LENGTH_SHORT).show()
+                                        } else {
+                                            Toast.makeText(this@MainActivity, "Нет свободных слотов на столе", Toast.LENGTH_SHORT).show()
+                                        }
+                                    }
+                                    2 -> {
+                                        dialog.dismiss()
+                                        openAppDetails(appItem.packageName)
+                                    }
+                                    3 -> {
+                                        dialog.dismiss()
+                                        homeManager.removeAppFromFolder(slot.slotIndex, appItem.packageName)
+                                        renderHomeGrid()
+                                        requestUninstallApp(appItem.packageName)
+                                    }
+                                }
+                            }
+                            .setNegativeButton("Отмена", null)
+                            .show()
+                        true
+                    }
+
+                    rowLayout.addView(appView)
+                }
+
+                // Заполняем пустоты в последнем ряду
+                val deficit = 4 - rowItems.size
+                for (d in 0 until deficit) {
+                    val dummy = View(this).apply {
+                        layoutParams = LinearLayout.LayoutParams(0, 1, 1f)
+                    }
+                    rowLayout.addView(dummy)
+                }
+
+                container.addView(rowLayout)
+            }
+        }
+
+        refreshFolderView()
+
+        btnClose.setOnClickListener {
+            dialog.dismiss()
+        }
+
+        btnRename.setOnClickListener {
+            val input = EditText(this)
+            input.setText(slot.title)
+            input.setSelection(slot.title.length)
+
+            AlertDialog.Builder(this)
+                .setTitle("Название папки")
+                .setView(input)
+                .setPositiveButton("Сохранить") { _, _ ->
+                    val newName = input.text.toString().trim()
+                    if (newName.isNotEmpty()) {
+                        slot.title = newName
+                        homeManager.updateSlot(slot.slotIndex, newName, slot.packageName, slot.actionType, slot.iconResName)
+                        refreshFolderView()
+                        renderHomeGrid()
+                    }
+                }
+                .setNegativeButton("Отмена", null)
+                .show()
+        }
+
+        btnAddApp.setOnClickListener {
+            val pm = packageManager
+            val intent = Intent(Intent.ACTION_MAIN, null).apply {
+                addCategory(Intent.CATEGORY_LAUNCHER)
+            }
+            val resolveList = pm.queryIntentActivities(intent, 0)
+            resolveList.sortBy { it.loadLabel(pm).toString().lowercase(Locale.getDefault()) }
+            val labels = resolveList.map { it.loadLabel(pm).toString() }.toTypedArray()
+
+            AlertDialog.Builder(this)
+                .setTitle("Добавить в папку")
+                .setItems(labels) { _, which ->
+                    val selected = resolveList[which]
+                    val pkg = selected.activityInfo.packageName
+                    val label = selected.loadLabel(pm).toString()
+
+                    homeManager.addAppToFolder(slot.slotIndex, FolderAppItem(title = label, packageName = pkg))
+                    refreshFolderView()
+                    renderHomeGrid()
+                }
+                .setNegativeButton("Отмена", null)
+                .show()
+        }
+
+        btnDissolve.setOnClickListener {
+            AlertDialog.Builder(this)
+                .setTitle("Расформировать папку?")
+                .setMessage("Папка будет удалена, а приложения останутся доступными в общем меню.")
+                .setPositiveButton("Расформировать") { _, _ ->
+                    homeManager.dissolveFolder(slot.slotIndex)
+                    dialog.dismiss()
+                    renderHomeGrid()
+                    Toast.makeText(this, "Папка расформирована", Toast.LENGTH_SHORT).show()
+                }
+                .setNegativeButton("Отмена", null)
+                .show()
+        }
+
+        dialog.show()
+    }
+
+
+    private fun promptCreateFolder(slot: HomeSlotItem) {
+        val pm = packageManager
+        val intent = Intent(Intent.ACTION_MAIN, null).apply {
+            addCategory(Intent.CATEGORY_LAUNCHER)
+        }
+        val resolveList = pm.queryIntentActivities(intent, 0)
+        resolveList.sortBy { it.loadLabel(pm).toString().lowercase(Locale.getDefault()) }
+        val labels = resolveList.map { it.loadLabel(pm).toString() }.toTypedArray()
+
+        AlertDialog.Builder(this)
+            .setTitle("Выберите второе приложение для папки")
+            .setItems(labels) { _, which ->
+                val selected = resolveList[which]
+                val pkg = selected.activityInfo.packageName
+                val label = selected.loadLabel(pm).toString()
+
+                val input = EditText(this)
+                input.setText("Папка")
+                input.setSelection(input.text.length)
+
+                AlertDialog.Builder(this)
+                    .setTitle("Название папки")
+                    .setView(input)
+                    .setPositiveButton("Создать") { _, _ ->
+                        val fName = input.text.toString().trim().ifEmpty { "Папка" }
+                        homeManager.createFolderWithApp(slot.slotIndex, fName, pkg, label)
+                        renderHomeGrid()
+                        Toast.makeText(this, "Папка «$fName» создана", Toast.LENGTH_SHORT).show()
+                    }
+                    .setNegativeButton("Отмена", null)
+                    .show()
+            }
+            .setNegativeButton("Отмена", null)
+            .show()
     }
 
     private fun showRenameDialog(slot: HomeSlotItem) {
@@ -957,6 +1213,8 @@ class MainActivity : Activity() {
     private fun showHomeSettingsDialog() {
         val options = arrayOf(
             "➕ Добавить ярлык в свободный слот",
+            "📁 Создать новую папку",
+            "📊 Управление приборами и виджетами",
             "🔄 Восстановить стандартные иконки UVOS"
         )
         AlertDialog.Builder(this)
@@ -973,6 +1231,18 @@ class MainActivity : Activity() {
                         }
                     }
                     1 -> {
+                        val slots = homeManager.getSlots()
+                        val freeIdx = slots.indexOfFirst { it.actionType == "EMPTY" }
+                        if (freeIdx != -1) {
+                            promptCreateFolder(slots[freeIdx])
+                        } else {
+                            Toast.makeText(this, "Нет свободного слота для новой папки", Toast.LENGTH_SHORT).show()
+                        }
+                    }
+                    2 -> {
+                        desktopPager.scrollToPage(0, smooth = true)
+                    }
+                    3 -> {
                         homeManager.resetToDefaults()
                         renderHomeGrid()
                     }

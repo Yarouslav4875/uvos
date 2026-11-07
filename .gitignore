@@ -21,6 +21,7 @@ captures/
 # --- Логи и временные файлы ---
 *.log
 *.tmp
+screen*.png
 .DS_Store
 Thumbs.db
 

@@ -1,0 +1,21 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="28dp"
+    android:height="28dp"
+    android:viewportWidth="32"
+    android:viewportHeight="32">
+    <!-- Индустриальная папка UVOS со скругленными гранями и красным шильдиком -->
+    <path
+        android:pathData="M3,7a2.5,2.5 0 0,1 2.5,-2.5h6.5l3,3.5h11.5a2.5,2.5 0 0,1 2.5,2.5v14a2.5,2.5 0 0,1 -2.5,2.5h-21a2.5,2.5 0 0,1 -2.5,-2.5z"
+        android:strokeWidth="1.8"
+        android:strokeColor="#E2E4EC"
+        android:strokeLineJoin="round" />
+    <path
+        android:pathData="M8,15h16"
+        android:strokeWidth="1.5"
+        android:strokeColor="#2F3346" />
+    <path
+        android:pathData="M11,18h10"
+        android:strokeWidth="2"
+        android:strokeColor="#E02020"
+        android:strokeLineCap="round" />
+</vector>

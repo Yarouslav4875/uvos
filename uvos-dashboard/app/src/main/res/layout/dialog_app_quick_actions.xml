@@ -280,6 +280,50 @@
         </LinearLayout>
     </LinearLayout>
 
+    <!-- Действие: Создать / Объединить в папку -->
+    <LinearLayout
+        android:id="@+id/action_create_folder"
+        android:layout_width="match_parent"
+        android:layout_height="52dp"
+        android:layout_marginBottom="8dp"
+        android:background="@drawable/bg_quick_actions_item"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:paddingStart="14dp"
+        android:paddingEnd="14dp"
+        android:clickable="true"
+        android:focusable="true">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="📁"
+            android:textSize="18sp" />
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:paddingStart="14dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Создать папку"
+                android:textColor="@color/uvos_text"
+                android:textSize="14sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Объединить ярлыки в изолированную группу"
+                android:textColor="@color/uvos_text_dim"
+                android:textSize="10.5sp" />
+        </LinearLayout>
+    </LinearLayout>
+
     <!-- Действие: Режим перетаскивания (подсказка / запуск) -->
     <LinearLayout
         android:id="@+id/action_start_drag"
