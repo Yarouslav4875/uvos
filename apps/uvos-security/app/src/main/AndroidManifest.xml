@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- Zero Network Invariant: NO android.permission.INTERNET -->
+    <!-- Zero Telemetry: strictly local operations -->
+
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES" />
+
+    <application
+        android:name=".SecurityApplication"
+        android:allowBackup="false"
+        android:icon="@drawable/ic_launcher_security"
+        android:label="@string/app_name"
+        android:roundIcon="@drawable/ic_launcher_security"
+        android:supportsRtl="false"
+        android:theme="@style/Theme.UVOSSecurity">
+
+        <activity
+            android:name=".presentation.MainActivity"
+            android:exported="true"
+            android:configChanges="orientation|screenSize|screenLayout|keyboardHidden"
+            android:theme="@style/Theme.UVOSSecurity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+    </application>
+</manifest>
