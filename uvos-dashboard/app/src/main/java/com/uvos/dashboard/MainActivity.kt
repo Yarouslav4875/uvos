@@ -946,7 +946,7 @@ class MainActivity : Activity() {
             "SYSTEM_PHONE" -> safeStartIntent(Intent(Intent.ACTION_DIAL))
             "SYSTEM_MESSAGES" -> launchOrFallback("com.uvos.messages", Intent(Intent.ACTION_MAIN).apply { addCategory(Intent.CATEGORY_APP_MESSAGING) })
             "SYSTEM_RADAR" -> safeStartIntent(Intent(Intent.ACTION_VIEW, Uri.parse("https://google.com")))
-            "SYSTEM_CAMERA" -> safeStartIntent(Intent(MediaStore.INTENT_ACTION_STILL_IMAGE_CAMERA))
+            "SYSTEM_CAMERA" -> launchOrFallback("com.uvos.camera", Intent(MediaStore.INTENT_ACTION_STILL_IMAGE_CAMERA))
             "SYSTEM_FILES" -> launchOrFallback("com.uvos.files", Intent(Intent.ACTION_GET_CONTENT).apply { type = "*/*" })
             "SYSTEM_PLAYER" -> launchOrFallback("com.uvos.music", Intent(Intent.ACTION_MAIN).apply { addCategory(Intent.CATEGORY_APP_MUSIC) })
             "SYSTEM_CALC" -> safeStartIntent(Intent(Intent.ACTION_MAIN).apply { addCategory(Intent.CATEGORY_APP_CALCULATOR) })
