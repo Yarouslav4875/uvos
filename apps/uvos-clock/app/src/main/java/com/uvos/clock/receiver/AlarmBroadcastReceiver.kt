@@ -112,7 +112,7 @@ class AlarmBroadcastReceiver : BroadcastReceiver() {
                 }
 
                 Intent.ACTION_BOOT_COMPLETED,
-                Intent.ACTION_TIME_SET,
+                Intent.ACTION_TIME_CHANGED,
                 Intent.ACTION_TIMEZONE_CHANGED -> {
                     val db = ClockDatabaseHelper(context)
                     val scheduler = AlarmScheduler(context)

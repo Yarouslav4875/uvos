@@ -54,7 +54,7 @@ fun TimerKnobControl(
                 if (!isRunning) {
                     detectDragGestures { change, _ ->
                         change.consume()
-                        val center = Offset(size.width / 2f, size.height / 2f)
+                        val center = Offset(this.size.width / 2f, this.size.height / 2f)
                         val touchPoint = change.position
                         // Вычисляем угол точки относительно центра (0 градусов сверху)
                         val dx = touchPoint.x - center.x
