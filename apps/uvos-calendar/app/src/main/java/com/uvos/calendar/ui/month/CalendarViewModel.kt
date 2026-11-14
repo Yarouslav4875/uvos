@@ -52,15 +52,28 @@ class CalendarViewModel(application: Application) : AndroidViewModel(application
     val allEvents: StateFlow<List<CalendarEvent>> = repository.observeAllEvents()
         .stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
 
+    private data class DateSelection(val year: Int, val month: Int, val day: Int)
+    private data class SheetSelection(val editingEvent: CalendarEvent?, val isSheetOpen: Boolean, val statusMsg: String?)
+
+    private val dateFlow = combine(_selectedYear, _selectedMonth, _selectedDay) { year, month, day ->
+        DateSelection(year, month, day)
+    }
+
+    private val sheetFlow = combine(_editingEvent, _isEditSheetOpen, _statusMessage) { editingEvent, isSheetOpen, statusMsg ->
+        SheetSelection(editingEvent, isSheetOpen, statusMsg)
+    }
+
     val uiState: StateFlow<CalendarUiState> = combine(
-        _selectedYear,
-        _selectedMonth,
-        _selectedDay,
+        dateFlow,
         allEvents,
-        _editingEvent,
-        _isEditSheetOpen,
-        _statusMessage
-    ) { year, month, day, events, editingEvent, isSheetOpen, statusMsg ->
+        sheetFlow
+    ) { date, events, sheet ->
+        val year = date.year
+        val month = date.month
+        val day = date.day
+        val editingEvent = sheet.editingEvent
+        val isSheetOpen = sheet.isSheetOpen
+        val statusMsg = sheet.statusMsg
         val cal = Calendar.getInstance()
         val todayYear = cal.get(Calendar.YEAR)
         val todayMonth = cal.get(Calendar.MONTH)
