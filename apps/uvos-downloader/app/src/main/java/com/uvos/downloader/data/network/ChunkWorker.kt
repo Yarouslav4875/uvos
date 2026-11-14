@@ -47,7 +47,8 @@ class ChunkWorker(
             }
 
             val body = response.body ?: throw IOException("Empty response body for chunk ${chunk.chunkIndex}")
-            inputStream = body.byteStream()
+            val stream = body.byteStream()
+            inputStream = stream
 
             raf = RandomAccessFile(targetFile, "rw")
             raf.seek(startFrom)
@@ -56,7 +57,7 @@ class ChunkWorker(
             var bytesRead: Int
             var currentPos = startFrom
 
-            while (inputStream.read(buffer).also { bytesRead = it } != -1) {
+            while (stream.read(buffer).also { bytesRead = it } != -1) {
                 currentCoroutineContext().ensureActive()
 
                 // Thread-safe seek and write per chunk

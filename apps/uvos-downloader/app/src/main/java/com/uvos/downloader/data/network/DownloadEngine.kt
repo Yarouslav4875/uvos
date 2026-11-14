@@ -7,6 +7,7 @@ import com.uvos.downloader.domain.model.NetworkSpeedMetric
 import com.uvos.downloader.domain.repository.DownloadRepository
 import com.uvos.downloader.domain.usecase.CalculateSpeedMetricsUseCase
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -143,6 +144,7 @@ class DownloadEngine(
 
         // 2. Execute parallel chunk downloads
         val currentFile = File(task.destinationPath)
+        coroutineScope {
         val chunkWorkers = chunks.map { chunk ->
             async(Dispatchers.IO) {
                 val worker = ChunkWorker(
@@ -172,6 +174,7 @@ class DownloadEngine(
             chunkWorkers.awaitAll()
         } finally {
             syncJob.cancel()
+        }
         }
 
         // 3. Final verification and complete
