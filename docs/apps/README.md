@@ -26,3 +26,6 @@
 - [13_APP_CALENDAR.md](file:///c:/Users/barab/Desktop/UVOC/docs/apps/13_APP_CALENDAR.md) — `com.uvos.calendar`: автономный локальный календарь / CalDAV без трекинга Google с ретро-циферблатом даты.
 - [14_APP_NOTES.md](file:///c:/Users/barab/Desktop/UVOC/docs/apps/14_APP_NOTES.md) — `com.uvos.notes`: оффлайн Markdown-заметки в открытых файлах `.md` с криптографическим сейфом AES-256.
 - [15_APP_CLOCK_TASKS.md](file:///c:/Users/barab/Desktop/UVOC/docs/apps/15_APP_CLOCK_TASKS.md) — `com.uvos.clock` & `com.uvos.tasks`: аналоговый хронометр, таймер со шкалами M4200, нарастающий будильник и матрица задач.
+
+### 5. Оптика и Фотофиксация
+- [16_APP_CAMERA.md](16_APP_CAMERA.md) — `com.uvos.camera`: оптический визор M4200 с аппаратной зачисткой EXIF/GPS на лету, осциллографической сеткой и нулевой звукозаписью.
