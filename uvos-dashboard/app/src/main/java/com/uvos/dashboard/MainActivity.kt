@@ -944,17 +944,17 @@ class MainActivity : Activity() {
                 }
             }
             "SYSTEM_PHONE" -> safeStartIntent(Intent(Intent.ACTION_DIAL))
-            "SYSTEM_MESSAGES" -> safeStartIntent(Intent(Intent.ACTION_MAIN).apply { addCategory(Intent.CATEGORY_APP_MESSAGING) })
+            "SYSTEM_MESSAGES" -> launchOrFallback("com.uvos.messages", Intent(Intent.ACTION_MAIN).apply { addCategory(Intent.CATEGORY_APP_MESSAGING) })
             "SYSTEM_RADAR" -> safeStartIntent(Intent(Intent.ACTION_VIEW, Uri.parse("https://google.com")))
             "SYSTEM_CAMERA" -> safeStartIntent(Intent(MediaStore.INTENT_ACTION_STILL_IMAGE_CAMERA))
-            "SYSTEM_FILES" -> safeStartIntent(Intent(Intent.ACTION_GET_CONTENT).apply { type = "*/*" })
-            "SYSTEM_PLAYER" -> safeStartIntent(Intent(Intent.ACTION_MAIN).apply { addCategory(Intent.CATEGORY_APP_MUSIC) })
+            "SYSTEM_FILES" -> launchOrFallback("com.uvos.files", Intent(Intent.ACTION_GET_CONTENT).apply { type = "*/*" })
+            "SYSTEM_PLAYER" -> launchOrFallback("com.uvos.music", Intent(Intent.ACTION_MAIN).apply { addCategory(Intent.CATEGORY_APP_MUSIC) })
             "SYSTEM_CALC" -> safeStartIntent(Intent(Intent.ACTION_MAIN).apply { addCategory(Intent.CATEGORY_APP_CALCULATOR) })
-            "SYSTEM_SETTINGS" -> safeStartIntent(Intent(Settings.ACTION_SETTINGS))
+            "SYSTEM_SETTINGS" -> launchOrFallback("com.uvos.settings", Intent(Settings.ACTION_SETTINGS))
             "SYSTEM_SHIELD" -> startActivity(Intent(this, ShieldActivity::class.java))
             "SYSTEM_LOG" -> startActivity(Intent(this, LogActivity::class.java))
             "SYSTEM_OSC" -> {}
-            "SYSTEM_TERM" -> {}
+            "SYSTEM_TERM" -> launchOrFallback("com.uvos.terminal", null)
             "SYSTEM_PACKAGES" -> desktopPager.scrollToPage(2, smooth = true)
         }
     }
@@ -1781,6 +1781,22 @@ class MainActivity : Activity() {
         homeClockDate.text = dateFormat.format(now).uppercase(Locale("ru"))
         if (::systemShadeManager.isInitialized) {
             systemShadeManager.updateTime(now)
+        }
+    }
+
+    private fun launchOrFallback(preferredPackage: String, fallbackIntent: Intent?) {
+        try {
+            val launchIntent = packageManager.getLaunchIntentForPackage(preferredPackage)
+            if (launchIntent != null) {
+                launchIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                startActivity(launchIntent)
+            } else if (fallbackIntent != null) {
+                safeStartIntent(fallbackIntent)
+            } else {
+                Toast.makeText(this, "Приложение $preferredPackage не установлено", Toast.LENGTH_SHORT).show()
+            }
+        } catch (_: Exception) {
+            if (fallbackIntent != null) safeStartIntent(fallbackIntent)
         }
     }
 
