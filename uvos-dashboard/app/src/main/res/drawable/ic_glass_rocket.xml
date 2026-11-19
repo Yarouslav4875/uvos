@@ -4,49 +4,40 @@
     android:viewportWidth="48"
     android:viewportHeight="48">
 
-    <!-- Корпус космического челнока из темного стекла -->
+    <!-- Левое и правое сопловое оперение (Booster Fins): сочный алый неон (#FF3B30 строго по референсу) -->
     <path
-        android:fillColor="#E6151722"
+        android:fillColor="#FF3B30"
+        android:pathData="M16,28 L10,33 L10,37 L16,35 Z M32,28 L38,33 L38,37 L32,35 Z" />
+
+    <!-- Реактивный факел форсажа загрузки (#FF3B30) -->
+    <path
+        android:fillColor="#FF3B30"
+        android:pathData="M24,33 L28,38 L25.5,38 L27,43 L24,40 L21,43 L22.5,38 L20,38 Z" />
+
+    <!-- Корпус ракеты: темное матовое стекло (Frosted Glass rgba(26,28,36,0.70)) -->
+    <path
+        android:fillColor="#B31A1C24"
         android:strokeColor="#75FFFFFF"
         android:strokeWidth="1.6"
         android:strokeLineJoin="round"
-        android:pathData="M24,7 C26.5,12 32,19 32,27 L32,31 L24,28.5 L16,31 L16,27 C16,19 21.5,12 24,7 Z" />
+        android:pathData="M24,7 C26.5,12 32,19 32,27 L32,33 L24,31 L16,33 L16,27 C16,19 21.5,12 24,7 Z" />
 
-    <!-- Левое и правое сопловые оперения (Booster Fins) -->
+    <!-- Зеркальный блик на носовом обтекателе (Specular Rim Highlight) -->
     <path
-        android:fillColor="#25FFFFFF"
-        android:strokeColor="#50FFFFFF"
-        android:strokeWidth="1.2"
-        android:pathData="M16,25 L10,30 L10,34 L16,31 Z M32,25 L38,30 L38,34 L32,31 Z" />
-
-    <!-- Зеркальный блик на носовом обтекателе -->
-    <path
-        android:strokeColor="#B8FFFFFF"
-        android:strokeWidth="1.4"
+        android:strokeColor="#E6FFFFFF"
+        android:strokeWidth="1.8"
         android:strokeLineCap="round"
-        android:pathData="M23.5,8 L24.5,8 M22,12 C23,10 24,9 24.5,8" />
+        android:pathData="M24,8 C23,12 18,18 17.5,26" />
 
-    <!-- Окно иллюминатора из титана и стекла -->
+    <!-- Иллюминатор из стекла -->
     <path
-        android:fillColor="#FF0E1016"
-        android:strokeColor="#50FFFFFF"
+        android:fillColor="#FF10121A"
+        android:strokeColor="#60FFFFFF"
         android:strokeWidth="1.2"
         android:pathData="M24,19 M20.5,19 A3.5,3.5 0 1,1 27.5,19 A3.5,3.5 0 1,1 20.5,19" />
 
-    <!-- Алый неоновый индикатор форсажа двигателя (#FF3B30) -->
+    <!-- Неоновый индикатор внутри иллюминатора -->
     <path
         android:fillColor="#FF3B30"
         android:pathData="M24,19 M22.5,19 A1.5,1.5 0 1,1 25.5,19 A1.5,1.5 0 1,1 22.5,19" />
-
-    <!-- Неоновый реактивный факел ускорения загрузки (Download Booster Plume) -->
-    <path
-        android:fillColor="#FF3B30"
-        android:pathData="M24,30 L28,34 L25.5,34 L27,39 L24,36 L21,39 L22.5,34 L20,34 Z" />
-
-    <!-- Внешняя орбитальная дуга ускорения -->
-    <path
-        android:strokeColor="#FF3B30"
-        android:strokeWidth="1.8"
-        android:strokeLineCap="round"
-        android:pathData="M11,19 C10,24 11,29 13.5,33" />
 </vector>

@@ -1,0 +1,43 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="48dp"
+    android:height="48dp"
+    android:viewportWidth="48"
+    android:viewportHeight="48">
+
+    <!-- Левое и правое сопловое оперение (Booster Fins): сочный алый неон (#FF3B30 строго по референсу) -->
+    <path
+        android:fillColor="#FF3B30"
+        android:pathData="M16,28 L10,33 L10,37 L16,35 Z M32,28 L38,33 L38,37 L32,35 Z" />
+
+    <!-- Реактивный факел форсажа загрузки (#FF3B30) -->
+    <path
+        android:fillColor="#FF3B30"
+        android:pathData="M24,33 L28,38 L25.5,38 L27,43 L24,40 L21,43 L22.5,38 L20,38 Z" />
+
+    <!-- Корпус ракеты: темное матовое стекло (Frosted Glass rgba(26,28,36,0.70)) -->
+    <path
+        android:fillColor="#B31A1C24"
+        android:strokeColor="#75FFFFFF"
+        android:strokeWidth="1.6"
+        android:strokeLineJoin="round"
+        android:pathData="M24,7 C26.5,12 32,19 32,27 L32,33 L24,31 L16,33 L16,27 C16,19 21.5,12 24,7 Z" />
+
+    <!-- Зеркальный блик на носовом обтекателе (Specular Rim Highlight) -->
+    <path
+        android:strokeColor="#E6FFFFFF"
+        android:strokeWidth="1.8"
+        android:strokeLineCap="round"
+        android:pathData="M24,8 C23,12 18,18 17.5,26" />
+
+    <!-- Иллюминатор из стекла -->
+    <path
+        android:fillColor="#FF10121A"
+        android:strokeColor="#60FFFFFF"
+        android:strokeWidth="1.2"
+        android:pathData="M24,19 M20.5,19 A3.5,3.5 0 1,1 27.5,19 A3.5,3.5 0 1,1 20.5,19" />
+
+    <!-- Неоновый индикатор внутри иллюминатора -->
+    <path
+        android:fillColor="#FF3B30"
+        android:pathData="M24,19 M22.5,19 A1.5,1.5 0 1,1 25.5,19 A1.5,1.5 0 1,1 22.5,19" />
+</vector>

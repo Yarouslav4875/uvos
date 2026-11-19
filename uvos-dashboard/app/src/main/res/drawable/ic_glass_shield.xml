@@ -4,38 +4,43 @@
     android:viewportWidth="48"
     android:viewportHeight="48">
 
-    <!-- Внешняя грань тактического бронещита из тёмного стекла -->
+    <!-- Задний индикаторный значок тревоги / статуса: сочный алый неон (#FF3B30 строго по референсу) -->
     <path
-        android:fillColor="#E612141E"
+        android:fillColor="#FF3B30"
+        android:pathData="M14,14 M9,14 A5,5 0 1,1 19,14 A5,5 0 1,1 9,14" />
+
+    <!-- Блик на верхнем значке -->
+    <path
+        android:strokeColor="#80FFFFFF"
+        android:strokeWidth="1.2"
+        android:strokeLineCap="round"
+        android:pathData="M12,11 C13,10 15,10 16,11" />
+
+    <!-- Корпус щита из темного матового стекла (Frosted Glass rgba(26,28,36,0.70)) -->
+    <path
+        android:fillColor="#B31A1C24"
         android:strokeColor="#75FFFFFF"
         android:strokeWidth="1.6"
         android:strokeLineJoin="round"
-        android:pathData="M24,7 L37,12 L37,23 C37,31.5 31.5,38 24,41 C16.5,38 11,31.5 11,23 L11,12 Z" />
+        android:pathData="M24,10 L37,14 C37,25 32,34 24,39 C16,34 11,25 11,14 L24,10 Z" />
 
-    <!-- Зеркальный блик на верхней наклонной кромке (Specular Rim) -->
+    <!-- Зеркальная фаска по левой и верхней кромке щита (Specular Rim Highlight) -->
     <path
-        android:strokeColor="#B8FFFFFF"
+        android:strokeColor="#E6FFFFFF"
+        android:strokeWidth="1.8"
+        android:strokeLineCap="round"
+        android:pathData="M13,15 L24,11.5 L35,15" />
+
+    <path
+        android:strokeColor="#99FFFFFF"
         android:strokeWidth="1.4"
         android:strokeLineCap="round"
-        android:pathData="M13,12.5 L24,7.8 L35,12.5" />
+        android:pathData="M12.5,17 C13,26 17,33 24,37.5" />
 
-    <!-- Внутренняя бронепластина из черненого титана -->
+    <!-- Внутренний криптографический герб / ядро файрвола -->
     <path
-        android:fillColor="#25FFFFFF"
-        android:strokeColor="#45FFFFFF"
-        android:strokeWidth="1.2"
-        android:pathData="M24,11 L33,15 L33,23 C33,29.5 29,34.5 24,37 C19,34.5 15,29.5 15,23 L15,15 Z" />
-
-    <!-- Центральная алая неоновая эмблема абсолютной изоляции (#FF3B30) -->
-    <path
-        android:fillColor="#FF3B30"
         android:strokeColor="#FF3B30"
-        android:strokeWidth="1.5"
-        android:strokeLineJoin="round"
-        android:pathData="M24,16 L29,18.5 L29,23.5 C29,27 27,29.8 24,31 C21,29.8 19,27 19,23.5 L19,18.5 Z" />
-
-    <!-- Сердцевина замка безопасности (Security Core Pip) -->
-    <path
-        android:fillColor="#FFFFFF"
-        android:pathData="M24,23.5 A1.8,1.8 0 1,1 20.4,23.5 A1.8,1.8 0 1,1 24,23.5" />
+        android:strokeWidth="1.8"
+        android:strokeLineCap="round"
+        android:pathData="M24,18 L29,20 C29,26 27,29 24,32 C21,29 19,26 19,20 L24,18 Z" />
 </vector>

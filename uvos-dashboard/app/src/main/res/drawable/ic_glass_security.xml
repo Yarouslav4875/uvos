@@ -1,0 +1,46 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="48dp"
+    android:height="48dp"
+    android:viewportWidth="48"
+    android:viewportHeight="48">
+
+    <!-- Задний индикаторный значок тревоги / статуса: сочный алый неон (#FF3B30 строго по референсу) -->
+    <path
+        android:fillColor="#FF3B30"
+        android:pathData="M14,14 M9,14 A5,5 0 1,1 19,14 A5,5 0 1,1 9,14" />
+
+    <!-- Блик на верхнем значке -->
+    <path
+        android:strokeColor="#80FFFFFF"
+        android:strokeWidth="1.2"
+        android:strokeLineCap="round"
+        android:pathData="M12,11 C13,10 15,10 16,11" />
+
+    <!-- Корпус щита из темного матового стекла (Frosted Glass rgba(26,28,36,0.70)) -->
+    <path
+        android:fillColor="#B31A1C24"
+        android:strokeColor="#75FFFFFF"
+        android:strokeWidth="1.6"
+        android:strokeLineJoin="round"
+        android:pathData="M24,10 L37,14 C37,25 32,34 24,39 C16,34 11,25 11,14 L24,10 Z" />
+
+    <!-- Зеркальная фаска по левой и верхней кромке щита (Specular Rim Highlight) -->
+    <path
+        android:strokeColor="#E6FFFFFF"
+        android:strokeWidth="1.8"
+        android:strokeLineCap="round"
+        android:pathData="M13,15 L24,11.5 L35,15" />
+
+    <path
+        android:strokeColor="#99FFFFFF"
+        android:strokeWidth="1.4"
+        android:strokeLineCap="round"
+        android:pathData="M12.5,17 C13,26 17,33 24,37.5" />
+
+    <!-- Внутренний криптографический герб / ядро файрвола -->
+    <path
+        android:strokeColor="#FF3B30"
+        android:strokeWidth="1.8"
+        android:strokeLineCap="round"
+        android:pathData="M24,18 L29,20 C29,26 27,29 24,32 C21,29 19,26 19,20 L24,18 Z" />
+</vector>

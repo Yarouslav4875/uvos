@@ -1,5 +1,6 @@
 package com.uvos.dashboard
 
+import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.ColorFilter
@@ -71,10 +72,10 @@ class GlassTileDrawable(
         val w = boundsF.width()
         val h = boundsF.height()
 
-        // 1. Frosted Glass Body Gradient
-        val topGlass = if (isPressedState) Color.argb(190, 24, 27, 36) else Color.argb(175, 28, 31, 42)
-        val midGlass = if (isPressedState) Color.argb(210, 16, 17, 24) else Color.argb(195, 18, 20, 28)
-        val botGlass = if (isPressedState) Color.argb(235, 10, 11, 15) else Color.argb(220, 12, 13, 18)
+        // 1. Frosted Glass Body Gradient (Strict reference standard: rgba(26,28,36,0.70))
+        val topGlass = if (isPressedState) Color.argb(210, 26, 28, 36) else Color.argb(178, 26, 28, 36)
+        val midGlass = if (isPressedState) Color.argb(225, 20, 22, 29) else Color.argb(195, 20, 22, 29)
+        val botGlass = if (isPressedState) Color.argb(245, 14, 15, 20) else Color.argb(220, 14, 15, 20)
 
         glassPaint.shader = LinearGradient(
             boundsF.left, boundsF.top,
@@ -204,4 +205,36 @@ class GlassTileDrawable(
 
     @Deprecated("Deprecated in Java")
     override fun getOpacity(): Int = PixelFormat.TRANSLUCENT
+
+    companion object {
+        /**
+         * Генератор стеклянных иконок: композиция подложки GlassTileDrawable и векторной иконки
+         */
+        fun createGlassTileBitmap(
+            sizePx: Int = 192,
+            cornerRadiusDp: Float = 18f,
+            hasNeonGlow: Boolean = true,
+            neonColor: Int = Color.parseColor("#FF3B30"),
+            foregroundIcon: Drawable? = null
+        ): Bitmap {
+            val bitmap = Bitmap.createBitmap(sizePx, sizePx, Bitmap.Config.ARGB_8888)
+            val canvas = Canvas(bitmap)
+
+            val tile = GlassTileDrawable(
+                cornerRadiusDp = cornerRadiusDp,
+                hasNeonGlow = hasNeonGlow,
+                neonColor = neonColor
+            )
+            tile.setBounds(0, 0, sizePx, sizePx)
+            tile.draw(canvas)
+
+            if (foregroundIcon != null) {
+                val padding = (sizePx * 0.22f).toInt()
+                foregroundIcon.setBounds(padding, padding, sizePx - padding, sizePx - padding)
+                foregroundIcon.draw(canvas)
+            }
+
+            return bitmap
+        }
+    }
 }

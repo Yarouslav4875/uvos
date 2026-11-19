@@ -4,53 +4,39 @@
     android:viewportWidth="48"
     android:viewportHeight="48">
 
-    <!-- Внешнее стеклянное кольцо с зеркальной фаской -->
+    <!-- Корпус радара / браузера: темное матовое стекло (Frosted Glass rgba(26,28,36,0.70)) -->
     <path
-        android:fillColor="#15FFFFFF"
+        android:fillColor="#B31A1C24"
         android:strokeColor="#75FFFFFF"
         android:strokeWidth="1.6"
-        android:pathData="M24,24 M8,24 A16,16 0 1,1 40,24 A16,16 0 1,1 8,24" />
+        android:pathData="M24,8 A16,16 0 1,0 40,24 L24,24 Z" />
 
-    <!-- Тёмное стекло линзы радара -->
-    <path
-        android:fillColor="#E612141E"
-        android:pathData="M24,24 M9,24 A15,15 0 1,1 39,24 A15,15 0 1,1 9,24" />
-
-    <!-- Внутреннее координатное кольцо -->
-    <path
-        android:strokeColor="#40FFFFFF"
-        android:strokeWidth="1.2"
-        android:strokeLineCap="round"
-        android:pathData="M24,24 M16,24 A8,8 0 1,1 32,24 A8,8 0 1,1 16,24" />
-
-    <!-- Перекрестие азимута (Azimuth Crosshairs) -->
-    <path
-        android:strokeColor="#50FFFFFF"
-        android:strokeWidth="1"
-        android:strokeLineCap="round"
-        android:pathData="M24,9 L24,14 M24,34 L24,39 M9,24 L14,24 M34,24 L39,24" />
-
-    <!-- Зеркальный блик на стекле (Северо-западный сектор) -->
-    <path
-        android:strokeColor="#B0FFFFFF"
-        android:strokeWidth="1.6"
-        android:strokeLineCap="round"
-        android:pathData="M13,15 C16,11 20,9.5 24,9.5" />
-
-    <!-- Вращающийся алый неоновый луч развертки (Radar Sweep Ray) -->
-    <path
-        android:strokeColor="#FF3B30"
-        android:strokeWidth="2.4"
-        android:strokeLineCap="round"
-        android:pathData="M24,24 L35,13" />
-
-    <!-- Центральный пин радара -->
-    <path
-        android:fillColor="#E02020"
-        android:pathData="M24,24 M22,24 A2,2 0 1,1 26,24 A2,2 0 1,1 22,24" />
-
-    <!-- Захваченная цель в алом неоне (Target Lock Blip) -->
+    <!-- Сочный алый неон: активный сканирующий сектор радара (#FF3B30 строго по референсу) -->
     <path
         android:fillColor="#FF3B30"
-        android:pathData="M32,16 A2.5,2.5 0 1,1 27,16 A2.5,2.5 0 1,1 32,16" />
+        android:pathData="M24,24 L40,24 A16,16 0 0,0 24,8 Z" />
+
+    <!-- Зеркальная фаска по контуру стекла (Specular Rim Highlight) -->
+    <path
+        android:strokeColor="#E6FFFFFF"
+        android:strokeWidth="1.8"
+        android:strokeLineCap="round"
+        android:pathData="M11,16 C14,10 20,8 24,8" />
+
+    <path
+        android:strokeColor="#99FFFFFF"
+        android:strokeWidth="1.2"
+        android:strokeLineCap="round"
+        android:pathData="M8,24 C8,32 15,39 23,40" />
+
+    <!-- Внутренние концентрические кольца дальности радара -->
+    <path
+        android:strokeColor="#30FFFFFF"
+        android:strokeWidth="1.2"
+        android:pathData="M24,15 A9,9 0 0,0 15,24 A9,9 0 0,0 24,33" />
+
+    <!-- Центральный фокусный керн -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M24,24 M22,24 A2,2 0 1,1 26,24 A2,2 0 1,1 22,24" />
 </vector>

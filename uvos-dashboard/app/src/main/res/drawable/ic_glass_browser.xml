@@ -1,0 +1,42 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="48dp"
+    android:height="48dp"
+    android:viewportWidth="48"
+    android:viewportHeight="48">
+
+    <!-- Корпус радара / браузера: темное матовое стекло (Frosted Glass rgba(26,28,36,0.70)) -->
+    <path
+        android:fillColor="#B31A1C24"
+        android:strokeColor="#75FFFFFF"
+        android:strokeWidth="1.6"
+        android:pathData="M24,8 A16,16 0 1,0 40,24 L24,24 Z" />
+
+    <!-- Сочный алый неон: активный сканирующий сектор радара (#FF3B30 строго по референсу) -->
+    <path
+        android:fillColor="#FF3B30"
+        android:pathData="M24,24 L40,24 A16,16 0 0,0 24,8 Z" />
+
+    <!-- Зеркальная фаска по контуру стекла (Specular Rim Highlight) -->
+    <path
+        android:strokeColor="#E6FFFFFF"
+        android:strokeWidth="1.8"
+        android:strokeLineCap="round"
+        android:pathData="M11,16 C14,10 20,8 24,8" />
+
+    <path
+        android:strokeColor="#99FFFFFF"
+        android:strokeWidth="1.2"
+        android:strokeLineCap="round"
+        android:pathData="M8,24 C8,32 15,39 23,40" />
+
+    <!-- Внутренние концентрические кольца дальности радара -->
+    <path
+        android:strokeColor="#30FFFFFF"
+        android:strokeWidth="1.2"
+        android:pathData="M24,15 A9,9 0 0,0 15,24 A9,9 0 0,0 24,33" />
+
+    <!-- Центральный фокусный керн -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M24,24 M22,24 A2,2 0 1,1 26,24 A2,2 0 1,1 22,24" />
+</vector>

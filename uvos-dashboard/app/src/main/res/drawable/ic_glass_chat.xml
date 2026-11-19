@@ -4,42 +4,35 @@
     android:viewportWidth="48"
     android:viewportHeight="48">
 
-    <!-- Внешний ореол стеклянного бабла -->
-    <path
-        android:fillColor="#18FFFFFF"
-        android:pathData="M10,13 C10,9.7 12.7,7 16,7 L32,7 C35.3,7 38,9.7 38,13 L38,25 C38,28.3 35.3,31 32,31 L21,31 L12.5,37.5 C11.5,38.2 10,37.5 10,36.2 L10,13 Z" />
-
-    <!-- Тело сообщения из тёмного стекла -->
-    <path
-        android:fillColor="#E6151722"
-        android:strokeColor="#70FFFFFF"
-        android:strokeWidth="1.6"
-        android:strokeLineJoin="round"
-        android:pathData="M11,14 C11,10.7 13.7,8 17,8 L31,8 C34.3,8 37,10.7 37,14 L37,24 C37,27.3 34.3,30 31,30 L20.5,30 L13,36 L13,30.5 C11.8,29.5 11,28 11,26.5 L11,14 Z" />
-
-    <!-- Зеркальная фаска верхней кромки (Specular Rim) -->
-    <path
-        android:strokeColor="#B8FFFFFF"
-        android:strokeWidth="1.4"
-        android:strokeLineCap="round"
-        android:pathData="M15,9.5 L33,9.5" />
-
-    <!-- Алая неоновая полоса криптографической аутентификации -->
-    <path
-        android:strokeColor="#FF3B30"
-        android:strokeWidth="2.2"
-        android:strokeLineCap="round"
-        android:pathData="M17,16 L31,16" />
-
-    <!-- Вторая строка данных / три точки передачи -->
-    <path
-        android:strokeColor="#60FFFFFF"
-        android:strokeWidth="1.8"
-        android:strokeLineCap="round"
-        android:pathData="M17,21 L26,21" />
-
-    <!-- Неоновый маяк шифрования (Secure Cipher LED) -->
+    <!-- Задний бабл диалога: сочный алый/коралловый неон (#FF3B30 строго по референсу) -->
     <path
         android:fillColor="#FF3B30"
-        android:pathData="M30,21 A1.8,1.8 0 1,1 26.4,21 A1.8,1.8 0 1,1 30,21" />
+        android:pathData="M24,19 C24,14 28,10 33,10 C38,10 42,14 42,19 C42,21.5 41,23.8 39.2,25.4 L40,30 L35.5,28.5 C34.7,28.8 33.8,29 33,29 C28,29 24,25 24,19 Z" />
+
+    <!-- Блик на заднем неоновом бабле -->
+    <path
+        android:strokeColor="#80FFFFFF"
+        android:strokeWidth="1.2"
+        android:strokeLineCap="round"
+        android:pathData="M30,13 C31.5,12 33.5,11.5 35,12" />
+
+    <!-- Передний бабл из темного матового стекла (Frosted Glass rgba(26,28,36,0.70)) -->
+    <path
+        android:fillColor="#B31A1C24"
+        android:strokeColor="#75FFFFFF"
+        android:strokeWidth="1.6"
+        android:strokeLineJoin="round"
+        android:pathData="M8,23 C8,17 13,12 19,12 C25,12 30,17 30,23 C30,29 25,34 19,34 C17.8,34 16.5,33.7 15.4,33.2 L10,35 L11.2,29.8 C9.2,28 8,25.6 8,23 Z" />
+
+    <!-- Зеркальная фаска по контуру стекла (Specular Rim Highlight) -->
+    <path
+        android:strokeColor="#E6FFFFFF"
+        android:strokeWidth="1.8"
+        android:strokeLineCap="round"
+        android:pathData="M11,18 C13,14 16,13 19,13 C23.5,13 27.5,16.5 28.5,21" />
+
+    <!-- Три точки шифрованного P2P сообщения -->
+    <path
+        android:fillColor="#E6FFFFFF"
+        android:pathData="M14,23 A1.5,1.5 0 1,1 14.1,23 Z M19,23 A1.5,1.5 0 1,1 19.1,23 Z M24,23 A1.5,1.5 0 1,1 24.1,23 Z" />
 </vector>
