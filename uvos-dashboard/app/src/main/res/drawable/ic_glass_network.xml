@@ -4,18 +4,18 @@
     android:viewportWidth="48"
     android:viewportHeight="48">
 
-    <!-- Защищенный стеклянный контур сетевого узла (Hexagonal Mesh Node) -->
+    <!-- Защищенный стеклянный контур сетевого узла: темное матовое стекло (Frosted Glass rgba(26,28,36,0.70)) -->
     <path
-        android:fillColor="#E6151722"
-        android:strokeColor="#70FFFFFF"
+        android:fillColor="#B31A1C24"
+        android:strokeColor="#75FFFFFF"
         android:strokeWidth="1.6"
         android:strokeLineJoin="round"
         android:pathData="M24,8 L37,15.5 L37,30.5 L24,38 L11,30.5 L11,15.5 Z" />
 
-    <!-- Зеркальный блик на верхней кромке полигона -->
+    <!-- Зеркальная фаска по контуру полигона (Specular Rim Highlight) -->
     <path
-        android:strokeColor="#B8FFFFFF"
-        android:strokeWidth="1.4"
+        android:strokeColor="#E6FFFFFF"
+        android:strokeWidth="1.8"
         android:strokeLineCap="round"
         android:pathData="M13,14.5 L24,8.5 L35,14.5" />
 
@@ -45,7 +45,7 @@
         android:fillColor="#80FFFFFF"
         android:pathData="M11,15.5 M9,15.5 A2,2 0 1,1 13,15.5 A2,2 0 1,1 9,15.5" />
 
-    <!-- Центральный криптографический хаб в алом неоне (WireGuard Core #FF3B30) -->
+    <!-- Сочный алый неон: центральный криптографический хаб WireGuard (#FF3B30 строго по референсу) -->
     <path
         android:fillColor="#FF3B30"
         android:pathData="M24,23 M20,23 A4,4 0 1,1 28,23 A4,4 0 1,1 20,23" />

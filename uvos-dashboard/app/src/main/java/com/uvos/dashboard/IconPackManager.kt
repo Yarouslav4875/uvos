@@ -34,11 +34,11 @@ class IconPackManager(private val context: Context) {
     var onIconPackChanged: (() -> Unit)? = null
 
     fun getIconPack(): IconPackType {
-        val name = prefs.getString(keyIconPack, IconPackType.SYSTEM_DEFAULT.name) ?: IconPackType.SYSTEM_DEFAULT.name
+        val name = prefs.getString(keyIconPack, IconPackType.DARK_GLASS.name) ?: IconPackType.DARK_GLASS.name
         return try {
             IconPackType.valueOf(name)
         } catch (_: Exception) {
-            IconPackType.SYSTEM_DEFAULT
+            IconPackType.DARK_GLASS
         }
     }
 
@@ -113,18 +113,18 @@ class IconPackManager(private val context: Context) {
         val pack = getIconPack()
         if (pack == IconPackType.DARK_GLASS) {
             return when (iconName) {
-                "ic_sys_phone" -> R.drawable.ic_glass_phone
-                "ic_sys_messages" -> R.drawable.ic_glass_chat
-                "ic_sys_radar" -> R.drawable.ic_glass_radar
-                "ic_sys_camera" -> R.drawable.ic_glass_camera
-                "ic_sys_files" -> R.drawable.ic_glass_files
-                "ic_sys_player" -> R.drawable.ic_glass_music
-                "ic_sys_settings" -> R.drawable.ic_glass_settings
-                "ic_sys_shield" -> R.drawable.ic_glass_shield
-                "ic_sys_oscilloscope" -> R.drawable.ic_glass_network
-                "ic_sys_terminal" -> R.drawable.ic_glass_terminal
-                "ic_sys_packages" -> R.drawable.ic_glass_rocket
-                "ic_sys_vault" -> R.drawable.ic_glass_vault
+                "ic_sys_phone", "ic_glass_phone" -> R.drawable.ic_glass_phone
+                "ic_sys_messages", "ic_glass_messages", "ic_glass_chat" -> R.drawable.ic_glass_messages
+                "ic_sys_radar", "ic_glass_radar", "ic_glass_browser" -> R.drawable.ic_glass_radar
+                "ic_sys_camera", "ic_glass_camera" -> R.drawable.ic_glass_camera
+                "ic_sys_files", "ic_glass_files" -> R.drawable.ic_glass_files
+                "ic_sys_player", "ic_glass_music" -> R.drawable.ic_glass_music
+                "ic_sys_settings", "ic_glass_settings" -> R.drawable.ic_glass_settings
+                "ic_sys_shield", "ic_glass_shield", "ic_glass_security" -> R.drawable.ic_glass_shield
+                "ic_sys_oscilloscope", "ic_glass_network", "ic_glass_cloud", "ic_glass_vpn" -> R.drawable.ic_glass_cloud
+                "ic_sys_terminal", "ic_glass_terminal" -> R.drawable.ic_glass_terminal
+                "ic_sys_packages", "ic_glass_rocket", "ic_glass_downloader" -> R.drawable.ic_glass_rocket
+                "ic_sys_vault", "ic_glass_vault" -> R.drawable.ic_glass_vault
                 else -> R.drawable.ic_glass_shield
             }
         }
