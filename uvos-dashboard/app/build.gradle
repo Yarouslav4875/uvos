@@ -4,7 +4,7 @@ plugins {
 }
 
 android {
-    namespace = "com.uvos.dashboard"
+    namespace = 'com.uvos.dashboard'
     compileSdk = 35
 
     defaultConfig {
@@ -17,7 +17,7 @@ android {
 
     buildTypes {
         release {
-            isMinifyEnabled = false
+            minifyEnabled = false
         }
     }
 
@@ -29,6 +29,3 @@ android {
         jvmTarget = "17"
     }
 }
-
-// Намеренно ноль зависимостей: только Kotlin stdlib (добавляется автоматически).
-// Меньше скачиваний - быстрее первая сборка на медленном канале.

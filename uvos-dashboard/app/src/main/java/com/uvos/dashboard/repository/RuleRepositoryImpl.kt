@@ -12,6 +12,7 @@ class RuleRepositoryImpl private constructor(private val context: Context) : Rul
 
     private val storageFile = File(context.filesDir, "uvos_rules.json")
     private var activeProfile: ProfileType = ProfileType.STERILE
+    private val ioExecutor = java.util.concurrent.Executors.newSingleThreadExecutor()
 
     private val apps = mutableListOf<AppRule>()
     private val attempts = mutableListOf<AccessAttemptEvent>()
@@ -20,9 +21,11 @@ class RuleRepositoryImpl private constructor(private val context: Context) : Rul
         loadFromDisk()
         if (apps.isEmpty()) {
             initDefaultDemoApps()
-            saveToDisk()
+            saveToDiskAsync()
         }
-        syncWithPackageManager()
+        ioExecutor.execute {
+            syncWithPackageManager()
+        }
     }
 
     fun syncWithPackageManager() {
@@ -33,19 +36,21 @@ class RuleRepositoryImpl private constructor(private val context: Context) : Rul
             }
             val launchableApps = pm.queryIntentActivities(intent, 0)
             var changed = false
-            for (resolveInfo in launchableApps) {
-                val pkgName = resolveInfo.activityInfo.packageName
-                if (pkgName == context.packageName) continue
-                val existing = apps.find { it.packageName == pkgName }
-                if (existing == null) {
-                    val label = resolveInfo.loadLabel(pm).toString()
-                    val uid = resolveInfo.activityInfo.applicationInfo.uid
-                    apps.add(AppRule(pkgName, label, uid))
-                    changed = true
+            synchronized(apps) {
+                for (resolveInfo in launchableApps) {
+                    val pkgName = resolveInfo.activityInfo.packageName
+                    if (pkgName == context.packageName) continue
+                    val existing = apps.find { it.packageName == pkgName }
+                    if (existing == null) {
+                        val label = resolveInfo.loadLabel(pm).toString()
+                        val uid = resolveInfo.activityInfo.applicationInfo.uid
+                        apps.add(AppRule(pkgName, label, uid))
+                        changed = true
+                    }
                 }
             }
             if (changed) {
-                saveToDisk()
+                saveToDiskAsync()
             }
         } catch (_: Exception) {
             // Тихо пропускаем при ошибках IPC PackageManager
@@ -128,16 +133,15 @@ class RuleRepositoryImpl private constructor(private val context: Context) : Rul
                 // Сохраняется текущая ручная конфигурация
             }
         }
-        saveToDisk()
+        saveToDiskAsync()
     }
 
     override fun getAllApps(): List<AppRule> {
-        syncWithPackageManager()
-        return apps
+        return synchronized(apps) { apps.toList() }
     }
 
     override fun getAppRule(packageName: String): AppRule? =
-        apps.find { it.packageName == packageName }
+        synchronized(apps) { apps.find { it.packageName == packageName } }
 
     override fun setChannelMode(packageName: String, channel: DataChannel, mode: ChannelMode) {
         val app = getAppRule(packageName) ?: return
@@ -145,7 +149,7 @@ class RuleRepositoryImpl private constructor(private val context: Context) : Rul
         if (activeProfile != ProfileType.CUSTOM) {
             activeProfile = ProfileType.CUSTOM
         }
-        saveToDisk()
+        saveToDiskAsync()
     }
 
     override fun updateNetworkConfig(packageName: String, config: NetworkConfig) {
@@ -154,11 +158,11 @@ class RuleRepositoryImpl private constructor(private val context: Context) : Rul
         if (activeProfile != ProfileType.CUSTOM) {
             activeProfile = ProfileType.CUSTOM
         }
-        saveToDisk()
+        saveToDiskAsync()
     }
 
     override fun getTotalOpenChannels(): Int {
-        return apps.sumOf { it.openChannelsCount }
+        return synchronized(apps) { apps.sumOf { it.openChannelsCount } }
     }
 
     override fun getBlockedAttemptsCountToday(): Int {
@@ -169,24 +173,30 @@ class RuleRepositoryImpl private constructor(private val context: Context) : Rul
             set(Calendar.MILLISECOND, 0)
         }.timeInMillis
 
-        return attempts.count { it.timestampMillis >= startOfDay && it.verdict.isBlocked }
+        return synchronized(attempts) { attempts.count { it.timestampMillis >= startOfDay && it.verdict.isBlocked } }
     }
 
-    override fun getAttempts(): List<AccessAttemptEvent> = attempts.sortedByDescending { it.timestampMillis }
+    override fun getAttempts(): List<AccessAttemptEvent> = synchronized(attempts) { attempts.sortedByDescending { it.timestampMillis } }
 
     override fun addAttempt(event: AccessAttemptEvent) {
-        attempts.add(0, event)
-        saveToDisk()
+        synchronized(attempts) { attempts.add(0, event) }
+        saveToDiskAsync()
     }
 
     override fun clearAttempts() {
-        attempts.clear()
-        saveToDisk()
+        synchronized(attempts) { attempts.clear() }
+        saveToDiskAsync()
     }
 
     override fun markAllAttemptsViewed() {
-        attempts.forEach { it.isViewed = true }
-        saveToDisk()
+        synchronized(attempts) { attempts.forEach { it.isViewed = true } }
+        saveToDiskAsync()
+    }
+
+    private fun saveToDiskAsync() {
+        ioExecutor.execute {
+            saveToDisk()
+        }
     }
 
     @Synchronized

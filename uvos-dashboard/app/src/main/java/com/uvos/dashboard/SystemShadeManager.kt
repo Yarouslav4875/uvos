@@ -225,7 +225,7 @@ class SystemShadeManager(
             ProfileType.COMM -> 1
             ProfileType.CUSTOM -> 2
         }
-        profileSelector.setSelectedIndex(idx, animate = true)
+        profileSelector.setSelectedIndex(idx, animate = true, notify = false)
         updateProfileLabels(profile)
     }
 

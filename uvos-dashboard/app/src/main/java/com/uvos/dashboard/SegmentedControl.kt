@@ -56,10 +56,12 @@ class SegmentedControl @JvmOverloads constructor(
         invalidate()
     }
 
-    fun setSelectedIndex(index: Int, animate: Boolean = true) {
+    fun setSelectedIndex(index: Int, animate: Boolean = true, notify: Boolean = false) {
         if (index == selectedIndex || index !in items.indices) return
         selectedIndex = index
-        onSegmentSelected?.invoke(selectedIndex)
+        if (notify) {
+            onSegmentSelected?.invoke(selectedIndex)
+        }
         if (animate) {
             animator?.cancel()
             animator = ValueAnimator.ofFloat(thumbLeftFraction, selectedIndex.toFloat()).apply {
@@ -117,7 +119,7 @@ class SegmentedControl @JvmOverloads constructor(
             val pad = 3f * density
             val segW = (width - pad * 2) / items.size
             val clickedIndex = ((event.x - pad) / segW).toInt().coerceIn(0, items.size - 1)
-            setSelectedIndex(clickedIndex, animate = true)
+            setSelectedIndex(clickedIndex, animate = true, notify = true)
             playSoundEffect(SoundEffectConstants.CLICK)
         }
         return true

@@ -156,15 +156,26 @@ class MainActivity : Activity() {
     private var managerSummaryRamSub: TextView? = null
     private var managerSummaryChannels: TextView? = null
 
-    // Цикл непрерывного обновления реальных системных данных (каждую секунду)
+    // Цикл непрерывного обновления реальных системных данных (каждую секунду в фоне)
     private val systemStatsHandler = Handler(Looper.getMainLooper())
+    private val telemetryExecutor = java.util.concurrent.Executors.newSingleThreadExecutor()
+    @Volatile private var isTelemetryRunning = false
     private var lastRxBytes = -1L
     private var lastTxBytes = -1L
     private var lastNetSampleTime = 0L
 
     private val systemStatsRunnable = object : Runnable {
         override fun run() {
-            updateLiveIndicators()
+            if (!isTelemetryRunning) {
+                isTelemetryRunning = true
+                telemetryExecutor.execute {
+                    try {
+                        collectAndDispatchTelemetry()
+                    } finally {
+                        isTelemetryRunning = false
+                    }
+                }
+            }
             systemStatsHandler.postDelayed(this, 1000)
         }
     }
@@ -206,9 +217,9 @@ class MainActivity : Activity() {
                     ProfileType.COMM -> 1
                     ProfileType.CUSTOM -> 2
                 }
-                profileSelector.setSelectedIndex(idx, animate = true)
+                profileSelector.setSelectedIndex(idx, animate = true, notify = false)
                 updateProfileDescription(newProfile)
-                renderDrawerApps()
+                updateDrawerBadges()
             }
         }
 
@@ -240,6 +251,11 @@ class MainActivity : Activity() {
         bluetoothDeviceManager?.stop()
         sensorTelemetryManager.stopListening()
         systemStatsHandler.removeCallbacks(systemStatsRunnable)
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        telemetryExecutor.shutdownNow()
     }
 
     override fun onNewIntent(intent: Intent?) {
@@ -403,7 +419,7 @@ class MainActivity : Activity() {
             }
             repository.setActiveProfile(selectedProfile)
             updateProfileDescription(selectedProfile)
-            renderDrawerApps()
+            updateDrawerBadges()
             if (::systemShadeManager.isInitialized) {
                 systemShadeManager.syncProfile(selectedProfile)
             }
@@ -1416,9 +1432,52 @@ class MainActivity : Activity() {
     // СТОЛ 03: МЕНЮ ПРИЛОЖЕНИЙ (APP DRAWER / ЗАКРЫТАЯ ТЕРРИТОРИЯ)
     // =========================================================================
 
+    private val iconCache = java.util.concurrent.ConcurrentHashMap<String, android.graphics.drawable.Drawable>()
+    private val isSystemCache = java.util.concurrent.ConcurrentHashMap<String, Boolean>()
+
     private fun initDesktop3Drawer() {
         drawerAppsContainer = findViewById(R.id.drawer_apps_container)
         renderDrawerApps()
+    }
+
+    private fun updateDrawerBadges() {
+        if (drawerAppsContainer.childCount == 0) {
+            renderDrawerApps()
+            return
+        }
+        val apps = repository.getAllApps()
+        val appMap = apps.associateBy { it.packageName }
+        for (i in 0 until drawerAppsContainer.childCount) {
+            val row = drawerAppsContainer.getChildAt(i)
+            val pkg = row.tag as? String ?: continue
+            val app = appMap[pkg] ?: continue
+            val badgeView = row.findViewById<TextView>(R.id.drawer_item_badge) ?: continue
+            val isSystem = isSystemCache[pkg] ?: false
+            val openCount = app.openChannelsCount
+
+            when {
+                isSystem -> {
+                    badgeView.text = "СИСТЕМА"
+                    badgeView.setBackgroundResource(R.drawable.bg_badge_system)
+                    badgeView.setTextColor(Color.parseColor("#71768E"))
+                }
+                openCount == 0 -> {
+                    badgeView.text = "ИЗОЛИРОВАНО (0)"
+                    badgeView.setBackgroundResource(R.drawable.bg_badge_isolated)
+                    badgeView.setTextColor(Color.parseColor("#06B6D4"))
+                }
+                openCount == 1 -> {
+                    badgeView.text = "1 КАНАЛ (СЕТЬ)"
+                    badgeView.setBackgroundResource(R.drawable.bg_badge_channel)
+                    badgeView.setTextColor(Color.parseColor("#E2E4EC"))
+                }
+                else -> {
+                    badgeView.text = "$openCount КАНАЛА"
+                    badgeView.setBackgroundResource(R.drawable.bg_badge_channel)
+                    badgeView.setTextColor(Color.parseColor("#FF6B6B"))
+                }
+            }
+        }
     }
 
     private fun renderDrawerApps() {
@@ -1428,6 +1487,7 @@ class MainActivity : Activity() {
 
         apps.forEach { app ->
             val row = layoutInflater.inflate(R.layout.item_drawer_app, drawerAppsContainer, false)
+            row.tag = app.packageName
             val iconView = row.findViewById<ImageView>(R.id.drawer_item_icon)
             val titleView = row.findViewById<TextView>(R.id.drawer_item_title)
             val pkgView = row.findViewById<TextView>(R.id.drawer_item_package)
@@ -1437,19 +1497,27 @@ class MainActivity : Activity() {
             titleView.text = app.appName
             pkgView.text = app.packageName
 
-            try {
-                val icon = pm.getApplicationIcon(app.packageName)
-                iconView.setImageDrawable(icon)
-            } catch (_: Exception) {
-                iconView.setImageResource(android.R.drawable.sym_def_app_icon)
+            val cachedIcon = iconCache[app.packageName]
+            if (cachedIcon != null) {
+                iconView.setImageDrawable(cachedIcon)
+            } else {
+                try {
+                    val icon = pm.getApplicationIcon(app.packageName)
+                    iconCache[app.packageName] = icon
+                    iconView.setImageDrawable(icon)
+                } catch (_: Exception) {
+                    iconView.setImageResource(android.R.drawable.sym_def_app_icon)
+                }
             }
 
             val openCount = app.openChannelsCount
-            val isSystem = try {
-                val ai = pm.getApplicationInfo(app.packageName, 0)
-                (ai.flags and ApplicationInfo.FLAG_SYSTEM) != 0
-            } catch (_: Exception) {
-                false
+            val isSystem = isSystemCache.getOrPut(app.packageName) {
+                try {
+                    val ai = pm.getApplicationInfo(app.packageName, 0)
+                    (ai.flags and ApplicationInfo.FLAG_SYSTEM) != 0
+                } catch (_: Exception) {
+                    false
+                }
             }
 
             when {
@@ -1879,70 +1947,35 @@ class MainActivity : Activity() {
     }
 
     // =========================================================================
-    // СИСТЕМНЫЙ МОНИТОРИНГ В РЕАЛЬНОМ ВРЕМЕНИ (ПОДКЛЮЧЕНИЕ ВСЕХ ДАННЫХ)
+    // СИСТЕМНЫЙ МОНИТОРИНГ В РЕАЛЬНОМ ВРЕМЕНИ (ФОНОВЫЙ СБОР ТЕЛЕМЕТРИИ)
     // =========================================================================
 
     private fun updateLiveIndicators() {
-        updateCpuMetrics()
-        updateRamMetrics()
-        updateNetworkMetrics()
-        batteryIntent()?.let { updateFromBatteryIntent(it) }
-        updateCustomGaugesLive()
-    }
-
-    /**
-     * Реальная аппаратная загрузка процессора и число ядер.
-     * Считывается из масштабирования частот ядра Linux (/sys/devices/system/cpu/cpufreq).
-     */
-    private fun updateCpuMetrics() {
-        val cpuData = sensorTelemetryManager.getCpuUsageLoad()
-        gaugeCpu.setLevel(cpuData.usageFraction, cpuData.formattedValue)
-        valCpuBadge?.text = cpuData.subtitle
-        if (cpuData.usageFraction >= 0.80f) {
-            valCpuBadge?.setTextColor(Color.parseColor("#E02020"))
-        } else {
-            valCpuBadge?.setTextColor(Color.parseColor("#E1E4EE"))
+        telemetryExecutor.execute {
+            collectAndDispatchTelemetry()
         }
     }
 
-    /**
-     * Реальное использование оперативной памяти устройства (ActivityManager.MemoryInfo).
-     */
-    private fun updateRamMetrics() {
-        val am = getSystemService(Context.ACTIVITY_SERVICE) as? ActivityManager ?: return
+    private fun collectAndDispatchTelemetry() {
+        // 1. Сбор тяжелых метрик в фоновом потоке
+        val cpuData = sensorTelemetryManager.getCpuUsageLoad()
+
+        val am = getSystemService(Context.ACTIVITY_SERVICE) as? ActivityManager
         val mi = ActivityManager.MemoryInfo()
-        am.getMemoryInfo(mi)
+        am?.getMemoryInfo(mi)
 
         val totalBytes = mi.totalMem
         val availBytes = mi.availMem
         val usedBytes = (totalBytes - availBytes).coerceAtLeast(0L)
-
-        val usageFraction = (usedBytes.toDouble() / totalBytes.toDouble()).toFloat().coerceIn(0f, 1f)
-        val percent = (usageFraction * 100).toInt()
-
+        val ramUsageFraction = if (totalBytes > 0) (usedBytes.toDouble() / totalBytes.toDouble()).toFloat().coerceIn(0f, 1f) else 0f
+        val ramPercent = (ramUsageFraction * 100).toInt()
         val usedGb = usedBytes.toDouble() / (1024.0 * 1024.0 * 1024.0)
         val totalGb = totalBytes.toDouble() / (1024.0 * 1024.0 * 1024.0)
+        val isCriticalRam = mi.lowMemory || ramUsageFraction >= 0.80f
+        val ramStatusText = if (isCriticalRam) "КРИТИЧ." else "НОРМА"
+        val ramBadge = String.format(Locale.US, "%.1f/%.0f ГБ • %s", usedGb, totalGb, ramStatusText)
 
-        gaugeMem.setLevel(usageFraction, "$percent%")
-
-        val isCritical = mi.lowMemory || usageFraction >= 0.80f
-        val statusText = if (isCritical) "КРИТИЧ." else "НОРМА"
-        valMemBadge?.text = String.format(Locale.US, "%.1f/%.0f ГБ • %s", usedGb, totalGb, statusText)
-        if (isCritical) {
-            valMemBadge?.setTextColor(Color.parseColor("#E02020"))
-        } else {
-            valMemBadge?.setTextColor(Color.parseColor("#E1E4EE"))
-        }
-
-        // Обновляем сводку в Менеджере процессов (Стол 04)
-        managerSummaryRam?.text = String.format(Locale.US, "%.1f ГБ", usedGb)
-        managerSummaryRamSub?.text = "ОЗУ ($percent%)"
-    }
-
-    /**
-     * Реальная скорость сетевого обмена (TrafficStats) и тип соединения (Wi-Fi / Мобильная сеть / Оффлайн).
-     */
-    private fun updateNetworkMetrics() {
+        // Сеть
         val rx = TrafficStats.getTotalRxBytes()
         val tx = TrafficStats.getTotalTxBytes()
         val now = SystemClock.elapsedRealtime()
@@ -1980,13 +2013,9 @@ class MainActivity : Activity() {
             "0 КБ/с"
         }
 
-        // Нелинейный отклик стрелки вольтметра
         val gaugeLevel = if (speedKb > 0f) {
             (kotlin.math.log10(1.0 + speedKb) / 4.5).toFloat().coerceIn(0.04f, 1.0f)
         } else 0f
-
-        gaugeNet.setLevel(gaugeLevel, speedFormatted)
-        valNetBadge?.text = "$speedFormatted • $netTypeName"
 
         val activeChannelsCount = if (caps != null) {
             var count = 0
@@ -1995,7 +2024,59 @@ class MainActivity : Activity() {
             if (caps.hasTransport(NetworkCapabilities.TRANSPORT_BLUETOOTH)) count++
             if (count == 0) 1 else count
         } else 0
-        managerSummaryChannels?.text = "$activeChannelsCount КАН."
+
+        // Кастомные виджеты (I/O в фоне)
+        val storageStats = try { gaugeWidgetManager.getStorageStats() } catch (_: Exception) { null }
+        val thermalData = try { sensorTelemetryManager.getThermalData() } catch (_: Exception) { null }
+
+        // Передача готовых значений в UI поток без задержек и блокировок
+        runOnUiThread {
+            if (isFinishing || isDestroyed) return@runOnUiThread
+
+            // CPU UI
+            gaugeCpu.setLevel(cpuData.usageFraction, cpuData.formattedValue)
+            valCpuBadge?.text = cpuData.subtitle
+            valCpuBadge?.setTextColor(if (cpuData.usageFraction >= 0.80f) Color.parseColor("#E02020") else Color.parseColor("#E1E4EE"))
+
+            // RAM UI
+            gaugeMem.setLevel(ramUsageFraction, "$ramPercent%")
+            valMemBadge?.text = ramBadge
+            valMemBadge?.setTextColor(if (isCriticalRam) Color.parseColor("#E02020") else Color.parseColor("#E1E4EE"))
+            managerSummaryRam?.text = String.format(Locale.US, "%.1f ГБ", usedGb)
+            managerSummaryRamSub?.text = "ОЗУ ($ramPercent%)"
+
+            // NET UI
+            gaugeNet.setLevel(gaugeLevel, speedFormatted)
+            valNetBadge?.text = "$speedFormatted • $netTypeName"
+            managerSummaryChannels?.text = "$activeChannelsCount КАН."
+
+            // Custom Gauges UI
+            customGaugeHolders.forEach { holder ->
+                when (holder.item.type) {
+                    GaugeWidgetType.STORAGE -> {
+                        storageStats?.let { stats ->
+                            holder.gaugeView.setLevel(stats.fraction, "${stats.percent}%")
+                            holder.valueView.text = stats.usedText
+                            holder.subtitleView.text = stats.subtitle
+                            holder.badgeView.text = "UFS 2.2 • СТАТУС: В НОРМЕ"
+                            holder.badgeView.setTextColor(Color.parseColor("#E2E4EC"))
+                        }
+                    }
+                    GaugeWidgetType.THERMAL -> {
+                        thermalData?.let { data ->
+                            holder.gaugeView.setLevel(data.levelFraction, String.format(Locale.US, "%.0f°C", data.socTempC))
+                            holder.valueView.text = data.formattedValue
+                            holder.subtitleView.text = data.subtitle
+                            holder.badgeView.text = data.statusBadge
+                            holder.badgeView.setTextColor(data.statusColor)
+                        }
+                    }
+                    else -> {
+                        updateCustomGaugeView(holder)
+                    }
+                }
+            }
+        }
     }
 
     /**
