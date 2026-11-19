@@ -64,4 +64,7 @@ dependencies {
 
     // Libsu Root Infrastructure
     implementation(libs.libsu.core)
+
+    // Testing
+    testImplementation(libs.junit)
 }

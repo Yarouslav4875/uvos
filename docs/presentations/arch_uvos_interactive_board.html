@@ -1,0 +1,662 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UVOS M4200 Interactive Project Board</title>
+    <style>
+        :root {
+            --bg-color: #0E0E12;
+            --tile-bg: #1C1E26;
+            --tile-header: #252834;
+            --accent-red: #E02020;
+            --accent-green: #20E060;
+            --accent-amber: #E0A020;
+            --accent-cyan: #20C0E0;
+            --dial-ivory: #E8E4D8;
+            --text-primary: #F0F2F5;
+            --text-secondary: #9BA3B5;
+            --border-color: #2F3342;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            overflow: hidden;
+            width: 100vw;
+            height: 100vh;
+        }
+
+        /* Top HUD Bar */
+        header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 64px;
+            background: linear-gradient(180deg, #181A22 0%, #111218 100%);
+            border-bottom: 2px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 24px;
+            z-index: 1000;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+        }
+
+        .brand-title {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .m4200-badge {
+            background: var(--accent-red);
+            color: #FFF;
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 900;
+            font-size: 13px;
+            padding: 4px 8px;
+            border-radius: 4px;
+            letter-spacing: 1px;
+            box-shadow: 0 0 12px rgba(224, 32, 32, 0.4);
+        }
+
+        .brand-name {
+            font-size: 18px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            color: #FFF;
+        }
+
+        .stats-bar {
+            display: flex;
+            gap: 24px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 13px;
+        }
+
+        .stat-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: #14161E;
+            padding: 6px 14px;
+            border-radius: 20px;
+            border: 1px solid var(--border-color);
+        }
+
+        .indicator {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+
+        .indicator.green { background: var(--accent-green); box-shadow: 0 0 8px var(--accent-green); }
+        .indicator.red { background: var(--accent-red); box-shadow: 0 0 8px var(--accent-red); }
+        .indicator.amber { background: var(--accent-amber); box-shadow: 0 0 8px var(--accent-amber); }
+        .indicator.cyan { background: var(--accent-cyan); box-shadow: 0 0 8px var(--accent-cyan); }
+
+        /* Canvas / Board Workspace */
+        #viewport {
+            width: 100vw;
+            height: 100vh;
+            position: absolute;
+            top: 0;
+            left: 0;
+            cursor: grab;
+            background-image: 
+                radial-gradient(circle, #252836 1px, transparent 1px);
+            background-size: 28px 28px;
+        }
+
+        #viewport:active {
+            cursor: grabbing;
+        }
+
+        #canvas {
+            position: absolute;
+            transform-origin: 0 0;
+            width: 5000px;
+            height: 3500px;
+            padding-top: 100px;
+            padding-left: 100px;
+        }
+
+        /* Group Containers */
+        .board-column {
+            position: absolute;
+            background: rgba(20, 22, 30, 0.85);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 20px;
+            backdrop-filter: blur(12px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+        }
+
+        .column-header {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 14px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 12px;
+        }
+
+        /* Cards */
+        .card-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .card {
+            background: var(--tile-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 16px;
+            width: 320px;
+            transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+            cursor: pointer;
+        }
+
+        .card:hover {
+            transform: translateY(-4px);
+            border-color: var(--accent-cyan);
+            box-shadow: 0 8px 24px rgba(32, 192, 224, 0.2);
+        }
+
+        .card-top {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+
+        .card-tag {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            font-weight: 700;
+            padding: 3px 6px;
+            border-radius: 4px;
+            background: #252834;
+            color: var(--text-secondary);
+        }
+
+        .card-tag.agent {
+            background: rgba(224, 32, 32, 0.15);
+            color: var(--accent-red);
+            border: 1px solid rgba(224, 32, 32, 0.4);
+        }
+
+        .card-title {
+            font-size: 16px;
+            font-weight: 700;
+            margin-bottom: 6px;
+            color: #FFF;
+        }
+
+        .card-package {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px;
+            color: var(--accent-cyan);
+            margin-bottom: 10px;
+        }
+
+        .card-desc {
+            font-size: 13px;
+            color: var(--text-secondary);
+            line-height: 1.4;
+            margin-bottom: 12px;
+        }
+
+        .card-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            border-top: 1px solid #282C3A;
+            padding-top: 10px;
+        }
+
+        .badge-zero-telemetry {
+            color: var(--accent-green);
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        /* Floating Controls */
+        .controls {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            display: flex;
+            gap: 12px;
+            background: #181A24;
+            padding: 8px 14px;
+            border-radius: 30px;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.6);
+            z-index: 1000;
+        }
+
+        .btn {
+            background: #252836;
+            border: none;
+            color: #FFF;
+            padding: 8px 14px;
+            border-radius: 18px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .btn:hover {
+            background: var(--accent-red);
+        }
+
+        /* Agent Allocation Banner */
+        .agent-banner {
+            border-left: 3px solid var(--accent-red);
+            padding-left: 8px;
+            margin-top: 8px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            color: var(--accent-amber);
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="brand-title">
+            <span class="m4200-badge">M4200 UI</span>
+            <span class="brand-name">UnderVoltOS (UVOS) — Interactive Architecture Board</span>
+        </div>
+        <div class="stats-bar">
+            <div class="stat-item"><span class="indicator green"></span> 15 Модулей Готово</div>
+            <div class="stat-item"><span class="indicator red"></span> 4 Агента Активны</div>
+            <div class="stat-item"><span class="indicator cyan"></span> Xiaomi Debloat: 100%</div>
+            <div class="stat-item"><span class="indicator amber"></span> 120 FPS Target</div>
+        </div>
+    </header>
+
+    <div id="viewport">
+        <div id="canvas">
+
+            <!-- КОЛОНКА 1: СИСТЕМНОЕ ЯДРО (Агент Lead Developer & Security) -->
+            <div class="board-column" style="left: 100px; top: 120px; width: 360px;">
+                <div class="column-header" style="color: var(--accent-red);">
+                    <span>🛡️ 1. ЯДРО И БЕЗОПАСНОСТЬ</span>
+                    <span class="card-tag">4 МОДУЛЯ</span>
+                </div>
+                <div class="card-grid">
+                    <div class="card">
+                        <div class="card-top">
+                            <span class="card-tag">CORE FIREWALL</span>
+                            <span class="indicator green"></span>
+                        </div>
+                        <div class="card-title">UVOS Security</div>
+                        <div class="card-package">com.uvos.security</div>
+                        <div class="card-desc">Контроль iptables/nftables, изоляция AppOps, фальсификация метрик батареи, аналоговый вольтметр тревоги.</div>
+                        <div class="agent-banner">Назначен: Security Engineer (75271c78)</div>
+                        <div class="card-meta">
+                            <span class="badge-zero-telemetry">✓ Zero-Network</span>
+                            <span>Root required</span>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-top">
+                            <span class="card-tag">ROOT TERMINAL</span>
+                            <span class="indicator green"></span>
+                        </div>
+                        <div class="card-title">UVOS Terminal</div>
+                        <div class="card-package">com.uvos.terminal</div>
+                        <div class="card-desc">Индустриальный PTY-терминал с амперметром нагрузки CPU и RAM, быстрые системные макросы.</div>
+                        <div class="agent-banner">Назначен: Lead Developer (ecd50c90)</div>
+                        <div class="card-meta">
+                            <span class="badge-zero-telemetry">✓ Zero-Network</span>
+                            <span>M4200 Gauges</span>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-top">
+                            <span class="card-tag">SYSTEM OS CONTROL</span>
+                            <span class="indicator green"></span>
+                        </div>
+                        <div class="card-title">UVOS Settings</div>
+                        <div class="card-package">com.uvos.settings</div>
+                        <div class="card-desc">Пульт управления профилями («Стерильно», «Связь»), мониторинг вольтажа и температуры батареи.</div>
+                        <div class="agent-banner">Назначен: Lead Developer (ecd50c90)</div>
+                        <div class="card-meta">
+                            <span class="badge-zero-telemetry">✓ Offline Only</span>
+                            <span>Profiles MVI</span>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-top">
+                            <span class="card-tag">STORAGE & ROOT FS</span>
+                            <span class="indicator green"></span>
+                        </div>
+                        <div class="card-title">UVOS Files</div>
+                        <div class="card-package">com.uvos.files</div>
+                        <div class="card-desc">Двухоконный проводник со шкалами свободного места дисков, Hex-редактор, расчет SHA-256 в один клик.</div>
+                        <div class="agent-banner">Назначен: Lead Developer (ecd50c90)</div>
+                        <div class="card-meta">
+                            <span class="badge-zero-telemetry">✓ No INTERNET</span>
+                            <span>Root FS</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- КОЛОНКА 2: МУЛЬТИМЕДИА И СЕТЬ (Агент Designer & 120Hz Optimizer) -->
+            <div class="board-column" style="left: 520px; top: 120px; width: 360px;">
+                <div class="column-header" style="color: var(--accent-cyan);">
+                    <span>🎵 2. СЕТЬ И МУЛЬТИМЕДИА</span>
+                    <span class="card-tag">5 МОДУЛЕЙ</span>
+                </div>
+                <div class="card-grid">
+                    <div class="card">
+                        <div class="card-top">
+                            <span class="card-tag">HI-RES AUDIO</span>
+                            <span class="indicator green"></span>
+                        </div>
+                        <div class="card-title">UVOS Music</div>
+                        <div class="card-package">com.uvos.music</div>
+                        <div class="card-desc">Оффлайн аудиоплеер (FLAC/ALAC) с живыми аналоговыми стерео VU-метрами L/R на Custom Canvas.</div>
+                        <div class="agent-banner">Назначен: 120Hz Optimizer (ff2b50cf)</div>
+                        <div class="card-meta">
+                            <span class="badge-zero-telemetry">✓ 0% Ads</span>
+                            <span>120 FPS VU-Meter</span>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-top">
+                            <span class="card-tag">PRIVACY MEDIA</span>
+                            <span class="indicator green"></span>
+                        </div>
+                        <div class="card-title">UVOS Gallery</div>
+                        <div class="card-package">com.uvos.gallery</div>
+                        <div class="card-desc">Локальная галерея с автоматической очисткой EXIF-метаданных (GPS, модель) и шифрованным сейфом.</div>
+                        <div class="agent-banner">Назначен: UI Designer (0c547d7b)</div>
+                        <div class="card-meta">
+                            <span class="badge-zero-telemetry">✓ Isolated</span>
+                            <span>AES-GCM Safe</span>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-top">
+                            <span class="card-tag">TUNNEL & MESH</span>
+                            <span class="indicator green"></span>
+                        </div>
+                        <div class="card-title">UVOS VPN</div>
+                        <div class="card-package">com.uvos.vpn</div>
+                        <div class="card-desc">WireGuard / VLESS туннель со стрелочным спидометром потока, раздельное туннелирование и Kill-Switch.</div>
+                        <div class="agent-banner">Назначен: Lead Developer (ecd50c90)</div>
+                        <div class="card-meta">
+                            <span>WireGuard Core</span>
+                            <span>Anti-Leak</span>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-top">
+                            <span class="card-tag">SECURE MAIL</span>
+                            <span class="indicator green"></span>
+                        </div>
+                        <div class="card-title">UVOS Mail</div>
+                        <div class="card-package">com.uvos.mail</div>
+                        <div class="card-desc">IMAP/SMTP клиент с блокировкой скрытых пикселей слежки и поддержкой OpenKeychain PGP шифрования.</div>
+                        <div class="agent-banner">Назначен: Security Engineer (75271c78)</div>
+                        <div class="card-meta">
+                            <span>OpenPGP Ready</span>
+                            <span>0 Tracking</span>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-top">
+                            <span class="card-tag">MULTI-THREAD</span>
+                            <span class="indicator green"></span>
+                        </div>
+                        <div class="card-title">UVOS Downloader</div>
+                        <div class="card-package">com.uvos.downloader</div>
+                        <div class="card-desc">Многопоточный загрузчик файлов (4-8 потоков) со стрелочным спидометром Мбайт/с M4200.</div>
+                        <div class="agent-banner">Назначен: 120Hz Optimizer (ff2b50cf)</div>
+                        <div class="card-meta">
+                            <span>Coroutines Flow</span>
+                            <span>M4200 Dial</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- КОЛОНКА 3: ОРГАНАЙЗЕР И СВЯЗЬ (Агент Designer & Developer) -->
+            <div class="board-column" style="left: 940px; top: 120px; width: 360px;">
+                <div class="column-header" style="color: var(--accent-amber);">
+                    <span>📋 3. ОРГАНАЙЗЕР И СВЯЗЬ</span>
+                    <span class="card-tag">6 МОДУЛЕЙ</span>
+                </div>
+                <div class="card-grid">
+                    <div class="card">
+                        <div class="card-top">
+                            <span class="card-tag">OFFLINE SMS</span>
+                            <span class="indicator green"></span>
+                        </div>
+                        <div class="card-title">UVOS Messages</div>
+                        <div class="card-package">com.uvos.messages</div>
+                        <div class="card-desc">Локальный SMS-менеджер с Regex-антиспамом без выгрузки контактов и сообщений на серверы.</div>
+                        <div class="agent-banner">Назначен: Lead Developer (ecd50c90)</div>
+                        <div class="card-meta">
+                            <span class="badge-zero-telemetry">✓ Offline DB</span>
+                            <span>Regex Filter</span>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-top">
+                            <span class="card-tag">LOCAL CALENDAR</span>
+                            <span class="indicator green"></span>
+                        </div>
+                        <div class="card-title">UVOS Calendar</div>
+                        <div class="card-package">com.uvos.calendar</div>
+                        <div class="card-desc">Календарь с циферблатом даты M4200, поддержка локальной базы Room и собственного CalDAV (Nextcloud).</div>
+                        <div class="agent-banner">Назначен: UI Designer (0c547d7b)</div>
+                        <div class="card-meta">
+                            <span class="badge-zero-telemetry">✓ 0 Google Sync</span>
+                            <span>Room SQLite</span>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-top">
+                            <span class="card-tag">MARKDOWN VAULT</span>
+                            <span class="indicator green"></span>
+                        </div>
+                        <div class="card-title">UVOS Notes</div>
+                        <div class="card-package">com.uvos.notes</div>
+                        <div class="card-desc">Хранение заметок в открытых `.md` файлах на диске, шифрование конфиденциальных записей паролем.</div>
+                        <div class="agent-banner">Назначен: Lead Developer (ecd50c90)</div>
+                        <div class="card-meta">
+                            <span class="badge-zero-telemetry">✓ Plain .md</span>
+                            <span>AES Vault</span>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-top">
+                            <span class="card-tag">ANALOG CHRONO</span>
+                            <span class="indicator green"></span>
+                        </div>
+                        <div class="card-title">UVOS Clock & Tasks</div>
+                        <div class="card-package">com.uvos.clock / tasks</div>
+                        <div class="card-desc">Стрелочный хронометр, будильник с аналоговым нарастанием звука и матрица задач с локальными пушами.</div>
+                        <div class="agent-banner">Назначен: UI Designer (0c547d7b)</div>
+                        <div class="card-meta">
+                            <span class="badge-zero-telemetry">✓ Custom Canvas</span>
+                            <span>AlarmManager</span>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-top">
+                            <span class="card-tag">EXIF-STRIP CAM</span>
+                            <span class="indicator green"></span>
+                        </div>
+                        <div class="card-title">UVOS Camera</div>
+                        <div class="card-package">com.uvos.camera</div>
+                        <div class="card-desc">Видоискатель M4200 со шкалами горизонта, авто-очистка GPS/EXIF на лету перед записью в файл.</div>
+                        <div class="agent-banner">Назначен: UI Designer (0c547d7b)</div>
+                        <div class="card-meta">
+                            <span class="badge-zero-telemetry">✓ CameraX</span>
+                            <span>0 Audio Log</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- КОЛОНКА 4: СИСТЕМА ДЕБЛОАТА И ОЧИСТКИ (Security Engineer) -->
+            <div class="board-column" style="left: 1360px; top: 120px; width: 360px;">
+                <div class="column-header" style="color: var(--accent-green);">
+                    <span>⚡ 4. DEBLOAT & HARDENING</span>
+                    <span class="card-tag">ОЧИСТКА</span>
+                </div>
+                <div class="card-grid">
+                    <div class="card">
+                        <div class="card-top">
+                            <span class="card-tag">PURGE XIAOMI</span>
+                            <span class="indicator red"></span>
+                        </div>
+                        <div class="card-title">Ликвидация Mi Account</div>
+                        <div class="card-package">scripts/debloat_purge_telemetry.ps1</div>
+                        <div class="card-desc">Полное вырезание 12 компонентов Mi Account: com.xiaomi.account, finddevice, micloudsync, xmsf, mipay.</div>
+                        <div class="agent-banner">Назначен: Security Engineer (75271c78)</div>
+                        <div class="card-meta">
+                            <span>ADB / Root Shell</span>
+                            <span>100% Purge</span>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-top">
+                            <span class="card-tag">TELEMETRY KILL</span>
+                            <span class="indicator red"></span>
+                        </div>
+                        <div class="card-title">Ликвидация MSA & Демонов</div>
+                        <div class="card-package">scripts/debloat_purge_telemetry.sh</div>
+                        <div class="card-desc">Удаление com.miui.analytics, joyose, daemon, hybrid, yellowpage. Подключение Private DNS AdGuard.</div>
+                        <div class="agent-banner">Назначен: Security Engineer (75271c78)</div>
+                        <div class="card-meta">
+                            <span>0% Telemetry</span>
+                            <span>DNS AdGuard</span>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-top">
+                            <span class="card-tag">GOOGLE HARVEST</span>
+                            <span class="indicator amber"></span>
+                        </div>
+                        <div class="card-title">Выборочный деблоат Google</div>
+                        <div class="card-package">Chrome / YouTube / Docs Purge</div>
+                        <div class="card-desc">Сохранение только Play Store (vending) и GmsCore. Замена Chrome на усиленный Firefox с uBlock Origin.</div>
+                        <div class="agent-banner">Назначен: Security Engineer (75271c78)</div>
+                        <div class="card-meta">
+                            <span>GMS Minimal</span>
+                            <span>Firefox Ready</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <div class="controls">
+        <button class="btn" onclick="resetZoom()">Сброс (100%)</button>
+        <button class="btn" onclick="zoomIn()">Zoom +</button>
+        <button class="btn" onclick="zoomOut()">Zoom -</button>
+    </div>
+
+    <script>
+        const viewport = document.getElementById('viewport');
+        const canvas = document.getElementById('canvas');
+
+        let isPanning = false;
+        let startX = 0, startY = 0;
+        let currentX = 0, currentY = 0;
+        let scale = 0.9;
+
+        function updateTransform() {
+            canvas.style.transform = `translate(${currentX}px, ${currentY}px) scale(${scale})`;
+        }
+
+        updateTransform();
+
+        viewport.addEventListener('mousedown', (e) => {
+            if (e.target.closest('.card') || e.target.closest('button')) return;
+            isPanning = true;
+            startX = e.clientX - currentX;
+            startY = e.clientY - currentY;
+        });
+
+        window.addEventListener('mousemove', (e) => {
+            if (!isPanning) return;
+            currentX = e.clientX - startX;
+            currentY = e.clientY - startY;
+            updateTransform();
+        });
+
+        window.addEventListener('mouseup', () => {
+            isPanning = false;
+        });
+
+        viewport.addEventListener('wheel', (e) => {
+            e.preventDefault();
+            const delta = e.deltaY > 0 ? 0.9 : 1.1;
+            scale = Math.min(Math.max(0.3, scale * delta), 2.5);
+            updateTransform();
+        }, { passive: false });
+
+        function resetZoom() {
+            scale = 0.9;
+            currentX = 0;
+            currentY = 0;
+            updateTransform();
+        }
+
+        function zoomIn() {
+            scale = Math.min(scale * 1.2, 2.5);
+            updateTransform();
+        }
+
+        function zoomOut() {
+            scale = Math.max(scale / 1.2, 0.3);
+            updateTransform();
+        }
+    </script>
+</body>
+</html>
