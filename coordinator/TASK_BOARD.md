@@ -81,3 +81,62 @@
      - 50-й перцентиль UI: **13 мс**, GPU: **6 мс**.
      - Зависания и лаги при переключении профилей безопасности полностью устранены.
 
+---
+
+## 4. Спринт 2: Таблица распределения задач (UI Acceleration, Dark Glassmorphism, Theme & Fluid Motion)
+
+| ID задачи | Ответственный агент | Роль | Модуль / Файлы | Задача и декомпозиция | Критерий приёмки (Done) |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **PERF-01** | `ff2b50cf-15ae-4192-959b-38a87446c3cb` | **120Hz Fluid Motion Optimizer** | `MainActivity.kt`, `DesktopPagerView.kt` | **Устранение `requestLayout()` при листании:** Заменить мутацию `layoutParams` в индикаторах точек страниц на `translationX`/`scaleX` и проверку `if (currentActiveDotPage == page) return`. | 0 вызовов `requestLayout` во время свайпа столов. 99th percentile < 8.3 мс. |
+| **PERF-02** | `ff2b50cf-15ae-4192-959b-38a87446c3cb` | **120Hz Fluid Motion Optimizer** | `DesktopPagerView.kt` | **Оптимизация пагинатора и пружинная физика:** Убрать `child.alpha` для сложных контейнеров столов (предотвратить создание `RenderNodeLayer` на Adreno 610). Внедрить адаптивную пружинную физику с затуханием (Damped Spring). | Плавная инерция без микрофризов и скачков при отпускании пальца. |
+| **PERF-03** | `ff2b50cf-15ae-4192-959b-38a87446c3cb` | **120Hz Fluid Motion Optimizer** | `activity_main.xml`, `MainActivity.kt` | **Ленивая загрузка столов (Lazy Desktops):** Отложенный инфлейт Стола 03 (Drawer) и Стола 04 (Process Manager) до первого перехода на них. | Снижение активного дерева представлений с 1057 до ~180 View. |
+| **UI-01** | `0c547d7b-340f-47db-ae40-a3d3649e75c1` | **UI/UX Designer** | `res/drawable/`, `GlassTileDrawable.kt` | **Генератор стеклянных иконок Dark Glassmorphism:** Реализовать подложку тёмного стекла (Frosted Glass), зеркальную фаску (specular rim) и алый неон (`#FF3B30`/`#E02020`) по референсу `glass_icons_reference.jpg`. | Полное соответствие референсу пользователя с визуальным объёмом. |
+| **UI-02** | `0c547d7b-340f-47db-ae40-a3d3649e75c1` | **UI/UX Designer** | `res/drawable/ic_glass_*` | **Пакет векторных иконок:** Создать 12 базовых иконок: Телефон, Чат, Браузер/Радар, Камера, Файлы, Плеер, Настройки, Сейф, Терминал, Ракета, Сеть, Щит. | Векторные SVG/XML ресурсы высокого разрешения в стиле референса. |
+| **UI-03** | `0c547d7b-340f-47db-ae40-a3d3649e75c1` | **UI/UX Designer** | `res/drawable/bg_wallpaper_*` | **Пресеты обоев и димминг:** Подготовить пресеты «Deep Void» (`#090A0E`), «M4200 Tactical Grid» (координатная сетка), «Crimson Horizon» (тёмный графит с алой полосой). | Готовые фоны с контрастностью для аналоговых приборов. |
+| **DEV-01** | `ecd50c90-7bc9-4aed-afc1-f66b718f9c81` | **Lead Developer** | `WallpaperManager.kt`, `MainActivity.kt` | **Движок обоев (Wallpaper Engine):** Реализовать выбор встроенных пресетов + загрузку изображения из галереи (SAF) с сохранением в `SharedPreferences`. | Фоновое переключение обоев с регулировкой димминга в реальном времени. |
+| **DEV-02** | `ecd50c90-7bc9-4aed-afc1-f66b718f9c81` | **Lead Developer** | `IconPackManager.kt`, `HomeManager.kt` | **Движок переключения наборов иконок:** Поддержка стилей: 1) Dark Glassmorphism, 2) Retro M4200, 3) Системные. Мгновенное применение к сетке стола. | Смена иконок на лету без перезапуска активности. |
+| **DEV-03** | `ecd50c90-7bc9-4aed-afc1-f66b718f9c81` | **Lead Developer** | `dialog_desktop_customization.xml` | **Диалог кастомизации:** Окно по долгому тапу на экран с вкладками «ОБОИ» (пресеты, галерея, ползунок затемнения) и «ИКОНКИ». | Удобный и интуитивный UI управления внешним видом. |
+| **SEC-01** | `75271c78-7409-4035-85d4-c1b832e933ac` | **Security Engineer** | `WallpaperManager.kt` | **Песочница и безопасность медиа:** Чтение пользовательских файлов через `content://` URI без избыточных системных прав и даунсэмплинг под 1080x2400 (защита от OOM). | Zero-Telemetry: нулевая сетевая активность при загрузке тем/обоев. |
+
+---
+
+## 5. Готовые директивы для передачи агентам (Prompts for External Chats)
+
+### 📌 Директива для Агента 4 (`ff2b50cf-15ae-4192-959b-38a87446c3cb`):
+```text
+Задача PERF-01..03: Оптимизация 120 FPS Fluid Motion в uvos-dashboard.
+1. В MainActivity.kt перепиши updatePageIndicators: устрани вызовы dot.layoutParams во время свайпа (используй scaleX/translationX и флаг if (currentActiveDotPage == page) return).
+2. В DesktopPagerView.kt удали child.alpha на уровне View-групп столов во время скролла для исключения off-screen RenderNodeLayer аллокаций на GPU Adreno 610.
+3. Добавь отложенную инициализацию (Lazy loading) содержимого Стола 03 (Drawer) и Стола 04 (Process Manager), чтобы сократить активное дерево представлений с 1057 до ~180 View.
+Сдай отчёт с замерами gfxinfo.
+```
+
+### 📌 Директива для Агента 2 (`0c547d7b-340f-47db-ae40-a3d3649e75c1`):
+```text
+Задача UI-01..03: Разработка стиля иконок Dark Glassmorphism и пресетов обоев для uvos-dashboard.
+1. Ознакомься с референсом пользователя: тёмное матовое полупрозрачное стекло с зеркальным бликом по контуру и сочным алым неоном (#FF3B30 / #E02020).
+2. Реализуй GlassTileDrawable и векторные иконки ic_glass_* для 12 ключевых приложений UVOS (Phone, Chat, Radar, Camera, Files, Music, Settings, Vault, Terminal, Downloader, Cloud, Security).
+3. Создай 3 пресета фонов: «Deep Void» (#090A0E), «M4200 Tactical Grid» (приборная координатная сетка) и «Crimson Horizon».
+Сдай отчёт и макеты.
+```
+
+### 📌 Директива для Агента 1 (`ecd50c90-7bc9-4aed-afc1-f66b718f9c81`):
+```text
+Задача DEV-01..03: Реализация WallpaperManager, IconPackManager и диалога кастомизации.
+1. Создай WallpaperManager: сохранение выбранного фона (3 системных пресета + пользовательское фото через Storage Access Framework) и уровня димминга (0-80%).
+2. Создай IconPackManager: поддержка наборов DARK_GLASS, RETRO_M4200, SYSTEM_DEFAULT с обновлением HomeManager и сетки ярлыков без перезапуска MainActivity.
+3. Реализуй всплывающий диалог кастомизации стола с вкладками «ОБОИ» и «ИКОНКИ».
+Собери и протестируй APK.
+```
+
+### 📌 Директива для Агента 3 (`75271c78-7409-4035-85d4-c1b832e933ac`):
+```text
+Задача SEC-01: Аудит безопасности кастомизации и Zero-Telemetry.
+1. Проверь безопасное открытие потока данных URI при выборе пользовательских обоев через Storage Access Framework.
+2. Проверь даунсэмплинг Bitmap (inSampleSize) под 1080x2400 для защиты от OutOfMemory при загрузке 4K/8K картинок.
+3. Подтверди сохранение инварианта Zero-Telemetry (отсутствие сетевых запросов).
+Сдай отчёт безопасности.
+```
+
+
+
