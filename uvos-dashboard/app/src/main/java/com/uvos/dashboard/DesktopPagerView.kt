@@ -12,10 +12,10 @@ import android.widget.OverScroller
 import kotlin.math.abs
 
 /**
- * UVOS DesktopPagerView - аппаратный пагинатор столов с физикой плавных переходов в стиле Apple iOS:
- * - Кубический сплайн Apple Spring (PathInterpolator 0.20, 1.0, 0.32, 1.0)
+ * UVOS DesktopPagerView - аппаратный пагинатор столов с физикой затухающей пружины (Damped Spring):
+ * - Физическая модель Damped Harmonic Oscillator (k=230, c=26, zeta ~ 0.85)
  * - Rubber-banding (упругий резиновый отскок на границах)
- * - Плавная трансформация глубины и прозрачности при листании (Apple Depth Scale & Alpha)
+ * - Исключены любые изменения child.alpha для предотвращения аллокаций off-screen RenderNodeLayer на Adreno 610
  * - Жесткий контроль геометрии (ровно 100% ширины экрана на каждый стол)
  */
 class DesktopPagerView @JvmOverloads constructor(
@@ -30,9 +30,18 @@ class DesktopPagerView @JvmOverloads constructor(
     var onPageSelectedListener: ((Int) -> Unit)? = null
     var onScrollProgressListener: ((Float) -> Unit)? = null
 
-    // Эталонный сплайн Apple Fluid Motion (быстрый старт, мягкая пружинная доводка без резкой остановки)
+    // Резервный скроллер для стандартных смещений
     private val appleSpringInterpolator = PathInterpolator(0.20f, 1.0f, 0.32f, 1.0f)
     private val scroller = OverScroller(context, appleSpringInterpolator)
+
+    // Параметры затухающей пружины (Damped Spring Physics)
+    private val springStiffness = 230f
+    private val springDamping = 26f
+    private var isSpringActive = false
+    private var springTargetX = 0f
+    private var springCurrentX = 0f
+    private var springVelocityX = 0f
+    private var lastFrameTimeNanos = 0L
 
     private val touchSlop = ViewConfiguration.get(context).scaledTouchSlop
     private val minFlingVelocity = ViewConfiguration.get(context).scaledMinimumFlingVelocity * 1.2f
@@ -80,6 +89,7 @@ class DesktopPagerView @JvmOverloads constructor(
         if (!scroller.isFinished) {
             scroller.abortAnimation()
         }
+        isSpringActive = false
         val targetX = currentPage * width
         scrollTo(targetX, 0)
         applyAppleDepthTransform(targetX)
@@ -95,9 +105,10 @@ class DesktopPagerView @JvmOverloads constructor(
                 lastY = y
                 downX = x
                 downY = y
-                isBeingDragged = !scroller.isFinished
+                isBeingDragged = !scroller.isFinished || isSpringActive
                 if (isBeingDragged) {
                     scroller.abortAnimation()
+                    isSpringActive = false
                     parent?.requestDisallowInterceptTouchEvent(true)
                 }
             }
@@ -132,6 +143,7 @@ class DesktopPagerView @JvmOverloads constructor(
                 if (!scroller.isFinished) {
                     scroller.abortAnimation()
                 }
+                isSpringActive = false
                 lastX = x
                 lastY = y
                 downX = x
@@ -167,7 +179,7 @@ class DesktopPagerView @JvmOverloads constructor(
                     val velocityX = velocityTracker?.xVelocity ?: 0f
                     snapToNearestPage(velocityX)
                     isBeingDragged = false
-                } else if (!scroller.isFinished) {
+                } else if (!scroller.isFinished || isSpringActive) {
                     snapToNearestPage(0f)
                 }
                 velocityTracker?.recycle()
@@ -201,15 +213,20 @@ class DesktopPagerView @JvmOverloads constructor(
         val total = childCount
         val targetPage = pageIndex.coerceIn(0, total - 1)
         val targetX = targetPage * width
-        val dx = targetX - scrollX
 
         if (smooth && width > 0) {
-            // Длительность в стиле iOS (320-450 мс для естественного пружинного движения)
-            val distanceRatio = (abs(dx).toFloat() / width).coerceIn(0.1f, 1.0f)
-            val duration = (280 + distanceRatio * 140).toInt()
-            scroller.startScroll(scrollX, 0, dx, 0, duration)
+            // Инициализация Damped Spring (затухающий гармонический осциллятор)
+            springTargetX = targetX.toFloat()
+            springCurrentX = scrollX.toFloat()
+            springVelocityX = -initialVelocity.coerceIn(-5000f, 5000f)
+            lastFrameTimeNanos = System.nanoTime()
+            isSpringActive = true
+            if (!scroller.isFinished) {
+                scroller.abortAnimation()
+            }
             postInvalidateOnAnimation()
         } else {
+            isSpringActive = false
             scrollTo(targetX, 0)
             applyAppleDepthTransform(targetX)
         }
@@ -221,7 +238,31 @@ class DesktopPagerView @JvmOverloads constructor(
     }
 
     override fun computeScroll() {
-        if (scroller.computeScrollOffset()) {
+        if (isSpringActive) {
+            val now = System.nanoTime()
+            var dt = ((now - lastFrameTimeNanos) / 1_000_000_000f).coerceIn(0.0005f, 0.032f)
+            lastFrameTimeNanos = now
+
+            // Численное интегрирование пружины с затуханием (Damped Spring Physics)
+            val displacement = springCurrentX - springTargetX
+            val springForce = -springStiffness * displacement
+            val dampingForce = -springDamping * springVelocityX
+            val acceleration = springForce + dampingForce
+
+            springVelocityX += acceleration * dt
+            springCurrentX += springVelocityX * dt
+
+            scrollTo(springCurrentX.toInt(), 0)
+            applyAppleDepthTransform(springCurrentX.toInt())
+
+            if (abs(displacement) < 0.5f && abs(springVelocityX) < 15f) {
+                isSpringActive = false
+                scrollTo(springTargetX.toInt(), 0)
+                applyAppleDepthTransform(springTargetX.toInt())
+            } else {
+                postInvalidateOnAnimation()
+            }
+        } else if (scroller.computeScrollOffset()) {
             scrollTo(scroller.currX, scroller.currY)
             applyAppleDepthTransform(scroller.currX)
             postInvalidateOnAnimation()
@@ -231,7 +272,8 @@ class DesktopPagerView @JvmOverloads constructor(
     /**
      * Плавная Apple-трансформация столов при листании:
      * - Легкое масштабирование уходящего стола (Depth Scale 1.0 -> 0.955)
-     * - Плавная прозрачность (Alpha 1.0 -> 0.88)
+     * - child.alpha ИСКЛЮЧЕН: на Adreno 610 прозрачность сложных контейнеров (>150 View)
+     *   провоцирует создание off-screen RenderNodeLayer текстур в VRAM и дропы до 60 Гц.
      */
     private fun applyAppleDepthTransform(scrollXPos: Int) {
         val pageWidth = width.toFloat()
@@ -247,14 +289,14 @@ class DesktopPagerView @JvmOverloads constructor(
 
             if (absOffset <= 1.0f) {
                 val scale = 1.0f - (0.045f * absOffset)
-                val alpha = 1.0f - (0.12f * absOffset)
                 child.scaleX = scale
                 child.scaleY = scale
-                child.alpha = alpha
             } else {
                 child.scaleX = 0.955f
                 child.scaleY = 0.955f
-                child.alpha = 0.88f
+            }
+            if (child.alpha != 1.0f) {
+                child.alpha = 1.0f
             }
         }
     }

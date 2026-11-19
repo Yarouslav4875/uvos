@@ -1,0 +1,52 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    width: 1080px; height: 2400px; overflow: hidden;
+    background: #08090D;
+    position: relative;
+    background-image: 
+      linear-gradient(180deg, #10121A 0%, #090A0E 40%, #050608 100%);
+  }
+  .horizon-glow {
+    position: absolute;
+    top: 1550px; left: 0; right: 0; height: 450px;
+    background: radial-gradient(ellipse 650px 220px at 50% 50%, rgba(255, 59, 48, 0.42) 0%, rgba(224, 32, 32, 0.15) 50%, transparent 85%);
+  }
+  .laser-beam {
+    position: absolute;
+    top: 1720px; left: 60px; right: 60px; height: 3px;
+    background: linear-gradient(90deg, transparent 0%, #FF3B30 20%, #FFFFFF 50%, #FF3B30 80%, transparent 100%);
+    box-shadow: 0 0 24px #FF3B30, 0 0 48px #E02020;
+    border-radius: 2px;
+  }
+  .secondary-beam {
+    position: absolute;
+    top: 1740px; left: 160px; right: 160px; height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(255, 59, 48, 0.4), transparent);
+  }
+  .stars {
+    position: absolute; top:0; left:0; width:100%; height:1400px;
+    background-image: radial-gradient(rgba(255,255,255,0.3) 1px, transparent 1px);
+    background-size: 48px 48px;
+    opacity: 0.25;
+  }
+  .horizon-label {
+    position: absolute; top: 1680px; right: 80px;
+    font-family: monospace; font-size: 18px; color: rgba(255, 59, 48, 0.85);
+    letter-spacing: 4px;
+    font-weight: bold;
+  }
+</style>
+</head>
+<body>
+  <div class="stars"></div>
+  <div class="horizon-glow"></div>
+  <div class="laser-beam"></div>
+  <div class="secondary-beam"></div>
+  <div class="horizon-label">CRIMSON HORIZON // UVOS 2.0</div>
+</body>
+</html>

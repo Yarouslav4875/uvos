@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Слой 1: Внешняя рассеянная тень / легкий алый неон подложки -->
+    <item>
+        <shape android:shape="rectangle">
+            <corners android:radius="18dp" />
+            <solid android:color="#22FF3B30" />
+        </shape>
+    </item>
+
+    <!-- Слой 2: Тело тёмного матового стекла (Dark Frosted Glass) -->
+    <item
+        android:bottom="1dp"
+        android:left="1dp"
+        android:right="1dp"
+        android:top="1dp">
+        <shape android:shape="rectangle">
+            <corners android:radius="17dp" />
+            <gradient
+                android:angle="315"
+                android:centerColor="#D4141620"
+                android:endColor="#E80A0B0F"
+                android:startColor="#BF202434"
+                android:type="linear" />
+            <!-- Зеркальная фаска (Specular Bevel Rim) -->
+            <stroke
+                android:width="1.3dp"
+                android:color="#48FFFFFF" />
+        </shape>
+    </item>
+
+    <!-- Слой 3: Верхний световой рефлекс физического стекла (Specular Glass Shelf) -->
+    <item
+        android:bottom="48dp"
+        android:left="10dp"
+        android:right="10dp"
+        android:top="3dp">
+        <shape android:shape="rectangle">
+            <corners android:radius="2dp" />
+            <gradient
+                android:angle="0"
+                android:centerColor="#30FFFFFF"
+                android:endColor="#00FFFFFF"
+                android:startColor="#00FFFFFF" />
+            <size android:height="1dp" />
+        </shape>
+    </item>
+</layer-list>

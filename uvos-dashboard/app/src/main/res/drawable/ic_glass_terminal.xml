@@ -1,0 +1,58 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="48dp"
+    android:height="48dp"
+    android:viewportWidth="48"
+    android:viewportHeight="48">
+
+    <!-- Экран терминала из матового черненого стекла (Terminal Shell) -->
+    <path
+        android:fillColor="#E610121A"
+        android:strokeColor="#75FFFFFF"
+        android:strokeWidth="1.6"
+        android:strokeLineJoin="round"
+        android:pathData="M8,11 C8,9.3 9.3,8 11,8 L37,8 C38.7,8 40,9.3 40,11 L40,37 C40,38.7 38.7,40 37,40 L11,40 C9.3,40 8,38.7 8,37 Z" />
+
+    <!-- Верхняя сервисная панель окна (Title Bar) -->
+    <path
+        android:strokeColor="#40FFFFFF"
+        android:strokeWidth="1"
+        android:pathData="M8,15 L40,15" />
+
+    <!-- Зеркальный блик на верхней фаске стекла (Specular Rim) -->
+    <path
+        android:strokeColor="#B8FFFFFF"
+        android:strokeWidth="1.3"
+        android:strokeLineCap="round"
+        android:pathData="M11,9.5 L37,9.5" />
+
+    <!-- 3 сигнальные лампы на строке заголовка -->
+    <path
+        android:fillColor="#FF3B30"
+        android:pathData="M12,11.5 A1.2,1.2 0 1,1 9.6,11.5 A1.2,1.2 0 1,1 12,11.5" />
+    <path
+        android:fillColor="#FFAA00"
+        android:pathData="M16,11.5 A1.2,1.2 0 1,1 13.6,11.5 A1.2,1.2 0 1,1 16,11.5" />
+    <path
+        android:fillColor="#00E676"
+        android:pathData="M20,11.5 A1.2,1.2 0 1,1 17.6,11.5 A1.2,1.2 0 1,1 20,11.5" />
+
+    <!-- Консольный шелл-промпт '>' из матового титана -->
+    <path
+        android:strokeColor="#E8E4D8"
+        android:strokeWidth="2.4"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:pathData="M14,21 L21,26 L14,31" />
+
+    <!-- Алый неоновый блочный курсор строки ввода (#FF3B30) -->
+    <path
+        android:fillColor="#FF3B30"
+        android:pathData="M25,29.5 L33,29.5 L33,32.5 L25,32.5 Z" />
+
+    <!-- Вторая строка системного вывода (System Output Scanline) -->
+    <path
+        android:strokeColor="#35FFFFFF"
+        android:strokeWidth="1.5"
+        android:strokeLineCap="round"
+        android:pathData="M14,36 L30,36" />
+</vector>

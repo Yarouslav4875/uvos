@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Слой 1: Черненый графит #08090D -->
+    <item>
+        <shape android:shape="rectangle">
+            <solid android:color="#08090D" />
+        </shape>
+    </item>
+
+    <!-- Слой 2: Верхний полумрак -->
+    <item>
+        <shape android:shape="rectangle">
+            <gradient
+                android:type="linear"
+                android:angle="270"
+                android:startColor="#12141D"
+                android:centerColor="#0B0C12"
+                android:endColor="#08090D" />
+        </shape>
+    </item>
+
+    <!-- Слой 3: Мягкое рассеянное алое свечение нижнего горизонта (#FF3B30) -->
+    <item
+        android:top="520dp"
+        android:bottom="140dp">
+        <shape android:shape="rectangle">
+            <gradient
+                android:type="radial"
+                android:gradientRadius="420dp"
+                android:centerX="50%"
+                android:centerY="50%"
+                android:startColor="#33FF3B30"
+                android:centerColor="#14E02020"
+                android:endColor="#00000000" />
+        </shape>
+    </item>
+
+    <!-- Слой 4: Лазерная горизонтальная линия горизонта (Crimson Neon Beam) -->
+    <item
+        android:left="24dp"
+        android:right="24dp"
+        android:top="680dp"
+        android:height="1.5dp">
+        <shape android:shape="rectangle">
+            <gradient
+                android:type="linear"
+                android:angle="0"
+                android:startColor="#00FF3B30"
+                android:centerColor="#D9FF3B30"
+                android:endColor="#00FF3B30" />
+        </shape>
+    </item>
+
+    <!-- Слой 5: Вторичная параллельная линия сетки -->
+    <item
+        android:left="48dp"
+        android:right="48dp"
+        android:top="695dp"
+        android:height="0.8dp">
+        <shape android:shape="rectangle">
+            <gradient
+                android:type="linear"
+                android:angle="0"
+                android:startColor="#00E02020"
+                android:centerColor="#40E02020"
+                android:endColor="#00E02020" />
+        </shape>
+    </item>
+</layer-list>

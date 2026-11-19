@@ -1,0 +1,52 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="48dp"
+    android:height="48dp"
+    android:viewportWidth="48"
+    android:viewportHeight="48">
+
+    <!-- Корпус космического челнока из темного стекла -->
+    <path
+        android:fillColor="#E6151722"
+        android:strokeColor="#75FFFFFF"
+        android:strokeWidth="1.6"
+        android:strokeLineJoin="round"
+        android:pathData="M24,7 C26.5,12 32,19 32,27 L32,31 L24,28.5 L16,31 L16,27 C16,19 21.5,12 24,7 Z" />
+
+    <!-- Левое и правое сопловые оперения (Booster Fins) -->
+    <path
+        android:fillColor="#25FFFFFF"
+        android:strokeColor="#50FFFFFF"
+        android:strokeWidth="1.2"
+        android:pathData="M16,25 L10,30 L10,34 L16,31 Z M32,25 L38,30 L38,34 L32,31 Z" />
+
+    <!-- Зеркальный блик на носовом обтекателе -->
+    <path
+        android:strokeColor="#B8FFFFFF"
+        android:strokeWidth="1.4"
+        android:strokeLineCap="round"
+        android:pathData="M23.5,8 L24.5,8 M22,12 C23,10 24,9 24.5,8" />
+
+    <!-- Окно иллюминатора из титана и стекла -->
+    <path
+        android:fillColor="#FF0E1016"
+        android:strokeColor="#50FFFFFF"
+        android:strokeWidth="1.2"
+        android:pathData="M24,19 M20.5,19 A3.5,3.5 0 1,1 27.5,19 A3.5,3.5 0 1,1 20.5,19" />
+
+    <!-- Алый неоновый индикатор форсажа двигателя (#FF3B30) -->
+    <path
+        android:fillColor="#FF3B30"
+        android:pathData="M24,19 M22.5,19 A1.5,1.5 0 1,1 25.5,19 A1.5,1.5 0 1,1 22.5,19" />
+
+    <!-- Неоновый реактивный факел ускорения загрузки (Download Booster Plume) -->
+    <path
+        android:fillColor="#FF3B30"
+        android:pathData="M24,30 L28,34 L25.5,34 L27,39 L24,36 L21,39 L22.5,34 L20,34 Z" />
+
+    <!-- Внешняя орбитальная дуга ускорения -->
+    <path
+        android:strokeColor="#FF3B30"
+        android:strokeWidth="1.8"
+        android:strokeLineCap="round"
+        android:pathData="M11,19 C10,24 11,29 13.5,33" />
+</vector>

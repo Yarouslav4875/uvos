@@ -1,0 +1,45 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="48dp"
+    android:height="48dp"
+    android:viewportWidth="48"
+    android:viewportHeight="48">
+
+    <!-- Задняя стенка папки из черненого стекла -->
+    <path
+        android:fillColor="#8010121A"
+        android:strokeColor="#50FFFFFF"
+        android:strokeWidth="1.4"
+        android:pathData="M9,13 C9,11.3 10.3,10 12,10 L20,10 L23,13.5 L36,13.5 C37.7,13.5 39,14.8 39,16.5 L39,32 C39,33.7 37.7,35 36,35 L12,35 C10.3,35 9,33.7 9,32 Z" />
+
+    <!-- Передняя полупрозрачная матовая створка (Frosted Glass Front) -->
+    <path
+        android:fillColor="#D9161824"
+        android:strokeColor="#80FFFFFF"
+        android:strokeWidth="1.6"
+        android:strokeLineJoin="round"
+        android:pathData="M8,17 C8,15.3 9.3,14 11,14 L37,14 C38.7,14 40,15.3 40,17 L40,33 C40,34.7 38.7,36 37,36 L11,36 C9.3,36 8,34.7 8,33 Z" />
+
+    <!-- Зеркальный блик на верхней фаске створки (Specular Shelf) -->
+    <path
+        android:strokeColor="#C0FFFFFF"
+        android:strokeWidth="1.4"
+        android:strokeLineCap="round"
+        android:pathData="M12,15.5 L36,15.5" />
+
+    <!-- Алый неоновый ярлык грифа секретности (Crimson Index Tab) -->
+    <path
+        android:fillColor="#FF3B30"
+        android:pathData="M22,10 L28,10 C29,10 29.5,10.6 29.5,11.5 L29.5,13.5 L20.5,13.5 L20.5,11.5 C20.5,10.6 21,10 22,10 Z" />
+
+    <!-- Внутренняя перфокарта / технический документ -->
+    <path
+        android:strokeColor="#FF3B30"
+        android:strokeWidth="2.2"
+        android:strokeLineCap="round"
+        android:pathData="M15,23 L33,23" />
+    <path
+        android:strokeColor="#40FFFFFF"
+        android:strokeWidth="1.8"
+        android:strokeLineCap="round"
+        android:pathData="M15,28 L27,28" />
+</vector>

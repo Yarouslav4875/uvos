@@ -118,6 +118,15 @@ class MainActivity : Activity() {
     private lateinit var homeRow3: LinearLayout
     private lateinit var homeRow4: LinearLayout
 
+    // Кастомизация рабочего стола (Обои, Наборы иконок, SAF)
+    private lateinit var wallpaperManager: WallpaperManager
+    private lateinit var iconPackManager: IconPackManager
+    private var customizationDialog: DesktopCustomizationDialog? = null
+    private lateinit var wallpaperImageView: ImageView
+    private lateinit var wallpaperDimOverlay: View
+    private lateinit var mainContentContainer: View
+    private val REQUEST_CODE_SAF_WALLPAPER = 4201
+
     // Панель зон сброса Drag & Drop (как на обычном Android)
     private var dropTargetBar: LinearLayout? = null
     private var dropTargetRemove: LinearLayout? = null
@@ -135,15 +144,17 @@ class MainActivity : Activity() {
             val pkg = intent.data?.schemeSpecificPart ?: return
             homeManager.removeAppPackage(pkg)
             renderHomeGrid()
-            renderDrawerApps()
-            loadRealProcessList()
+            if (isDesktop3Initialized) renderDrawerApps()
+            if (isDesktop4Initialized) loadRealProcessList()
         }
     }
 
-    // Стол 03: App Drawer
+    // Стол 03: App Drawer (Ленивая инициализация)
+    private var isDesktop3Initialized = false
     private lateinit var drawerAppsContainer: LinearLayout
 
-    // Стол 04: Process Manager
+    // Стол 04: Process Manager (Ленивая инициализация)
+    private var isDesktop4Initialized = false
     private lateinit var managerProcessContainer: LinearLayout
     private lateinit var managerFilterActive: TextView
     private lateinit var managerFilterAccess: TextView
@@ -203,11 +214,26 @@ class MainActivity : Activity() {
         homeManager = HomeManager(this)
         sensorTelemetryManager = SensorTelemetryManager(this)
 
+        wallpaperImageView = findViewById(R.id.wallpaper_image_view)
+        wallpaperDimOverlay = findViewById(R.id.wallpaper_dim_overlay)
+        mainContentContainer = findViewById(R.id.main_content_container)
+
+        wallpaperManager = WallpaperManager(this)
+        iconPackManager = IconPackManager(this)
+
+        wallpaperManager.onWallpaperChanged = {
+            wallpaperManager.applyTo(wallpaperImageView, wallpaperDimOverlay, mainContentContainer)
+        }
+        wallpaperManager.applyTo(wallpaperImageView, wallpaperDimOverlay, mainContentContainer)
+
+        iconPackManager.onIconPackChanged = {
+            renderHomeGrid()
+        }
+
         initTopBarAndPager()
         initDesktop1Dashboard()
         initDesktop2Home()
-        initDesktop3Drawer()
-        initDesktop4ProcessManager()
+        // Стол 03 (Drawer) и Стол 04 (Process Manager) загружаются лениво при свайпе (Lazy Loading)
         initBottomDock()
 
         systemShadeManager = SystemShadeManager(this, findViewById(R.id.main_root_frame), repository).apply {
@@ -235,7 +261,9 @@ class MainActivity : Activity() {
         registerReceiver(packageRemovedReceiver, pkgFilter)
         updateDailyLogStats()
         renderHomeGrid()
-        renderDrawerApps()
+        if (isDesktop3Initialized) {
+            renderDrawerApps()
+        }
         updateClock()
         checkBluetoothPermission()
         bluetoothDeviceManager?.start()
@@ -304,38 +332,45 @@ class MainActivity : Activity() {
             "СТОЛ 04 • ПРОЦЕССЫ"
         )
 
-        fun updatePageIndicators(page: Int) {
-            val dots = listOf(dotPage1, dotPage2, dotPage3, dotPage4)
-            val density = resources.displayMetrics.density
-            val activeW = (18f * density).toInt()
-            val inactiveW = (6f * density).toInt()
-            val dotH = (6f * density).toInt()
+        var currentActiveDotPage = -1
 
+        fun updatePageIndicators(page: Int) {
+            if (currentActiveDotPage == page) return
+            currentActiveDotPage = page
+
+            val dots = listOf(dotPage1, dotPage2, dotPage3, dotPage4)
             dots.forEachIndexed { index, dot ->
                 val isActive = (index == page)
                 dot.setBackgroundResource(if (isActive) R.drawable.bg_dot_active else R.drawable.bg_dot_inactive)
-                val lp = dot.layoutParams
-                if (lp != null) {
-                    lp.width = if (isActive) activeW else inactiveW
-                    lp.height = dotH
-                    dot.layoutParams = lp
-                }
+                // Оптимизация 120 FPS: устранение dot.layoutParams (исключает вызовы requestLayout при скролле)
+                dot.scaleX = if (isActive) 2.6f else 1.0f
+                dot.scaleY = 1.0f
             }
         }
 
         desktopPager.onPageSelectedListener = { page ->
             updatePageIndicators(page)
+            if (page == 2) ensureDesktop3Initialized()
+            if (page == 3) ensureDesktop4Initialized()
         }
 
         desktopPager.onScrollProgressListener = { progress ->
             val nearestPage = Math.round(progress).coerceIn(0, 3)
             updatePageIndicators(nearestPage)
+            if (progress >= 1.2f) ensureDesktop3Initialized()
+            if (progress >= 2.2f) ensureDesktop4Initialized()
         }
 
         dotPage1.setOnClickListener { desktopPager.scrollToPage(0) }
         dotPage2.setOnClickListener { desktopPager.scrollToPage(1) }
-        dotPage3.setOnClickListener { desktopPager.scrollToPage(2) }
-        dotPage4.setOnClickListener { desktopPager.scrollToPage(3) }
+        dotPage3.setOnClickListener {
+            ensureDesktop3Initialized()
+            desktopPager.scrollToPage(2)
+        }
+        dotPage4.setOnClickListener {
+            ensureDesktop4Initialized()
+            desktopPager.scrollToPage(3)
+        }
 
         // Стартовое состояние - Стол 02 (Главный домашний экран с виджетами)
         desktopPager.post {
@@ -815,26 +850,21 @@ class MainActivity : Activity() {
                 // Загрузка значка (Папка, Нативное приложение или Системный инструмент)
                 if (slot.actionType == "FOLDER") {
                     iconView.setImageResource(R.drawable.ic_sys_folder)
-                    iconView.setBackgroundResource(R.drawable.bg_tile_clickable)
-                    iconView.setPadding(22, 22, 22, 22)
                     val count = slot.folderItems.size
                     labelView.text = if (count > 0) "${slot.title} ($count)" else slot.title
+                    iconPackManager.applySlotStyling(iconView, labelView, isSystemOrFolder = true, isAppIcon = false)
                 } else if (slot.actionType == "APP" && slot.packageName != null) {
                     try {
                         val icon = pm.getApplicationIcon(slot.packageName!!)
                         iconView.setImageDrawable(icon)
-                        iconView.setPadding(0, 0, 0, 0)
-                        iconView.setBackgroundColor(Color.TRANSPARENT)
                     } catch (_: Exception) {
                         iconView.setImageResource(android.R.drawable.sym_def_app_icon)
-                        iconView.setBackgroundResource(R.drawable.bg_tile_clickable)
-                        iconView.setPadding(24, 24, 24, 24)
                     }
+                    iconPackManager.applySlotStyling(iconView, labelView, isSystemOrFolder = false, isAppIcon = true)
                 } else {
                     val resId = getSystemIconRes(slot.iconResName)
                     iconView.setImageResource(resId)
-                    iconView.setBackgroundResource(R.drawable.bg_tile_clickable)
-                    iconView.setPadding(26, 26, 26, 26)
+                    iconPackManager.applySlotStyling(iconView, labelView, isSystemOrFolder = true, isAppIcon = false)
                 }
 
                 // Клик - запуск приложения или открытие папки
@@ -928,21 +958,7 @@ class MainActivity : Activity() {
     }
 
     private fun getSystemIconRes(iconName: String?): Int {
-        return when (iconName) {
-            "ic_sys_phone" -> R.drawable.ic_sys_phone
-            "ic_sys_messages" -> R.drawable.ic_sys_messages
-            "ic_sys_radar" -> R.drawable.ic_sys_radar
-            "ic_sys_camera" -> R.drawable.ic_sys_camera
-            "ic_sys_files" -> R.drawable.ic_sys_files
-            "ic_sys_player" -> R.drawable.ic_sys_player
-            "ic_sys_calc" -> R.drawable.ic_sys_calc
-            "ic_sys_settings" -> R.drawable.ic_sys_settings
-            "ic_sys_shield" -> R.drawable.ic_sys_shield
-            "ic_sys_oscilloscope" -> R.drawable.ic_sys_oscilloscope
-            "ic_sys_terminal" -> R.drawable.ic_sys_terminal
-            "ic_sys_packages" -> R.drawable.ic_sys_packages
-            else -> R.drawable.ic_sys_shield
-        }
+        return iconPackManager.resolveSystemIconRes(iconName)
     }
 
     private fun handleSlotClick(slot: HomeSlotItem) {
@@ -1351,6 +1367,7 @@ class MainActivity : Activity() {
 
     private fun showHomeSettingsDialog() {
         val options = arrayOf(
+            "🎨 Кастомизация стола (Обои и Иконки)",
             "➕ Добавить ярлык в свободный слот",
             "📁 Создать новую папку",
             "📊 Управление приборами и виджетами",
@@ -1360,7 +1377,8 @@ class MainActivity : Activity() {
             .setTitle("Настройка рабочего стола")
             .setItems(options) { _, which ->
                 when (which) {
-                    0 -> {
+                    0 -> showCustomizationDialog()
+                    1 -> {
                         val slots = homeManager.getSlots()
                         val freeIdx = slots.indexOfFirst { it.actionType == "EMPTY" }
                         if (freeIdx != -1) {
@@ -1369,7 +1387,7 @@ class MainActivity : Activity() {
                             Toast.makeText(this, "Все 16 слотов заняты. Уберите ненужный ярлык.", Toast.LENGTH_SHORT).show()
                         }
                     }
-                    1 -> {
+                    2 -> {
                         val slots = homeManager.getSlots()
                         val freeIdx = slots.indexOfFirst { it.actionType == "EMPTY" }
                         if (freeIdx != -1) {
@@ -1378,10 +1396,10 @@ class MainActivity : Activity() {
                             Toast.makeText(this, "Нет свободного слота для новой папки", Toast.LENGTH_SHORT).show()
                         }
                     }
-                    2 -> {
+                    3 -> {
                         desktopPager.scrollToPage(0, smooth = true)
                     }
-                    3 -> {
+                    4 -> {
                         homeManager.resetToDefaults()
                         renderHomeGrid()
                     }
@@ -1389,6 +1407,46 @@ class MainActivity : Activity() {
             }
             .setNegativeButton("Закрыть", null)
             .show()
+    }
+
+    private fun showCustomizationDialog() {
+        customizationDialog = DesktopCustomizationDialog(
+            activity = this,
+            wallpaperManager = wallpaperManager,
+            iconPackManager = iconPackManager,
+            onPickImageRequested = { launchSafWallpaperPicker() }
+        )
+        customizationDialog?.show()
+    }
+
+    private fun launchSafWallpaperPicker() {
+        try {
+            val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
+                addCategory(Intent.CATEGORY_OPENABLE)
+                type = "image/*"
+            }
+            startActivityForResult(intent, REQUEST_CODE_SAF_WALLPAPER)
+        } catch (_: Exception) {
+            val fallback = Intent(Intent.ACTION_GET_CONTENT).apply {
+                type = "image/*"
+            }
+            startActivityForResult(fallback, REQUEST_CODE_SAF_WALLPAPER)
+        }
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode == REQUEST_CODE_SAF_WALLPAPER && resultCode == Activity.RESULT_OK && data?.data != null) {
+            val uri = data.data!!
+            val success = wallpaperManager.saveCustomWallpaper(uri)
+            if (success) {
+                wallpaperManager.applyTo(wallpaperImageView, wallpaperDimOverlay, mainContentContainer)
+                customizationDialog?.updateAfterSafPhotoSelected()
+                Toast.makeText(this, "Обои успешно применены", Toast.LENGTH_SHORT).show()
+            } else {
+                Toast.makeText(this, "Не удалось загрузить изображение", Toast.LENGTH_SHORT).show()
+            }
+        }
     }
 
     private fun isSystemApp(packageName: String?): Boolean {
@@ -1435,14 +1493,25 @@ class MainActivity : Activity() {
     private val iconCache = java.util.concurrent.ConcurrentHashMap<String, android.graphics.drawable.Drawable>()
     private val isSystemCache = java.util.concurrent.ConcurrentHashMap<String, Boolean>()
 
+    private fun ensureDesktop3Initialized() {
+        if (isDesktop3Initialized) return
+        isDesktop3Initialized = true
+        initDesktop3Drawer()
+    }
+
+    private fun ensureDesktop4Initialized() {
+        if (isDesktop4Initialized) return
+        isDesktop4Initialized = true
+        initDesktop4ProcessManager()
+    }
+
     private fun initDesktop3Drawer() {
         drawerAppsContainer = findViewById(R.id.drawer_apps_container)
         renderDrawerApps()
     }
 
     private fun updateDrawerBadges() {
-        if (drawerAppsContainer.childCount == 0) {
-            renderDrawerApps()
+        if (!isDesktop3Initialized || !::drawerAppsContainer.isInitialized || drawerAppsContainer.childCount == 0) {
             return
         }
         val apps = repository.getAllApps()
@@ -1720,6 +1789,7 @@ class MainActivity : Activity() {
     }
 
     private fun renderProcessList(predicate: (ProcessItem) -> Boolean) {
+        if (!isDesktop4Initialized || !::managerProcessContainer.isInitialized) return
         managerProcessContainer.removeAllViews()
         val pm = packageManager
 

@@ -1,0 +1,56 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="48dp"
+    android:height="48dp"
+    android:viewportWidth="48"
+    android:viewportHeight="48">
+
+    <!-- Внешнее стеклянное кольцо с зеркальной фаской -->
+    <path
+        android:fillColor="#15FFFFFF"
+        android:strokeColor="#75FFFFFF"
+        android:strokeWidth="1.6"
+        android:pathData="M24,24 M8,24 A16,16 0 1,1 40,24 A16,16 0 1,1 8,24" />
+
+    <!-- Тёмное стекло линзы радара -->
+    <path
+        android:fillColor="#E612141E"
+        android:pathData="M24,24 M9,24 A15,15 0 1,1 39,24 A15,15 0 1,1 9,24" />
+
+    <!-- Внутреннее координатное кольцо -->
+    <path
+        android:strokeColor="#40FFFFFF"
+        android:strokeWidth="1.2"
+        android:strokeLineCap="round"
+        android:pathData="M24,24 M16,24 A8,8 0 1,1 32,24 A8,8 0 1,1 16,24" />
+
+    <!-- Перекрестие азимута (Azimuth Crosshairs) -->
+    <path
+        android:strokeColor="#50FFFFFF"
+        android:strokeWidth="1"
+        android:strokeLineCap="round"
+        android:pathData="M24,9 L24,14 M24,34 L24,39 M9,24 L14,24 M34,24 L39,24" />
+
+    <!-- Зеркальный блик на стекле (Северо-западный сектор) -->
+    <path
+        android:strokeColor="#B0FFFFFF"
+        android:strokeWidth="1.6"
+        android:strokeLineCap="round"
+        android:pathData="M13,15 C16,11 20,9.5 24,9.5" />
+
+    <!-- Вращающийся алый неоновый луч развертки (Radar Sweep Ray) -->
+    <path
+        android:strokeColor="#FF3B30"
+        android:strokeWidth="2.4"
+        android:strokeLineCap="round"
+        android:pathData="M24,24 L35,13" />
+
+    <!-- Центральный пин радара -->
+    <path
+        android:fillColor="#E02020"
+        android:pathData="M24,24 M22,24 A2,2 0 1,1 26,24 A2,2 0 1,1 22,24" />
+
+    <!-- Захваченная цель в алом неоне (Target Lock Blip) -->
+    <path
+        android:fillColor="#FF3B30"
+        android:pathData="M32,16 A2.5,2.5 0 1,1 27,16 A2.5,2.5 0 1,1 32,16" />
+</vector>

@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Слой 1: Радиальный алый неон ореол -->
+    <item>
+        <shape android:shape="rectangle">
+            <corners android:radius="20dp" />
+            <gradient
+                android:type="radial"
+                android:gradientRadius="45dp"
+                android:startColor="#50FF3B30"
+                android:endColor="#00FF3B30" />
+        </shape>
+    </item>
+
+    <!-- Слой 2: Тёмное стекло с неоновым обрамлением -->
+    <item
+        android:bottom="1.5dp"
+        android:left="1.5dp"
+        android:right="1.5dp"
+        android:top="1.5dp">
+        <shape android:shape="rectangle">
+            <corners android:radius="18dp" />
+            <gradient
+                android:angle="315"
+                android:startColor="#CC222738"
+                android:centerColor="#E612141E"
+                android:endColor="#F0090A0E"
+                android:type="linear" />
+            <stroke
+                android:width="1.5dp"
+                android:color="#80FF3B30" />
+        </shape>
+    </item>
+
+    <!-- Слой 3: Зеркальный блик на верхней кромке -->
+    <item
+        android:top="2.5dp"
+        android:left="12dp"
+        android:right="12dp"
+        android:bottom="46dp">
+        <shape android:shape="rectangle">
+            <corners android:radius="2dp" />
+            <solid android:color="#40FFFFFF" />
+        </shape>
+    </item>
+</layer-list>

@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Слой 1: Базовый глубокий черненый вакуум #090A0E -->
+    <item>
+        <shape android:shape="rectangle">
+            <solid android:color="#090A0E" />
+        </shape>
+    </item>
+
+    <!-- Слой 2: Центральное мягкое рассеивание титана #12141D -->
+    <item>
+        <shape android:shape="rectangle">
+            <gradient
+                android:type="radial"
+                android:gradientRadius="380dp"
+                android:centerX="50%"
+                android:centerY="42%"
+                android:startColor="#1A1D28"
+                android:centerColor="#0E1017"
+                android:endColor="#00090A0E" />
+        </shape>
+    </item>
+
+    <!-- Слой 3: Нижнее глубокое затемнение (виньетирование под док и шторку) -->
+    <item>
+        <shape android:shape="rectangle">
+            <gradient
+                android:type="linear"
+                android:angle="270"
+                android:startColor="#33040406"
+                android:centerColor="#00000000"
+                android:endColor="#77040406" />
+        </shape>
+    </item>
+</layer-list>

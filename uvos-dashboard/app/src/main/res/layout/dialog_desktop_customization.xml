@@ -1,0 +1,406 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:background="@drawable/bg_dialog_card"
+    android:padding="20dp">
+
+    <!-- Заголовок диалога -->
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="НАСТРОЙКА РАБОЧЕГО СТОЛА"
+        android:textColor="@color/uvos_text"
+        android:textSize="15sp"
+        android:textStyle="bold"
+        android:letterSpacing="0.06"
+        android:fontFamily="monospace" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="2dp"
+        android:text="M4200 DESKTOP CUSTOMIZER // HOT-SWAP"
+        android:textColor="@color/uvos_text_dim"
+        android:textSize="10sp"
+        android:fontFamily="monospace" />
+
+    <!-- Панель вкладок «ОБОИ» и «ИКОНКИ» -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="40dp"
+        android:layout_marginTop="16dp"
+        android:layout_marginBottom="14dp"
+        android:background="@drawable/bg_tile"
+        android:orientation="horizontal"
+        android:padding="3dp">
+
+        <TextView
+            android:id="@+id/btn_tab_wallpaper"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:text="ОБОИ"
+            android:textSize="12sp"
+            android:textStyle="bold"
+            android:fontFamily="monospace"
+            android:textColor="@color/uvos_text"
+            android:background="@drawable/bg_button_primary" />
+
+        <TextView
+            android:id="@+id/btn_tab_icons"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:text="ИКОНКИ"
+            android:textSize="12sp"
+            android:textStyle="bold"
+            android:fontFamily="monospace"
+            android:textColor="@color/uvos_text_dim"
+            android:background="@android:color/transparent" />
+    </LinearLayout>
+
+    <!-- ВКЛАДКА 1: ОБОИ РАБОЧЕГО СТОЛА -->
+    <LinearLayout
+        android:id="@+id/container_tab_wallpaper"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:visibility="visible">
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="СИСТЕМНЫЕ ПРЕСЕТЫ И ФОТО:"
+            android:textColor="@color/uvos_text_dim"
+            android:textSize="10.5sp"
+            android:fontFamily="monospace"
+            android:layout_marginBottom="8dp" />
+
+        <!-- Пресет: AMOLED Черный -->
+        <LinearLayout
+            android:id="@+id/btn_preset_amoled"
+            android:layout_width="match_parent"
+            android:layout_height="42dp"
+            android:layout_marginBottom="6dp"
+            android:background="@drawable/bg_tile_clickable"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingStart="12dp"
+            android:paddingEnd="12dp">
+
+            <TextView
+                android:id="@+id/indicator_preset_amoled"
+                android:layout_width="10dp"
+                android:layout_height="10dp"
+                android:background="@drawable/bg_dot_inactive"
+                android:layout_marginEnd="10dp" />
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="AMOLED (Сплошной чёрный)"
+                android:textColor="@color/uvos_text"
+                android:textSize="12.5sp" />
+        </LinearLayout>
+
+        <!-- Пресет: Тактическая сетка -->
+        <LinearLayout
+            android:id="@+id/btn_preset_grid"
+            android:layout_width="match_parent"
+            android:layout_height="42dp"
+            android:layout_marginBottom="6dp"
+            android:background="@drawable/bg_tile_clickable"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingStart="12dp"
+            android:paddingEnd="12dp">
+
+            <TextView
+                android:id="@+id/indicator_preset_grid"
+                android:layout_width="10dp"
+                android:layout_height="10dp"
+                android:background="@drawable/bg_dot_active"
+                android:layout_marginEnd="10dp" />
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Тактическая сетка (Tactical Grid)"
+                android:textColor="@color/uvos_text"
+                android:textSize="12.5sp" />
+        </LinearLayout>
+
+        <!-- Пресет: Карбон M4200 -->
+        <LinearLayout
+            android:id="@+id/btn_preset_carbon"
+            android:layout_width="match_parent"
+            android:layout_height="42dp"
+            android:layout_marginBottom="6dp"
+            android:background="@drawable/bg_tile_clickable"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingStart="12dp"
+            android:paddingEnd="12dp">
+
+            <TextView
+                android:id="@+id/indicator_preset_carbon"
+                android:layout_width="10dp"
+                android:layout_height="10dp"
+                android:background="@drawable/bg_dot_inactive"
+                android:layout_marginEnd="10dp" />
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Карбон M4200 (Carbon Fiber)"
+                android:textColor="@color/uvos_text"
+                android:textSize="12.5sp" />
+        </LinearLayout>
+
+        <!-- Пресет: Радар-сталь -->
+        <LinearLayout
+            android:id="@+id/btn_preset_radar"
+            android:layout_width="match_parent"
+            android:layout_height="42dp"
+            android:layout_marginBottom="6dp"
+            android:background="@drawable/bg_tile_clickable"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingStart="12dp"
+            android:paddingEnd="12dp">
+
+            <TextView
+                android:id="@+id/indicator_preset_radar"
+                android:layout_width="10dp"
+                android:layout_height="10dp"
+                android:background="@drawable/bg_dot_inactive"
+                android:layout_marginEnd="10dp" />
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Радар-сталь (Steel Radar)"
+                android:textColor="@color/uvos_text"
+                android:textSize="12.5sp" />
+        </LinearLayout>
+
+        <!-- Пользовательское фото через SAF -->
+        <LinearLayout
+            android:id="@+id/btn_choose_custom_photo"
+            android:layout_width="match_parent"
+            android:layout_height="42dp"
+            android:layout_marginBottom="14dp"
+            android:background="@drawable/bg_tile_clickable"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingStart="12dp"
+            android:paddingEnd="12dp">
+
+            <TextView
+                android:id="@+id/indicator_preset_custom"
+                android:layout_width="10dp"
+                android:layout_height="10dp"
+                android:background="@drawable/bg_dot_inactive"
+                android:layout_marginEnd="10dp" />
+
+            <TextView
+                android:id="@+id/txt_custom_photo_title"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Выбрать фото через SAF..."
+                android:textColor="@color/uvos_amber"
+                android:textSize="12.5sp" />
+        </LinearLayout>
+
+        <!-- Контроллер затемнения фона (0 - 80%) -->
+        <TextView
+            android:id="@+id/txt_dim_level_label"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="УРОВЕНЬ ЗАТЕМНЕНИЯ ФОНА: 20%"
+            android:textColor="@color/uvos_text_dim"
+            android:textSize="11sp"
+            android:fontFamily="monospace"
+            android:layout_marginBottom="4dp" />
+
+        <SeekBar
+            android:id="@+id/seekbar_dim_level"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:max="80"
+            android:progress="20"
+            android:layout_marginBottom="8dp" />
+    </LinearLayout>
+
+    <!-- ВКЛАДКА 2: ИКОНКИ РАБОЧЕГО СТОЛА -->
+    <LinearLayout
+        android:id="@+id/container_tab_icons"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:visibility="gone">
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="ВЫБОР НАБОРА ЗНАЧКОВ (HOT-SWAP):"
+            android:textColor="@color/uvos_text_dim"
+            android:textSize="10.5sp"
+            android:fontFamily="monospace"
+            android:layout_marginBottom="10dp" />
+
+        <!-- Набор 1: DARK_GLASS -->
+        <LinearLayout
+            android:id="@+id/card_pack_dark_glass"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="8dp"
+            android:background="@drawable/bg_tile_clickable"
+            android:orientation="vertical"
+            android:padding="12dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
+
+                <TextView
+                    android:id="@+id/indicator_pack_dark_glass"
+                    android:layout_width="10dp"
+                    android:layout_height="10dp"
+                    android:background="@drawable/bg_dot_inactive"
+                    android:layout_marginEnd="10dp" />
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="ТЁМНОЕ СТЕКЛО (DARK_GLASS)"
+                    android:textColor="@color/uvos_text"
+                    android:textSize="13sp"
+                    android:textStyle="bold"
+                    android:fontFamily="monospace" />
+            </LinearLayout>
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="20dp"
+                android:layout_marginTop="2dp"
+                android:text="Полупрозрачные стеклянные плитки с неоновым свечением"
+                android:textColor="@color/uvos_text_dim"
+                android:textSize="11sp" />
+        </LinearLayout>
+
+        <!-- Набор 2: RETRO_M4200 -->
+        <LinearLayout
+            android:id="@+id/card_pack_retro_m4200"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="8dp"
+            android:background="@drawable/bg_tile_clickable"
+            android:orientation="vertical"
+            android:padding="12dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
+
+                <TextView
+                    android:id="@+id/indicator_pack_retro_m4200"
+                    android:layout_width="10dp"
+                    android:layout_height="10dp"
+                    android:background="@drawable/bg_dot_inactive"
+                    android:layout_marginEnd="10dp" />
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="РЕТРО M4200 (RETRO_M4200)"
+                    android:textColor="@color/uvos_text"
+                    android:textSize="13sp"
+                    android:textStyle="bold"
+                    android:fontFamily="monospace" />
+            </LinearLayout>
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="20dp"
+                android:layout_marginTop="2dp"
+                android:text="Индустриальный янтарный корпус и приборные шкалы"
+                android:textColor="@color/uvos_text_dim"
+                android:textSize="11sp" />
+        </LinearLayout>
+
+        <!-- Набор 3: SYSTEM_DEFAULT -->
+        <LinearLayout
+            android:id="@+id/card_pack_system_default"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="8dp"
+            android:background="@drawable/bg_tile_clickable"
+            android:orientation="vertical"
+            android:padding="12dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
+
+                <TextView
+                    android:id="@+id/indicator_pack_system_default"
+                    android:layout_width="10dp"
+                    android:layout_height="10dp"
+                    android:background="@drawable/bg_dot_active"
+                    android:layout_marginEnd="10dp" />
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="СТАНДАРТ UVOS (SYSTEM_DEFAULT)"
+                    android:textColor="@color/uvos_text"
+                    android:textSize="13sp"
+                    android:textStyle="bold"
+                    android:fontFamily="monospace" />
+            </LinearLayout>
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="20dp"
+                android:layout_marginTop="2dp"
+                android:text="Тактический тёмный минимализм UnderVoltOS"
+                android:textColor="@color/uvos_text_dim"
+                android:textSize="11sp" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <!-- Кнопка закрытия -->
+    <Button
+        android:id="@+id/btn_close_customization"
+        android:layout_width="match_parent"
+        android:layout_height="44dp"
+        android:layout_marginTop="12dp"
+        android:background="@drawable/bg_button_primary"
+        android:text="ЗАКРЫТЬ"
+        android:textColor="@color/uvos_on_red"
+        android:textSize="12.5sp"
+        android:textStyle="bold"
+        android:fontFamily="monospace" />
+</LinearLayout>

@@ -1,0 +1,51 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="48dp"
+    android:height="48dp"
+    android:viewportWidth="48"
+    android:viewportHeight="48">
+
+    <!-- Корпус камеры из тёмного стекла со скруглением -->
+    <path
+        android:fillColor="#E6151722"
+        android:strokeColor="#75FFFFFF"
+        android:strokeWidth="1.6"
+        android:strokeLineJoin="round"
+        android:pathData="M9,15 C9,12.8 10.8,11 13,11 L17.5,11 L19.5,8.5 C20.1,7.8 21,7.5 22,7.5 L26,7.5 C27,7.5 27.9,7.8 28.5,8.5 L30.5,11 L35,11 C37.2,11 39,12.8 39,15 L39,33 C39,35.2 37.2,37 35,37 L13,37 C10.8,37 9,35.2 9,33 Z" />
+
+    <!-- Верхний зеркальный блик на титановом безеле -->
+    <path
+        android:strokeColor="#B8FFFFFF"
+        android:strokeWidth="1.3"
+        android:strokeLineCap="round"
+        android:pathData="M14,12 L34,12" />
+
+    <!-- Внешнее стеклянное кольцо оптического объектива -->
+    <path
+        android:fillColor="#20FFFFFF"
+        android:strokeColor="#50FFFFFF"
+        android:strokeWidth="1.2"
+        android:pathData="M24,24 M15,24 A9,9 0 1,1 33,24 A9,9 0 1,1 15,24" />
+
+    <!-- Алое неоновое кольцо апертуры и лазерного фокуса (#FF3B30) -->
+    <path
+        android:strokeColor="#FF3B30"
+        android:strokeWidth="2.2"
+        android:pathData="M24,24 M18,24 A6,6 0 1,1 30,24 A6,6 0 1,1 18,24" />
+
+    <!-- Центральная линза с зеркальной точкой -->
+    <path
+        android:fillColor="#D90E0E14"
+        android:pathData="M24,24 M21,24 A3,3 0 1,1 27,24 A3,3 0 1,1 21,24" />
+
+    <!-- Зеркальный блик на зрачке линзы -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M23,22.5 A1,1 0 1,1 21,22.5 A1,1 0 1,1 23,22.5" />
+
+    <!-- Механическая кнопка спуска затвора (правый верхний угол) -->
+    <path
+        android:strokeColor="#FF3B30"
+        android:strokeWidth="2.2"
+        android:strokeLineCap="round"
+        android:pathData="M14,8 L16,8" />
+</vector>

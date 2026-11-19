@@ -6,6 +6,22 @@
     android:layout_height="match_parent"
     android:background="@color/uvos_background">
 
+    <!-- ОБОИ РАБОЧЕГО СТОЛА (WALLPAPER LAYER) -->
+    <ImageView
+        android:id="@+id/wallpaper_image_view"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:scaleType="centerCrop"
+        android:visibility="gone" />
+
+    <!-- СЛОЙ ЗАТЕМНЕНИЯ ФОНА (0-80% DIM OVERLAY) -->
+    <View
+        android:id="@+id/wallpaper_dim_overlay"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#000000"
+        android:visibility="gone" />
+
     <!-- ОСНОВНОЙ КОНТЕЙНЕР РАБОЧИХ СТОЛОВ И ДОКА -->
     <LinearLayout
         android:id="@+id/main_content_container"

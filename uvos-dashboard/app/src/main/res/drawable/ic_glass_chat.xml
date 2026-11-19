@@ -1,0 +1,45 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="48dp"
+    android:height="48dp"
+    android:viewportWidth="48"
+    android:viewportHeight="48">
+
+    <!-- Внешний ореол стеклянного бабла -->
+    <path
+        android:fillColor="#18FFFFFF"
+        android:pathData="M10,13 C10,9.7 12.7,7 16,7 L32,7 C35.3,7 38,9.7 38,13 L38,25 C38,28.3 35.3,31 32,31 L21,31 L12.5,37.5 C11.5,38.2 10,37.5 10,36.2 L10,13 Z" />
+
+    <!-- Тело сообщения из тёмного стекла -->
+    <path
+        android:fillColor="#E6151722"
+        android:strokeColor="#70FFFFFF"
+        android:strokeWidth="1.6"
+        android:strokeLineJoin="round"
+        android:pathData="M11,14 C11,10.7 13.7,8 17,8 L31,8 C34.3,8 37,10.7 37,14 L37,24 C37,27.3 34.3,30 31,30 L20.5,30 L13,36 L13,30.5 C11.8,29.5 11,28 11,26.5 L11,14 Z" />
+
+    <!-- Зеркальная фаска верхней кромки (Specular Rim) -->
+    <path
+        android:strokeColor="#B8FFFFFF"
+        android:strokeWidth="1.4"
+        android:strokeLineCap="round"
+        android:pathData="M15,9.5 L33,9.5" />
+
+    <!-- Алая неоновая полоса криптографической аутентификации -->
+    <path
+        android:strokeColor="#FF3B30"
+        android:strokeWidth="2.2"
+        android:strokeLineCap="round"
+        android:pathData="M17,16 L31,16" />
+
+    <!-- Вторая строка данных / три точки передачи -->
+    <path
+        android:strokeColor="#60FFFFFF"
+        android:strokeWidth="1.8"
+        android:strokeLineCap="round"
+        android:pathData="M17,21 L26,21" />
+
+    <!-- Неоновый маяк шифрования (Secure Cipher LED) -->
+    <path
+        android:fillColor="#FF3B30"
+        android:pathData="M30,21 A1.8,1.8 0 1,1 26.4,21 A1.8,1.8 0 1,1 30,21" />
+</vector>

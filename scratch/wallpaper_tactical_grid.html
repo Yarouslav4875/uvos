@@ -1,0 +1,59 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    width: 1080px; height: 2400px; overflow: hidden;
+    background: #0A0B10;
+    position: relative;
+    background-image:
+      radial-gradient(circle at 50% 45%, rgba(0, 229, 255, 0.06) 0%, rgba(255, 59, 48, 0.03) 40%, transparent 70%),
+      linear-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+      linear-gradient(rgba(255, 255, 255, 0.015) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255, 255, 255, 0.015) 1px, transparent 1px);
+    background-size: 100% 100%, 120px 120px, 120px 120px, 24px 24px, 24px 24px;
+  }
+  .crosshair {
+    position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+    width: 600px; height: 600px;
+    border: 1px dashed rgba(255, 255, 255, 0.12);
+    border-radius: 50%;
+  }
+  .crosshair-inner {
+    position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+    width: 240px; height: 240px;
+    border: 1px solid rgba(255, 59, 48, 0.25);
+    border-radius: 50%;
+  }
+  .axis-h {
+    position: absolute; top: 50%; left: 80px; right: 80px; height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(255, 59, 48, 0.4), transparent);
+  }
+  .axis-v {
+    position: absolute; left: 50%; top: 200px; bottom: 200px; width: 1px;
+    background: linear-gradient(180deg, transparent, rgba(0, 229, 255, 0.3), transparent);
+  }
+  .corner-tl { position: absolute; top: 60px; left: 60px; width: 40px; height: 40px; border-top: 2px solid #FF3B30; border-left: 2px solid #FF3B30; }
+  .corner-tr { position: absolute; top: 60px; right: 60px; width: 40px; height: 40px; border-top: 2px solid #FF3B30; border-right: 2px solid #FF3B30; }
+  .corner-bl { position: absolute; bottom: 60px; left: 60px; width: 40px; height: 40px; border-bottom: 2px solid #FF3B30; border-left: 2px solid #FF3B30; }
+  .corner-br { position: absolute; bottom: 60px; right: 60px; width: 40px; height: 40px; border-bottom: 2px solid #FF3B30; border-right: 2px solid #FF3B30; }
+  .tech-label {
+    position: absolute; top: 75px; left: 120px;
+    font-family: monospace; font-size: 20px; color: rgba(255, 59, 48, 0.6);
+    letter-spacing: 3px;
+  }
+</style>
+</head>
+<body>
+  <div class="axis-h"></div>
+  <div class="axis-v"></div>
+  <div class="crosshair"></div>
+  <div class="crosshair-inner"></div>
+  <div class="corner-tl"></div><div class="corner-tr"></div>
+  <div class="corner-bl"></div><div class="corner-br"></div>
+  <div class="tech-label">M4200 TACTICAL TELEMETRY GRID // 120HZ</div>
+</body>
+</html>
