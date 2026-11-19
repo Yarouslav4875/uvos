@@ -16,6 +16,7 @@
 
         <!-- ВЕРХНЯЯ ШАПКА ШТОРКИ (С УЧЕТОМ ВЫРЕЗА КАМЕРЫ 34dp) -->
         <LinearLayout
+            android:id="@+id/shade_top_bar"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
@@ -71,21 +72,44 @@
                     android:fontFamily="monospace"
                     android:textStyle="bold" />
 
-                <TextView
-                    android:id="@+id/btn_close_shade"
+                <LinearLayout
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="4dp"
-                    android:background="@drawable/bg_tile_clickable"
-                    android:paddingStart="10dp"
-                    android:paddingEnd="10dp"
-                    android:paddingTop="3dp"
-                    android:paddingBottom="3dp"
-                    android:text="▲ СВЕРНУТЬ"
-                    android:textColor="@color/uvos_text_dim"
-                    android:textSize="10sp"
-                    android:fontFamily="monospace"
-                    android:textStyle="bold" />
+                    android:orientation="horizontal"
+                    android:gravity="end"
+                    android:layout_marginTop="4dp">
+
+                    <TextView
+                        android:id="@+id/btn_shade_customization"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginEnd="6dp"
+                        android:background="@drawable/bg_tile_clickable"
+                        android:paddingStart="8dp"
+                        android:paddingEnd="8dp"
+                        android:paddingTop="3dp"
+                        android:paddingBottom="3dp"
+                        android:text="🎨 ОБОИ"
+                        android:textColor="@color/uvos_text"
+                        android:textSize="10sp"
+                        android:fontFamily="monospace"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/btn_close_shade"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:background="@drawable/bg_tile_clickable"
+                        android:paddingStart="10dp"
+                        android:paddingEnd="10dp"
+                        android:paddingTop="3dp"
+                        android:paddingBottom="3dp"
+                        android:text="▲ СВЕРНУТЬ"
+                        android:textColor="@color/uvos_text_dim"
+                        android:textSize="10sp"
+                        android:fontFamily="monospace"
+                        android:textStyle="bold" />
+                </LinearLayout>
             </LinearLayout>
         </LinearLayout>
 

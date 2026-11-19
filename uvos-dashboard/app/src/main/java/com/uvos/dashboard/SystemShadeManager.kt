@@ -42,7 +42,10 @@ class SystemShadeManager(
     private val clockDateText: TextView = rootContainer.findViewById(R.id.shade_clock_date)
     private val batteryStatusText: TextView = rootContainer.findViewById(R.id.shade_battery_status)
     private val btnCloseShade: View = rootContainer.findViewById(R.id.btn_close_shade)
+    private val btnShadeCustomization: View? = rootContainer.findViewById(R.id.btn_shade_customization)
     private val dragHandleBar: View = rootContainer.findViewById(R.id.shade_drag_handle_bar)
+
+    var onCustomizationRequested: (() -> Unit)? = null
 
     // Быстрые тумблеры параметров
     private val tileData: View = rootContainer.findViewById(R.id.tile_quick_data)
@@ -286,6 +289,11 @@ class SystemShadeManager(
     private fun setupGestures() {
         btnCloseShade.setOnClickListener {
             closeShade(animate = true)
+        }
+
+        btnShadeCustomization?.setOnClickListener {
+            closeShade(animate = true)
+            onCustomizationRequested?.invoke()
         }
 
         dragHandleBar.setOnClickListener {

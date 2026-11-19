@@ -494,6 +494,7 @@
                 android:fillViewport="true">
 
                 <LinearLayout
+                    android:id="@+id/desktop_2_content_container"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"

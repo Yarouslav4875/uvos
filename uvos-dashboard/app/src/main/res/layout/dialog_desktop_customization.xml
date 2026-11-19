@@ -192,6 +192,34 @@
                 android:textSize="12.5sp" />
         </LinearLayout>
 
+        <!-- Пресет: Алый горизонт (Crimson Horizon) -->
+        <LinearLayout
+            android:id="@+id/btn_preset_crimson"
+            android:layout_width="match_parent"
+            android:layout_height="42dp"
+            android:layout_marginBottom="6dp"
+            android:background="@drawable/bg_tile_clickable"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingStart="12dp"
+            android:paddingEnd="12dp">
+
+            <TextView
+                android:id="@+id/indicator_preset_crimson"
+                android:layout_width="10dp"
+                android:layout_height="10dp"
+                android:background="@drawable/bg_dot_inactive"
+                android:layout_marginEnd="10dp" />
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Алый горизонт (Crimson Horizon)"
+                android:textColor="@color/uvos_text"
+                android:textSize="12.5sp" />
+        </LinearLayout>
+
         <!-- Пользовательское фото через SAF -->
         <LinearLayout
             android:id="@+id/btn_choose_custom_photo"

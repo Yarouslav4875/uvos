@@ -31,6 +31,7 @@ class WallpaperManager(private val context: Context) {
         PRESET_TACTICAL_GRID,
         PRESET_CARBON_FIBER,
         PRESET_STEEL_RADAR,
+        PRESET_CRIMSON_HORIZON,
         CUSTOM_PHOTO
     }
 
@@ -157,6 +158,14 @@ class WallpaperManager(private val context: Context) {
                 if (cachedPresetBitmap == null || cachedPresetMode != mode || cachedPresetBitmap?.isRecycled == true) {
                     cachedPresetBitmap?.recycle()
                     cachedPresetBitmap = createSteelRadarBitmap(targetWidth, targetHeight)
+                    cachedPresetMode = mode
+                }
+                cachedPresetBitmap
+            }
+            WallpaperMode.PRESET_CRIMSON_HORIZON -> {
+                if (cachedPresetBitmap == null || cachedPresetMode != mode || cachedPresetBitmap?.isRecycled == true) {
+                    cachedPresetBitmap?.recycle()
+                    cachedPresetBitmap = createCrimsonHorizonBitmap(targetWidth, targetHeight)
                     cachedPresetMode = mode
                 }
                 cachedPresetBitmap
@@ -353,6 +362,62 @@ class WallpaperManager(private val context: Context) {
 
         // Центр радара
         canvas.drawCircle(centerX, centerY, 4f, centerDotPaint)
+
+        return bitmap
+    }
+
+    private fun createCrimsonHorizonBitmap(width: Int, height: Int): Bitmap {
+        val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+        val canvas = Canvas(bitmap)
+
+        // Фон: глубокий темно-графитовый
+        canvas.drawColor(Color.parseColor("#08090E"))
+
+        // Багрово-алый градиент горизонта снизу
+        val horizonGradient = android.graphics.LinearGradient(
+            0f, height.toFloat(),
+            0f, height * 0.45f,
+            intArrayOf(
+                Color.parseColor("#C8E02020").toInt(),
+                Color.parseColor("#5A4A0A0E").toInt(),
+                Color.parseColor("#1C1E0A0D").toInt(),
+                Color.TRANSPARENT
+            ),
+            floatArrayOf(0.0f, 0.35f, 0.70f, 1.0f),
+            android.graphics.Shader.TileMode.CLAMP
+        )
+
+        val gradientPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            shader = horizonGradient
+        }
+        canvas.drawRect(0f, height * 0.45f, width.toFloat(), height.toFloat(), gradientPaint)
+
+        // Тонкие горизонтальные линии разметки горизонта
+        val gridPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            color = Color.parseColor("#E02020")
+            strokeWidth = 1.0f
+            alpha = 45
+        }
+        val step = height / 50f
+        for (i in 30..48) {
+            val y = i * step
+            gridPaint.alpha = (25 + (i - 30) * 3).coerceIn(15, 80)
+            canvas.drawLine(0f, y, width.toFloat(), y, gridPaint)
+        }
+
+        // Вертикальные перспективные лучи
+        val centerX = width / 2f
+        val horizonY = height * 0.58f
+        val rayPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            color = Color.parseColor("#E02020")
+            strokeWidth = 1.2f
+            alpha = 35
+        }
+        val rayCount = 12
+        for (r in 0..rayCount) {
+            val bottomX = (width.toFloat() / rayCount) * r
+            canvas.drawLine(centerX, horizonY, bottomX, height.toFloat(), rayPaint)
+        }
 
         return bitmap
     }

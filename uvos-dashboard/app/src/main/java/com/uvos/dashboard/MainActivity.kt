@@ -235,6 +235,7 @@ class MainActivity : Activity() {
         initDesktop2Home()
         // Стол 03 (Drawer) и Стол 04 (Process Manager) загружаются лениво при свайпе (Lazy Loading)
         initBottomDock()
+        setupWindowInsets()
 
         systemShadeManager = SystemShadeManager(this, findViewById(R.id.main_root_frame), repository).apply {
             onProfileChangedListener = { newProfile ->
@@ -246,6 +247,9 @@ class MainActivity : Activity() {
                 profileSelector.setSelectedIndex(idx, animate = true, notify = false)
                 updateProfileDescription(newProfile)
                 updateDrawerBadges()
+            }
+            onCustomizationRequested = {
+                showCustomizationDialog()
             }
         }
 
@@ -664,7 +668,7 @@ class MainActivity : Activity() {
 
         initDropTargetListeners()
 
-        // Долгий тап по часам/дате открывает общее меню настройки стола
+        // Меню настройки стола (Кастомизация обоев, иконок и виджетов)
         val openHomeSettings = View.OnLongClickListener { v ->
             v.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
             showHomeSettingsDialog()
@@ -672,8 +676,14 @@ class MainActivity : Activity() {
         }
         homeClockTime.setOnLongClickListener(openHomeSettings)
         homeClockDate.setOnLongClickListener(openHomeSettings)
+        homeClockDate.setOnClickListener { showHomeSettingsDialog() }
         findViewById<View>(R.id.desktop_2_home)?.setOnLongClickListener(openHomeSettings)
+        findViewById<View>(R.id.desktop_2_content_container)?.setOnLongClickListener(openHomeSettings)
         findViewById<View>(R.id.home_grid_container)?.setOnLongClickListener(openHomeSettings)
+        findViewById<View>(R.id.pagination_dots)?.setOnLongClickListener(openHomeSettings)
+        findViewById<View>(R.id.home_dock)?.setOnLongClickListener(openHomeSettings)
+        findViewById<View>(R.id.top_bar_left)?.setOnClickListener { showHomeSettingsDialog() }
+        findViewById<View>(R.id.top_bar_left)?.setOnLongClickListener(openHomeSettings)
 
         renderHomeGrid()
     }
@@ -982,7 +992,7 @@ class MainActivity : Activity() {
             "SYSTEM_FILES" -> launchOrFallback("com.uvos.files", Intent(Intent.ACTION_GET_CONTENT).apply { type = "*/*" })
             "SYSTEM_PLAYER" -> launchOrFallback("com.uvos.music", Intent(Intent.ACTION_MAIN).apply { addCategory(Intent.CATEGORY_APP_MUSIC) })
             "SYSTEM_CALC" -> safeStartIntent(Intent(Intent.ACTION_MAIN).apply { addCategory(Intent.CATEGORY_APP_CALCULATOR) })
-            "SYSTEM_SETTINGS" -> launchOrFallback("com.uvos.settings", Intent(Settings.ACTION_SETTINGS))
+            "SYSTEM_SETTINGS" -> showSettingsChooserDialog()
             "SYSTEM_SHIELD" -> startActivity(Intent(this, ShieldActivity::class.java))
             "SYSTEM_LOG" -> startActivity(Intent(this, LogActivity::class.java))
             "SYSTEM_OSC" -> {}
@@ -1075,6 +1085,12 @@ class MainActivity : Activity() {
         dialogView.findViewById<View>(R.id.action_replace_app).setOnClickListener {
             dialog.dismiss()
             showAppChooserForSlot(slot.slotIndex)
+        }
+
+        // Действие: Обои и кастомизация стола
+        dialogView.findViewById<View>(R.id.action_wallpaper_customization)?.setOnClickListener {
+            dialog.dismiss()
+            showCustomizationDialog()
         }
 
         // Действие 6: Перетащить
@@ -1406,6 +1422,23 @@ class MainActivity : Activity() {
                 }
             }
             .setNegativeButton("Закрыть", null)
+            .show()
+    }
+
+    private fun showSettingsChooserDialog() {
+        val options = arrayOf(
+            "🎨 Обои и оформление UVOS (Кастомизация)",
+            "⚙️ Системные настройки Android"
+        )
+        AlertDialog.Builder(this)
+            .setTitle("Настройки")
+            .setItems(options) { _, which ->
+                when (which) {
+                    0 -> showCustomizationDialog()
+                    1 -> launchOrFallback("com.uvos.settings", Intent(Settings.ACTION_SETTINGS))
+                }
+            }
+            .setNegativeButton("Отмена", null)
             .show()
     }
 
@@ -1885,6 +1918,85 @@ class MainActivity : Activity() {
             startActivity(Intent(this, ShieldActivity::class.java))
             true
         }
+    }
+
+    private fun setupWindowInsets() {
+        val rootFrame = findViewById<View>(R.id.main_root_frame) ?: return
+        val baseDockMargin = (12 * resources.displayMetrics.density).toInt()
+
+        // Первичное применение с fallback, чтобы док не перекрывался даже до первого insets callback
+        val fallbackNavHeight = getSystemNavigationBarHeight()
+        val dock = findViewById<View>(R.id.home_dock)
+        if (dock != null && fallbackNavHeight > 0) {
+            val lp = dock.layoutParams as? ViewGroup.MarginLayoutParams
+            if (lp != null) {
+                lp.bottomMargin = baseDockMargin + fallbackNavHeight
+                dock.layoutParams = lp
+            }
+        }
+
+        rootFrame.setOnApplyWindowInsetsListener { _, insets ->
+            val navBottom = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                insets.getInsets(android.view.WindowInsets.Type.navigationBars()).bottom
+            } else {
+                @Suppress("DEPRECATION")
+                insets.systemWindowInsetBottom
+            }
+
+            val statusTop = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                insets.getInsets(android.view.WindowInsets.Type.statusBars()).top
+            } else {
+                @Suppress("DEPRECATION")
+                insets.systemWindowInsetTop
+            }
+
+            // Динамический подъем нижнего дока над навигационной панелью (3 кнопки или полоса жестов)
+            if (dock != null) {
+                val lp = dock.layoutParams as? ViewGroup.MarginLayoutParams
+                if (lp != null) {
+                    val targetBottom = if (navBottom > 0) navBottom else fallbackNavHeight
+                    val newBottomMargin = baseDockMargin + targetBottom
+                    if (lp.bottomMargin != newBottomMargin) {
+                        lp.bottomMargin = newBottomMargin
+                        dock.layoutParams = lp
+                    }
+                }
+            }
+
+            // Корректировка статус-бара (вырез камеры)
+            val topBar = findViewById<View>(R.id.desktop_top_bar)
+            if (topBar != null) {
+                val baseTopPadding = (34 * resources.displayMetrics.density).toInt()
+                val calculatedTopPadding = maxOf(statusTop, baseTopPadding)
+                if (topBar.paddingTop != calculatedTopPadding) {
+                    topBar.setPadding(topBar.paddingLeft, calculatedTopPadding, topBar.paddingRight, topBar.paddingBottom)
+                }
+            }
+
+            // Корректировка шапки шторки
+            val shadeTopBar = findViewById<View>(R.id.shade_top_bar)
+            if (shadeTopBar != null) {
+                val baseTopPadding = (34 * resources.displayMetrics.density).toInt()
+                val calculatedTopPadding = maxOf(statusTop, baseTopPadding)
+                if (shadeTopBar.paddingTop != calculatedTopPadding) {
+                    shadeTopBar.setPadding(shadeTopBar.paddingLeft, calculatedTopPadding, shadeTopBar.paddingRight, shadeTopBar.paddingBottom)
+                }
+            }
+
+            insets
+        }
+
+        rootFrame.requestApplyInsets()
+        rootFrame.post { rootFrame.requestApplyInsets() }
+    }
+
+    private fun getSystemNavigationBarHeight(): Int {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            val insets = windowManager.currentWindowMetrics.windowInsets.getInsets(android.view.WindowInsets.Type.navigationBars())
+            if (insets.bottom > 0) return insets.bottom
+        }
+        val resourceId = resources.getIdentifier("navigation_bar_height", "dimen", "android")
+        return if (resourceId > 0) resources.getDimensionPixelSize(resourceId) else 0
     }
 
     private fun showDockAppDialog(title: String, launchIntent: Intent) {

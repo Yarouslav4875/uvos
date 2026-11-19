@@ -69,6 +69,7 @@ class DesktopCustomizationDialog(
         val btnGrid = dialog.findViewById<View>(R.id.btn_preset_grid)
         val btnCarbon = dialog.findViewById<View>(R.id.btn_preset_carbon)
         val btnRadar = dialog.findViewById<View>(R.id.btn_preset_radar)
+        val btnCrimson = dialog.findViewById<View>(R.id.btn_preset_crimson)
         val btnCustom = dialog.findViewById<View>(R.id.btn_choose_custom_photo)
         val txtCustomPhotoTitle = dialog.findViewById<TextView>(R.id.txt_custom_photo_title)
 
@@ -76,6 +77,7 @@ class DesktopCustomizationDialog(
         val dotGrid = dialog.findViewById<View>(R.id.indicator_preset_grid)
         val dotCarbon = dialog.findViewById<View>(R.id.indicator_preset_carbon)
         val dotRadar = dialog.findViewById<View>(R.id.indicator_preset_radar)
+        val dotCrimson = dialog.findViewById<View>(R.id.indicator_preset_crimson)
         val dotCustom = dialog.findViewById<View>(R.id.indicator_preset_custom)
 
         fun updateWallpaperIndicators() {
@@ -84,6 +86,7 @@ class DesktopCustomizationDialog(
             dotGrid.setBackgroundResource(if (mode == WallpaperManager.WallpaperMode.PRESET_TACTICAL_GRID) R.drawable.bg_dot_active else R.drawable.bg_dot_inactive)
             dotCarbon.setBackgroundResource(if (mode == WallpaperManager.WallpaperMode.PRESET_CARBON_FIBER) R.drawable.bg_dot_active else R.drawable.bg_dot_inactive)
             dotRadar.setBackgroundResource(if (mode == WallpaperManager.WallpaperMode.PRESET_STEEL_RADAR) R.drawable.bg_dot_active else R.drawable.bg_dot_inactive)
+            dotCrimson?.setBackgroundResource(if (mode == WallpaperManager.WallpaperMode.PRESET_CRIMSON_HORIZON) R.drawable.bg_dot_active else R.drawable.bg_dot_inactive)
             dotCustom.setBackgroundResource(if (mode == WallpaperManager.WallpaperMode.CUSTOM_PHOTO) R.drawable.bg_dot_active else R.drawable.bg_dot_inactive)
 
             txtCustomPhotoTitle.text = if (wallpaperManager.hasCustomWallpaper()) {
@@ -110,6 +113,11 @@ class DesktopCustomizationDialog(
 
         btnRadar.setOnClickListener {
             wallpaperManager.setWallpaperMode(WallpaperManager.WallpaperMode.PRESET_STEEL_RADAR)
+            updateWallpaperIndicators()
+        }
+
+        btnCrimson?.setOnClickListener {
+            wallpaperManager.setWallpaperMode(WallpaperManager.WallpaperMode.PRESET_CRIMSON_HORIZON)
             updateWallpaperIndicators()
         }
 
