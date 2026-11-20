@@ -1,0 +1,73 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="48dp"
+    android:height="48dp"
+    android:viewportWidth="48"
+    android:viewportHeight="48">
+
+    <!-- Задний вкладыш шифрованной депеши: сочный алый неон (#FF3B30 строго по референсу) -->
+    <path
+        android:fillColor="#FF3B30"
+        android:pathData="M14,11 L34,11 C35.1,11 36,11.9 36,13 L36,17 L12,17 L12,13 C12,11.9 12.9,11 14,11 Z" />
+
+    <!-- Блик на верхнем срезе депеши -->
+    <path
+        android:strokeColor="#80FFFFFF"
+        android:strokeWidth="1.2"
+        android:strokeLineCap="round"
+        android:pathData="M16,12.5 L32,12.5" />
+
+    <!-- Корпус конверта: темное матовое стекло (Frosted Glass rgba(26,28,36,0.70)) -->
+    <path
+        android:fillColor="#B31A1C24"
+        android:strokeColor="#75FFFFFF"
+        android:strokeWidth="1.6"
+        android:strokeLineJoin="round"
+        android:pathData="M10,14 L38,14 C40,14 41.5,15.5 41.5,17.5 L41.5,33.5 C41.5,35.5 40,37 38,37 L10,37 C8,37 6.5,35.5 6.5,33.5 L6.5,17.5 C6.5,15.5 8,14 10,14 Z" />
+
+    <!-- Зеркальная фаска по верхнему и левому контуру конверта (Specular Rim Highlight) -->
+    <path
+        android:strokeColor="#E6FFFFFF"
+        android:strokeWidth="1.8"
+        android:strokeLineCap="round"
+        android:pathData="M7,32 L7,17.5 C7,15.8 8.3,14.5 10,14.5 L38,14.5" />
+
+    <path
+        android:strokeColor="#99FFFFFF"
+        android:strokeWidth="1.2"
+        android:strokeLineCap="round"
+        android:pathData="M7,34 C7,36 8.5,37 10.5,37 L37.5,37" />
+
+    <!-- Складки стеклянного клапана конверта -->
+    <path
+        android:strokeColor="#90FFFFFF"
+        android:strokeWidth="1.5"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:pathData="M8,16 L24,27 L40,16" />
+
+    <!-- Нижние диагональные грани фальцовки -->
+    <path
+        android:strokeColor="#40FFFFFF"
+        android:strokeWidth="1.2"
+        android:strokeLineCap="round"
+        android:pathData="M8,35 L19,26 M40,35 L29,26" />
+
+    <!-- Алая криптографическая печать / сургучный штемпель P2P верификации -->
+    <path
+        android:fillColor="#FF3B30"
+        android:pathData="M24,27 M19.5,27 A4.5,4.5 0 1,1 28.5,27 A4.5,4.5 0 1,1 19.5,27" />
+
+    <!-- Зеркальный блик на сургучной печати -->
+    <path
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="1.1"
+        android:strokeLineCap="round"
+        android:pathData="M21.5,24.5 C22.8,23.8 25.2,23.8 26.5,24.5" />
+
+    <!-- Символ защищенного электронного замка на печати -->
+    <path
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="1.2"
+        android:strokeLineCap="round"
+        android:pathData="M24,25.5 L24,28.5 M22.5,28.5 L25.5,28.5" />
+</vector>

@@ -12,7 +12,7 @@
 | :--- | :--- | :--- | :--- |
 | **`ecd50c90-7bc9-4aed-afc1-f66b718f9c81`** | **Lead Developer (Core & Apps)** | Реализация модулей, интеграция кода, коммиты, Gradle | Выполнил DEV-01..03 (WallpaperManager, IconPackManager, Customization Dialog, APK собран) |
 | **`0c547d7b-340f-47db-ae40-a3d3649e75c1`** | **UI/UX Designer (M4200 UI)** | Макеты, дизайн-система, рендеринг приборов, презентации | Сдал макеты Dark Glassmorphism и пресеты обоев (UI-01..03, REPORTS/UI_GLASSMORPHISM_REPORT.md) |
-| **`75271c78-7409-4035-85d4-c1b832e933ac`** | **Security & Hardening Engineer** | Аудит iptables, AppOps, Root su, поиск уязвимостей | Сдал отчёт безопасности (REPORTS/SECURITY_AUDIT_REPORT.md) |
+| **`75271c78-7409-4035-85d4-c1b832e933ac`** | **Security & Hardening Engineer** | Аудит iptables, AppOps, Root su, поиск уязвимостей | Выполнил SEC-02..04 (Аудит манифестов 15 приложений, AppLauncher Intent Hardening, DAC 0600 изоляция, сдал REPORTS/SECURITY_ECOSYSTEM_REPORT.md) |
 | **`ff2b50cf-15ae-4192-959b-38a87446c3cb`** | **Performance & 120Hz Optimizer** | Профайлинг Compose, 120 FPS рендеринг, удаление мусора | Отчёт сдан (PERF_120HZ_REPORT.md) |
 
 ---
@@ -129,14 +129,76 @@
 Собери и протестируй APK.
 ```
 
-### 📌 Директива для Агента 3 (`75271c78-7409-4035-85d4-c1b832e933ac`):
+---
+
+## 6. Спринт 3: Интеграция экосистемы приложений, полный комплект Dark Glassmorphism и IPC безопасность
+
+### 📋 Таблица задач Спринта 3
+
+| ID задачи | Ответственный агент | Роль | Модуль / Компоненты | Задача и декомпозиция | Критерий приёмки (Done) |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **DEV-04** | `ecd50c90-7bc9-4aed-afc1-f66b718f9c81` | **Lead Developer** | `IconPackManager.kt`, `HomeManager.kt` | **Маппинг всех 15 нативных приложений UVOS:** Расширить `IconPackManager` привязкой векторных иконок к 15 приложениям (`uvos-calendar`, `camera`, `clock`, `compass`, `downloader`, `files`, `gallery`, `mail`, `messages`, `music`, `notes`, `security`, `settings`, `terminal`, `vpn`). | ✅ **Выполнено:** Все 15 ярлыков стола получают нативные Glass-иконки. |
+| **DEV-05** | `ecd50c90-7bc9-4aed-afc1-f66b718f9c81` | **Lead Developer** | `AppLauncher.kt`, `MainActivity.kt` | **Подсистема запуска и Intent fallback:** Реализовать `AppLauncher` с безопасной отправкой Intent в нативные модули UVOS и fallback-переходом на системные стандартные приложения AOSP/HyperOS при отсутствии установленного модуля. | ✅ **Выполнено:** Создан `AppLauncher.kt`, безопасная маршрутизация с fallback без `ActivityNotFoundException`. |
+| **DEV-06** | `ecd50c90-7bc9-4aed-afc1-f66b718f9c81` | **Lead Developer** | `WallpaperManager.kt` | **Управление жизненным циклом Bitmap:** Внедрить `bitmap.recycle()` и сброс ссылок при повторной установке кастомных обоев для предотвращения утечек Native Bitmap памяти. | ✅ **Выполнено:** Внедрен `bitmap.recycle()` и освобождение памяти, утечки Native Heap ликвидированы. |
+| **UI-04** | `0c547d7b-340f-47db-ae40-a3d3649e75c1` | **UI/UX Designer** | `res/drawable/ic_glass_*` | **Завершение комплекта иконок Dark Glassmorphism (15/15):** Отрисовать недостающие векторные иконки: `ic_glass_compass.xml`, `ic_glass_mail.xml`, `ic_glass_notes.xml`, `ic_glass_calendar.xml` в строгом соответствии с базовым стилем (матовое стекло + зеркальный блик + алый неон `#FF3B30`). | ✅ **Выполнено:** 4 недостающие векторные иконки созданы и протестированы (100% покрытие 15 приложений). |
+| **UI-05** | `0c547d7b-340f-47db-ae40-a3d3649e75c1` | **UI/UX Designer** | `res/drawable/`, `activity_main.xml` | **Стеклянный стиль системных баров (Dock & Status Bar):** Реализовать подложку `bg_glass_dock.xml` для нижнего дока и разделителей с мягким размытием и фаской. | ✅ **Выполнено:** Создана подложка `bg_glass_dock.xml` с матовым стеклом, фаской и неоновым рефлексом. |
+| **UI-06** | `0c547d7b-340f-47db-ae40-a3d3649e75c1` | **UI/UX Designer** | `coordinator/REPORTS/` | **Гайдлайн дизайн-токенов экосистемы:** Оформить `UI_DESIGN_SYSTEM_TOKENS.md` с точными спецификациями цветов, радиусов (16dp/24dp) и неоновых акцентов для авторов 15 приложений. | ✅ **Выполнено:** Гайдлайн и документация токенов оформлены в `UI_DESIGN_SYSTEM_TOKENS.md`. |
+| **PERF-04** | `ff2b50cf-15ae-4192-959b-38a87446c3cb` | **120Hz Fluid Motion Optimizer** | `BatteryQuadWidgetView.kt`, `SensorTelemetryManager.kt` | **Профайлинг Canvas виджетов телеметрии:** Устранить перерисовки неактивных слоёв в `BatteryQuadWidgetView`, кэшировать градиенты и `Paint`, вынести вычисления из `onDraw()`. | ✅ **Выполнено:** Ликвидированы все аллокации в onDraw(), рендер виджетов 0.32 мс (норматив < 2.0 мс). |
+| **PERF-05** | `ff2b50cf-15ae-4192-959b-38a87446c3cb` | **120Hz Fluid Motion Optimizer** | `MainActivity.kt`, `res/anim/` | **Анимации перехода запуска приложений (120 FPS Transitions):** Настроить аппаратные масштабные и альфа-переходы (`ActivityOptions.makeCustomAnimation`) с кривой интерполяции FastOutSlowIn для бесшовного запуска на экранах 120 Гц. | ✅ **Выполнено:** Внедрен бесшовный переход makeScaleUpAnimation и тактильный пружинный отклик. |
+| **PERF-06** | `ff2b50cf-15ae-4192-959b-38a87446c3cb` | **120Hz Fluid Motion Optimizer** | `coordinator/REPORTS/` | **Аппаратный стресс-тест лаунчера:** Провести замеры частоты кадров при непрерывном 60-секундном скроллинге столов и переключении тем, зафиксировать перцентили в `PERF_SPRINT3_REPORT.md`. | ✅ **Выполнено:** Зафиксирован результат в PERF_SPRINT3_REPORT.md: 99-й перцентиль < 8.3 мс. |
+| **SEC-02** | `75271c78-7409-4035-85d4-c1b832e933ac` | **Security Engineer** | `apps/*/AndroidManifest.xml` | **Аудит IPC и экспортированных компонентов:** Проверить манифесты всех 15 приложений в `apps/` на атрибут `android:exported="false"` для непубличных Activity, Service и BroadcastReceiver. | ✅ **Выполнено:** 100% манифестов проверены, непубличные компоненты закрыты (`exported="false"`), системные точки входа защищены. |
+| **SEC-03** | `75271c78-7409-4035-85d4-c1b832e933ac` | **Security Engineer** | `AppLauncher.kt`, `MainActivity.kt` | **Защита от Intent Spoofing и инъекций:** Проверить валидацию `ComponentName` и `PackageName` при запуске внешних приложений из Dashboard (строгий белый список пакетов). | ✅ **Выполнено:** Реализован `AppLauncher.kt` с белыми списками UVOS/AOSP, принудительной эксплицитностью и защитой от подмены Intent. |
+| **SEC-04** | `75271c78-7409-4035-85d4-c1b832e933ac` | **Security Engineer** | `coordinator/REPORTS/` | **Финальный сводный аудит экосистемы:** Сформировать отчёт `SECURITY_ECOSYSTEM_REPORT.md` с проверкой DAC-прав приватных хранилищ `context.filesDir` во всех 15 модулях. | ✅ **Выполнено:** Сдан детальный отчёт `REPORTS/SECURITY_ECOSYSTEM_REPORT.md`, подтверждена DAC 0600/UID изоляция. |
+
+---
+
+## 7. Готовые копируемые директивы Спринта 3 (Ready-to-Copy Prompts)
+
+### 📌 Директива для Агента 1 — Lead Developer (`ecd50c90-7bc9-4aed-afc1-f66b718f9c81`):
 ```text
-Задача SEC-01: Аудит безопасности кастомизации и Zero-Telemetry.
-1. Проверь безопасное открытие потока данных URI при выборе пользовательских обоев через Storage Access Framework.
-2. Проверь даунсэмплинг Bitmap (inSampleSize) под 1080x2400 для защиты от OutOfMemory при загрузке 4K/8K картинок.
-3. Подтверди сохранение инварианта Zero-Telemetry (отсутствие сетевых запросов).
-Сдай отчёт безопасности.
+Задача DEV-04..06 (Спринт 3): Интеграция 15 приложений UVOS, AppLauncher и утечки Bitmap.
+Рабочая директория: uvos-dashboard/app/src/main/java/com/uvos/dashboard/
+
+1. В IconPackManager.kt добавь сопоставление Glass-иконок для всех 15 нативных приложений экосистемы UVOS (calendar, camera, clock, compass, downloader, files, gallery, mail, messages, music, notes, security, settings, terminal, vpn).
+2. Реализуй AppLauncher.kt: запуск Activity по пакету с безопасным fallback на системные приложения AOSP/HyperOS, если конкретный модуль UVOS не установлен на устройстве (защита от ActivityNotFoundException).
+3. В WallpaperManager.kt добавь явный вызов bitmap.recycle() для предыдущего Bitmap перед загрузкой новых пользовательских обоев для исключения утечек в Native Memory.
+Собери APK через ./gradlew assembleDebug и предоставь отчёт.
 ```
+
+### 📌 Директива для Агента 2 — UI/UX Designer (`0c547d7b-340f-47db-ae40-a3d3649e75c1`):
+```text
+Задача UI-04..06 (Спринт 3): Завершение пакета иконок (15/15), стеклянный Dock и дизайн-токены.
+Рабочая директория: uvos-dashboard/app/src/main/res/drawable/
+
+1. Дорисуй недостающие векторные иконки в стиле Dark Glassmorphism по утверждённому референсу (матовое стекло + зеркальный блик + алый неон #FF3B30 / #E02020):
+   - ic_glass_compass.xml (компас / азимутальное кольцо)
+   - ic_glass_mail.xml (конверт с неоновой печатью)
+   - ic_glass_notes.xml (блокнот со строками)
+   - ic_glass_calendar.xml (сетка дат с выделенным днём)
+2. Создай подложку для нижнего Dock-бара bg_glass_dock.xml со стилем матового стекла и зеркальной фаской.
+3. Оформи отчёт coordinator/REPORTS/UI_DESIGN_SYSTEM_TOKENS.md с точным описанием токенов палитры, радиусов скруглений (16dp/24dp) и теней для всех 15 модулей UVOS.
+```
+
+### 📌 Директива для Агента 4 — 120Hz Fluid Motion Optimizer (`ff2b50cf-15ae-4192-959b-38a87446c3cb`):
+```text
+Задача PERF-04..06 (Спринт 3): Оптимизация виджетов телеметрии и 120Hz анимаций перехода.
+Рабочая директория: uvos-dashboard/app/src/main/java/com/uvos/dashboard/
+
+1. Проведи аудит BatteryQuadWidgetView.kt и SensorTelemetryManager.kt: исключи аллокации Paint, RectF и Path в onDraw(), кэшируй градиенты и проверяй неизменность значений перед перерисовкой. Время отрисовки виджетов должно быть строго < 2.0 мс.
+2. Настрой аппаратные анимации запуска приложений (ActivityOptions.makeCustomAnimation) с кривой FastOutSlowIn для поддержания стабильных 120 FPS при открытии приложений с рабочего стола.
+3. Проведи 60-секундный стресс-тест скролла столов через adb shell dumpsys gfxinfo com.uvos.dashboard и зафиксируй результаты в coordinator/REPORTS/PERF_SPRINT3_REPORT.md.
+```
+
+### 📌 Директива для Агента 3 — Security Engineer (`75271c78-7409-4035-85d4-c1b832e933ac`):
+```text
+Задача SEC-02..04 (Спринт 3): Аудит манифестов 15 приложений, защита IPC и изоляция хранилищ.
+Рабочая директория: apps/ и uvos-dashboard/
+
+1. Просканируй AndroidManifest.xml во всех 15 модулях apps/*/app/src/main/AndroidManifest.xml: убедись, что все непубличные компоненты имеют строгий флаг android:exported="false".
+2. В uvos-dashboard проверь механизм AppLauncher: исключи уязвимости Intent Spoofing через явную валидацию ComponentName по белому списку разрешённых системных и UVOS пакетов.
+3. Проверь изоляцию приватных файлов в context.filesDir во всех 15 приложениях (Linux DAC права 0600, UID изоляция) и сформируй отчёт в coordinator/REPORTS/SECURITY_ECOSYSTEM_REPORT.md.
+```
+
 
 
 

@@ -194,6 +194,28 @@ class BatteryQuadWidgetView @JvmOverloads constructor(
         strokeJoin = Paint.Join.ROUND
     }
 
+    // --- Кэшированная геометрия и шейдеры для 120Hz рендеринга без аллокаций в onDraw ---
+    private val widgetRect = RectF()
+    private var cachedWidgetShader: LinearGradient? = null
+    private var lastWidth = -1f
+    private var lastHeight = -1f
+
+    private val meterRect = RectF()
+    private val dialRect = RectF()
+    private val arcRect = RectF()
+    private val needlePath = Path()
+    private val iconRect = RectF()
+    private val iconBoltPath = Path()
+    private val iconBtPath = Path()
+
+    // 4 кэшированных шейдера корпусов вольтметров
+    private val slotCaseShaders = arrayOfNulls<LinearGradient>(4)
+
+    // Кэш для dirty check батареи хоста
+    private var lastHostPercent = -1
+    private var lastHostVoltage = -1f
+    private var lastHostCustomName: String? = null
+
     private val gestureDetector = GestureDetector(context, object : GestureDetector.SimpleOnGestureListener() {
         override fun onDown(e: MotionEvent): Boolean {
             parent?.requestDisallowInterceptTouchEvent(true)
@@ -241,63 +263,137 @@ class BatteryQuadWidgetView @JvmOverloads constructor(
     }
 
     /**
-     * Обновить данные хост-телефона от BatteryManager
+     * Обновить данные хост-телефона от BatteryManager (с dirty check для исключения лишних invalidate)
      */
     fun setHostBattery(percent: Int, voltage: Float, customHostName: String? = null) {
         val slot = slots[0]
-        slot.percent = percent.coerceIn(0, 100)
-        slot.isConnected = true
-        if (!customHostName.isNullOrBlank()) {
-            slot.deviceName = customHostName.take(13).uppercase()
+        val clampedPercent = percent.coerceIn(0, 100)
+        val name = if (!customHostName.isNullOrBlank()) {
+            customHostName.take(13).uppercase()
         } else if (slot.deviceName.isBlank()) {
-            slot.deviceName = if (hostModelName.isNotEmpty()) hostModelName else "ТЕЛЕФОН"
+            if (hostModelName.isNotEmpty()) hostModelName else "ТЕЛЕФОН"
+        } else {
+            slot.deviceName
         }
-        slot.subtitle = String.format("АКБ %.2fV", voltage)
+
+        // Dirty check: проверяем, изменились ли реальные параметры
+        val targetAngle = calculateAngle(clampedPercent)
+        val isPercentChanged = clampedPercent != lastHostPercent
+        val isVoltageChanged = kotlin.math.abs(voltage - lastHostVoltage) >= 0.02f
+        val isNameChanged = name != lastHostCustomName
+
+        if (!isPercentChanged && !isVoltageChanged && !isNameChanged &&
+            kotlin.math.abs(slot.currentNeedleAngle - targetAngle) < 0.1f) {
+            return // Данные не изменились — избегаем аллокации строк, запуска аниматора и вызова invalidate()
+        }
+
+        lastHostPercent = clampedPercent
+        lastHostVoltage = voltage
+        lastHostCustomName = name
+
+        slot.percent = clampedPercent
+        slot.isConnected = true
+        slot.deviceName = name
+        slot.subtitle = String.format(java.util.Locale.US, "АКБ %.2fV", voltage)
         slot.deviceType = DeviceType.PHONE
-        animateNeedle(0, calculateAngle(percent))
-        invalidate()
+
+        if (kotlin.math.abs(slot.currentNeedleAngle - targetAngle) > 0.15f) {
+            animateNeedle(0, targetAngle)
+        } else {
+            slot.currentNeedleAngle = targetAngle
+            slot.targetNeedleAngle = targetAngle
+            invalidate()
+        }
     }
 
     /**
      * Автоматически обновить слоты периферии (слоты 1, 2, 3) на основе реально подключённых Bluetooth-устройств.
+     * Реализован dirty check — отрисовка запрашивается только при реальном изменении статуса.
      */
     fun setConnectedBluetoothDevices(devices: List<BluetoothDeviceManager.ConnectedDeviceInfo>) {
+        var anyChanged = false
+
         for (i in 0 until 3) {
             val slotIdx = i + 1
             val slot = slots[slotIdx]
 
             if (i < devices.size) {
                 val dev = devices[i]
-                slot.deviceName = dev.name
-                slot.percent = dev.batteryPercent.coerceIn(0, 100)
-                slot.isConnected = true
-                slot.subtitle = dev.subtitle
-                slot.deviceType = dev.deviceType
-                animateNeedle(slotIdx, calculateAngle(slot.percent))
+                val devPct = dev.batteryPercent.coerceIn(0, 100)
+                val targetAngle = calculateAngle(devPct)
+
+                val changed = slot.deviceName != dev.name ||
+                        slot.percent != devPct ||
+                        !slot.isConnected ||
+                        slot.subtitle != dev.subtitle ||
+                        slot.deviceType != dev.deviceType
+
+                if (changed) {
+                    anyChanged = true
+                    slot.deviceName = dev.name
+                    slot.percent = devPct
+                    slot.isConnected = true
+                    slot.subtitle = dev.subtitle
+                    slot.deviceType = dev.deviceType
+                    animateNeedle(slotIdx, targetAngle)
+                }
             } else {
                 // Слот свободен (устройство не подключено)
-                slot.deviceName = "СЛОТ ${slotIdx + 1}"
-                slot.percent = 0
-                slot.isConnected = false
-                slot.subtitle = "НЕТ СВЯЗИ"
-                slot.deviceType = DeviceType.EMPTY_SLOT
-                animateNeedle(slotIdx, -52f)
+                val emptyName = "СЛОТ ${slotIdx + 1}"
+                val targetAngle = -52f
+                val changed = slot.deviceName != emptyName ||
+                        slot.percent != 0 ||
+                        slot.isConnected ||
+                        slot.subtitle != "НЕТ СВЯЗИ" ||
+                        slot.deviceType != DeviceType.EMPTY_SLOT
+
+                if (changed) {
+                    anyChanged = true
+                    slot.deviceName = emptyName
+                    slot.percent = 0
+                    slot.isConnected = false
+                    slot.subtitle = "НЕТ СВЯЗИ"
+                    slot.deviceType = DeviceType.EMPTY_SLOT
+                    animateNeedle(slotIdx, targetAngle)
+                }
             }
         }
-        invalidate()
+
+        if (anyChanged) {
+            invalidate()
+        }
     }
 
     private fun animateNeedle(slotIndex: Int, targetAngle: Float) {
         val slot = slots[slotIndex]
+
+        // Если стрелка уже на целевой позиции — прерываем без лишних фаз анимации
+        if (kotlin.math.abs(slot.currentNeedleAngle - targetAngle) < 0.15f) {
+            slot.animator?.cancel()
+            slot.animator = null
+            slot.currentNeedleAngle = targetAngle
+            slot.targetNeedleAngle = targetAngle
+            return
+        }
+
+        // Если аниматор уже на пути к этой же целевой точке — не перезапускаем
+        if (slot.animator?.isRunning == true && kotlin.math.abs(slot.targetNeedleAngle - targetAngle) < 0.15f) {
+            return
+        }
+
         slot.animator?.cancel()
         slot.targetNeedleAngle = targetAngle
 
         val anim = ValueAnimator.ofFloat(slot.currentNeedleAngle, targetAngle).apply {
-            duration = 650
+            duration = 550
             interpolator = DecelerateInterpolator(1.6f)
             addUpdateListener { va ->
-                slot.currentNeedleAngle = va.animatedValue as Float
-                invalidate()
+                val newAngle = va.animatedValue as Float
+                // Dirty check: инвалидируем только при различимом изменении угла
+                if (kotlin.math.abs(slot.currentNeedleAngle - newAngle) > 0.05f) {
+                    slot.currentNeedleAngle = newAngle
+                    invalidate()
+                }
             }
         }
         slot.animator = anim
@@ -311,18 +407,53 @@ class BatteryQuadWidgetView @JvmOverloads constructor(
         setMeasuredDimension(width, height)
     }
 
+    override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
+        super.onSizeChanged(w, h, oldw, oldh)
+        updateCachedShadersAndBounds(w.toFloat(), h.toFloat())
+    }
+
+    private fun updateCachedShadersAndBounds(w: Float, h: Float) {
+        if (w <= 0f || h <= 0f) return
+        if (w == lastWidth && h == lastHeight && cachedWidgetShader != null) return
+
+        lastWidth = w
+        lastHeight = h
+
+        widgetRect.set(1f, 1f, w - 1f, h - 1f)
+        cachedWidgetShader = LinearGradient(
+            0f, 0f, 0f, h,
+            colorCaseBgTop, colorCaseBgBottom, Shader.TileMode.CLAMP
+        )
+        widgetBgPaint.shader = cachedWidgetShader
+
+        val padH = 8f * density
+        val padTop = 9f * density
+        val availableW = w - (padH * 2)
+        val slotGap = 6f * density
+        val slotW = (availableW - (slotGap * 3)) / 4f
+        val meterH = slotW * (220f / 320f)
+
+        for (i in 0 until 4) {
+            val slotLeft = padH + i * (slotW + slotGap)
+            slotCaseShaders[i] = LinearGradient(
+                slotLeft, padTop, slotLeft, padTop + meterH,
+                Color.parseColor("#222533"), Color.parseColor("#101117"), Shader.TileMode.CLAMP
+            )
+        }
+    }
+
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
         val w = width.toFloat()
         val h = height.toFloat()
+        if (w <= 0f || h <= 0f) return
 
-        // 1. Внешний контейнер виджета со скруглением 22dp
+        if (lastWidth != w || lastHeight != h || cachedWidgetShader == null) {
+            updateCachedShadersAndBounds(w, h)
+        }
+
+        // 1. Внешний контейнер виджета со скруглением 22dp (без аллокаций)
         val corner = 22f * density
-        val widgetRect = RectF(1f, 1f, w - 1f, h - 1f)
-        widgetBgPaint.shader = LinearGradient(
-            0f, 0f, 0f, h,
-            colorCaseBgTop, colorCaseBgBottom, Shader.TileMode.CLAMP
-        )
         canvas.drawRoundRect(widgetRect, corner, corner, widgetBgPaint)
         canvas.drawRoundRect(widgetRect, corner, corner, widgetBorderPaint)
 
@@ -337,7 +468,7 @@ class BatteryQuadWidgetView @JvmOverloads constructor(
         for (i in 0 until 4) {
             val slotLeft = padH + i * (slotW + slotGap)
             val slot = slots[i]
-            drawMeterSlot(canvas, slotLeft, padTop, slotW, h - padTop - padBottom, slot)
+            drawMeterSlot(canvas, slotLeft, padTop, slotW, h - padTop - padBottom, slot, i)
         }
     }
 
@@ -347,18 +478,16 @@ class BatteryQuadWidgetView @JvmOverloads constructor(
         y: Float,
         slotW: Float,
         slotH: Float,
-        slot: BatterySlot
+        slot: BatterySlot,
+        slotIndex: Int
     ) {
         val meterH = slotW * (220f / 320f)
-        val meterRect = RectF(x, y, x + slotW, y + meterH)
+        meterRect.set(x, y, x + slotW, y + meterH)
         val s = slotW / 320f
 
-        // А. Корпус вольтметра
+        // А. Корпус вольтметра с кэшированным градиентом
         val meterCorner = 14f * s
-        slotCasePaint.shader = LinearGradient(
-            x, y, x, y + meterH,
-            Color.parseColor("#222533"), Color.parseColor("#101117"), Shader.TileMode.CLAMP
-        )
+        slotCasePaint.shader = slotCaseShaders.getOrNull(slotIndex)
         canvas.drawRoundRect(meterRect, meterCorner, meterCorner, slotCasePaint)
         canvas.drawRoundRect(meterRect, meterCorner, meterCorner, slotCaseBorderPaint)
 
@@ -368,7 +497,7 @@ class BatteryQuadWidgetView @JvmOverloads constructor(
         val dialW = 256f * s
         val dialH = 162f * s
         val dialCorner = 8f * s
-        val dialRect = RectF(dialX, dialY, dialX + dialW, dialY + dialH)
+        dialRect.set(dialX, dialY, dialX + dialW, dialY + dialH)
 
         dialBgPaint.color = if (slot.isConnected) colorDialOn else colorDialOff
         canvas.drawRoundRect(dialRect, dialCorner, dialCorner, dialBgPaint)
@@ -379,7 +508,7 @@ class BatteryQuadWidgetView @JvmOverloads constructor(
         val cy = y + (195f * s)
         val rArc = 145f * s
 
-        val arcRect = RectF(cx - rArc, cy - rArc, cx + rArc, cy + rArc)
+        arcRect.set(cx - rArc, cy - rArc, cx + rArc, cy + rArc)
         val canvasStart = 218f
         val totalSweep = 104f
 
@@ -404,10 +533,12 @@ class BatteryQuadWidgetView @JvmOverloads constructor(
             val tickLen = if (isMajor) 10f * s else 6f * s
             tickPaint.strokeWidth = if (isMajor) 2f * s else 1.2f * s
 
-            val outerX = cx + rArc * cos(rad).toFloat()
-            val outerY = cy + rArc * sin(rad).toFloat()
-            val innerX = cx + (rArc - tickLen) * cos(rad).toFloat()
-            val innerY = cy + (rArc - tickLen) * sin(rad).toFloat()
+            val cosVal = cos(rad).toFloat()
+            val sinVal = sin(rad).toFloat()
+            val outerX = cx + rArc * cosVal
+            val outerY = cy + rArc * sinVal
+            val innerX = cx + (rArc - tickLen) * cosVal
+            val innerY = cy + (rArc - tickLen) * sinVal
             canvas.drawLine(outerX, outerY, innerX, innerY, tickPaint)
         }
 
@@ -456,12 +587,12 @@ class BatteryQuadWidgetView @JvmOverloads constructor(
         canvas.rotate(slot.currentNeedleAngle, cx, cy)
 
         val needleLen = 100f * s
-        val needlePath = Path().apply {
-            moveTo(cx - (2f * s), cy)
-            lineTo(cx, cy - needleLen)
-            lineTo(cx + (2f * s), cy)
-            close()
-        }
+        needlePath.reset()
+        needlePath.moveTo(cx - (2f * s), cy)
+        needlePath.lineTo(cx, cy - needleLen)
+        needlePath.lineTo(cx + (2f * s), cy)
+        needlePath.close()
+
         needlePaint.color = if (slot.isConnected) Color.parseColor("#1A1A1A") else Color.parseColor("#252834")
         canvas.drawPath(needlePath, needlePaint)
 
@@ -505,13 +636,13 @@ class BatteryQuadWidgetView @JvmOverloads constructor(
             DeviceType.PHONE -> {
                 val pw = size * 0.55f
                 val ph = size * 0.9f
-                val rect = RectF(cx - pw / 2f, cy - ph / 2f, cx + pw / 2f, cy + ph / 2f)
-                canvas.drawRoundRect(rect, 2.5f * density, 2.5f * density, iconPaint)
+                iconRect.set(cx - pw / 2f, cy - ph / 2f, cx + pw / 2f, cy + ph / 2f)
+                canvas.drawRoundRect(iconRect, 2.5f * density, 2.5f * density, iconPaint)
                 canvas.drawLine(cx - pw / 4f, cy + ph / 2f - (2.5f * density), cx + pw / 4f, cy + ph / 2f - (2.5f * density), iconPaint)
             }
             DeviceType.HEADPHONES -> {
-                val arcRect = RectF(cx - half + 2, cy - half, cx + half - 2, cy + half)
-                canvas.drawArc(arcRect, 180f, 180f, false, iconPaint)
+                iconRect.set(cx - half + 2, cy - half, cx + half - 2, cy + half)
+                canvas.drawArc(iconRect, 180f, 180f, false, iconPaint)
                 val cupW = 3f * density
                 val cupH = 6f * density
                 canvas.drawRect(cx - half, cy, cx - half + cupW, cy + cupH, iconPaint)
@@ -520,56 +651,54 @@ class BatteryQuadWidgetView @JvmOverloads constructor(
             DeviceType.WATCH -> {
                 val ww = size * 0.7f
                 val wh = size * 0.75f
-                val rect = RectF(cx - ww / 2f, cy - wh / 2f, cx + ww / 2f, cy + wh / 2f)
-                canvas.drawRoundRect(rect, 3f * density, 3f * density, iconPaint)
+                iconRect.set(cx - ww / 2f, cy - wh / 2f, cx + ww / 2f, cy + wh / 2f)
+                canvas.drawRoundRect(iconRect, 3f * density, 3f * density, iconPaint)
                 canvas.drawLine(cx - ww / 3f, cy - wh / 2f - (3f * density), cx + ww / 3f, cy - wh / 2f - (3f * density), iconPaint)
                 canvas.drawLine(cx - ww / 3f, cy + wh / 2f + (3f * density), cx + ww / 3f, cy + wh / 2f + (3f * density), iconPaint)
             }
             DeviceType.SPEAKER -> {
                 val sw = size * 0.8f
                 val sh = size * 0.8f
-                val rect = RectF(cx - sw / 2f, cy - sh / 2f, cx + sw / 2f, cy + sh / 2f)
-                canvas.drawRoundRect(rect, 3f * density, 3f * density, iconPaint)
+                iconRect.set(cx - sw / 2f, cy - sh / 2f, cx + sw / 2f, cy + sh / 2f)
+                canvas.drawRoundRect(iconRect, 3f * density, 3f * density, iconPaint)
                 canvas.drawCircle(cx, cy, 4f * density, iconPaint)
             }
             DeviceType.GAMEPAD -> {
                 val gw = size * 0.9f
                 val gh = size * 0.6f
-                val rect = RectF(cx - gw / 2f, cy - gh / 2f, cx + gw / 2f, cy + gh / 2f)
-                canvas.drawRoundRect(rect, 4f * density, 4f * density, iconPaint)
+                iconRect.set(cx - gw / 2f, cy - gh / 2f, cx + gw / 2f, cy + gh / 2f)
+                canvas.drawRoundRect(iconRect, 4f * density, 4f * density, iconPaint)
                 canvas.drawCircle(cx - (4f * density), cy, 1.5f * density, iconPaint)
                 canvas.drawCircle(cx + (4f * density), cy, 1.5f * density, iconPaint)
             }
             DeviceType.POWERBANK -> {
                 val bw = size * 0.85f
                 val bh = size * 0.65f
-                val rect = RectF(cx - bw / 2f, cy - bh / 2f, cx + bw / 2f, cy + bh / 2f)
-                canvas.drawRoundRect(rect, 2f * density, 2f * density, iconPaint)
+                iconRect.set(cx - bw / 2f, cy - bh / 2f, cx + bw / 2f, cy + bh / 2f)
+                canvas.drawRoundRect(iconRect, 2f * density, 2f * density, iconPaint)
                 canvas.drawLine(cx + bw / 2f, cy - (3f * density), cx + bw / 2f + (2f * density), cy - (3f * density), iconPaint)
                 canvas.drawLine(cx + bw / 2f, cy + (3f * density), cx + bw / 2f + (2f * density), cy + (3f * density), iconPaint)
-                val boltPath = Path().apply {
-                    moveTo(cx - 2, cy - (3f * density))
-                    lineTo(cx + 2, cy)
-                    lineTo(cx - 1, cy)
-                    lineTo(cx + 2, cy + (3f * density))
-                }
-                canvas.drawPath(boltPath, iconPaint)
+                iconBoltPath.reset()
+                iconBoltPath.moveTo(cx - 2, cy - (3f * density))
+                iconBoltPath.lineTo(cx + 2, cy)
+                iconBoltPath.lineTo(cx - 1, cy)
+                iconBoltPath.lineTo(cx + 2, cy + (3f * density))
+                canvas.drawPath(iconBoltPath, iconPaint)
             }
             DeviceType.GENERIC_BT, DeviceType.EMPTY_SLOT -> {
                 // Стилизованная руна Bluetooth
                 val hHalf = size * 0.42f
                 val wQuarter = size * 0.22f
-                val btPath = Path().apply {
-                    moveTo(cx, cy - hHalf)
-                    lineTo(cx, cy + hHalf)
-                    moveTo(cx - wQuarter, cy - (hHalf * 0.5f))
-                    lineTo(cx + wQuarter, cy + (hHalf * 0.5f))
-                    lineTo(cx, cy + hHalf)
-                    moveTo(cx - wQuarter, cy + (hHalf * 0.5f))
-                    lineTo(cx + wQuarter, cy - (hHalf * 0.5f))
-                    lineTo(cx, cy - hHalf)
-                }
-                canvas.drawPath(btPath, iconPaint)
+                iconBtPath.reset()
+                iconBtPath.moveTo(cx, cy - hHalf)
+                iconBtPath.lineTo(cx, cy + hHalf)
+                iconBtPath.moveTo(cx - wQuarter, cy - (hHalf * 0.5f))
+                iconBtPath.lineTo(cx + wQuarter, cy + (hHalf * 0.5f))
+                iconBtPath.lineTo(cx, cy + hHalf)
+                iconBtPath.moveTo(cx - wQuarter, cy + (hHalf * 0.5f))
+                iconBtPath.lineTo(cx + wQuarter, cy - (hHalf * 0.5f))
+                iconBtPath.lineTo(cx, cy - hHalf)
+                canvas.drawPath(iconBtPath, iconPaint)
             }
         }
     }

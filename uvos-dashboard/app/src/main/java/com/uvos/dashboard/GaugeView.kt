@@ -71,6 +71,23 @@ class GaugeView @JvmOverloads constructor(
     private var customValueText: String? = null
     private var animator: ValueAnimator? = null
 
+    // --- Кэшированная геометрия и шейдеры для 120Hz 0-allocation Canvas rendering ---
+    private val caseRect = RectF()
+    private val rectOuter = RectF()
+    private val rectInner = RectF()
+    private val maskRect = RectF()
+    private val capRect = RectF()
+
+    private var cachedW = -1f
+    private var cachedH = -1f
+    private var cachedScale = -1f
+    private var bodyGrad: LinearGradient? = null
+    private var screwHeadGrad: RadialGradient? = null
+    private var bezelGrad: LinearGradient? = null
+    private var dialFaceGrad: RadialGradient? = null
+    private var maskGrad: LinearGradient? = null
+    private var dangerGlowGrad: RadialGradient? = null
+
     // --- Базовые переиспользуемые кисти ---
     private val fillPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.FILL }
     private val strokePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.STROKE }
@@ -94,18 +111,35 @@ class GaugeView @JvmOverloads constructor(
     private val needleCounterPath = Path()
 
     /**
-     * Плавно перевести стрелку на новый уровень [0..1].
+     * Плавно перевести стрелку на новый уровень [0..1] с dirty check.
      */
     fun setLevel(newLevel: Float, displayValue: String? = null) {
         val target = newLevel.coerceIn(0f, 1f)
+        val textChanged = customValueText != displayValue
+        val delta = kotlin.math.abs(needleLevel - target)
+
+        // Dirty check: если значение и текст не изменились, не перезапускаем аниматор и не инвалидируем
+        if (!textChanged && delta < 0.005f) {
+            return
+        }
+
         customValueText = displayValue
+        if (delta < 0.005f) {
+            needleLevel = target
+            invalidate()
+            return
+        }
+
         animator?.cancel()
         animator = ValueAnimator.ofFloat(needleLevel, target).apply {
-            duration = 600
+            duration = 550
             interpolator = DecelerateInterpolator()
             addUpdateListener { anim ->
-                needleLevel = anim.animatedValue as Float
-                invalidate()
+                val v = anim.animatedValue as Float
+                if (kotlin.math.abs(needleLevel - v) > 0.002f) {
+                    needleLevel = v
+                    invalidate()
+                }
             }
             start()
         }
@@ -130,76 +164,24 @@ class GaugeView @JvmOverloads constructor(
         setMeasuredDimension(finalSize, finalSize)
     }
 
-    /**
-     * Отрисовка кокпитного винта со шлицем под отвертку (точно как в renderAviationVoltmeter)
-     */
-    private fun drawCockpitScrew(canvas: Canvas, cx: Float, cy: Float, r: Float, angleDeg: Float, scale: Float) {
-        // 1. Теневое углубление винта (гнездо)
-        fillPaint.shader = null
-        fillPaint.color = Color.parseColor("#06070A")
-        canvas.drawCircle(cx, cy + 0.8f * scale, r + 1.2f * scale, fillPaint)
-
-        // 2. Радиальный градиент головки винта
-        val screwGrad = RadialGradient(
-            cx - r * 0.35f, cy - r * 0.35f, r,
-            intArrayOf(
-                Color.parseColor("#989BA8"),
-                Color.parseColor("#565A68"),
-                Color.parseColor("#282A34"),
-                Color.parseColor("#15161C")
-            ),
-            floatArrayOf(0.0f, 0.35f, 0.75f, 1.0f),
-            Shader.TileMode.CLAMP
-        )
-        fillPaint.shader = screwGrad
-        canvas.drawCircle(cx, cy, r, fillPaint)
-        fillPaint.shader = null
-
-        // 3. Ободок головки винта
-        strokePaint.shader = null
-        strokePaint.color = Color.parseColor("#484B5A")
-        strokePaint.strokeWidth = 0.8f * scale
-        canvas.drawCircle(cx, cy, r, strokePaint)
-
-        // 4. Шлиц винта с фаской
-        val rad = Math.toRadians(angleDeg.toDouble())
-        val dx = r * 0.72f * cos(rad).toFloat()
-        val dy = r * 0.72f * sin(rad).toFloat()
-
-        // Светлая фаска шлица
-        strokePaint.color = Color.parseColor("#747788")
-        strokePaint.strokeWidth = 1.6f * scale
-        canvas.drawLine(cx - dx, cy - dy + 0.6f * scale, cx + dx, cy + dy + 0.6f * scale, strokePaint)
-
-        // Глубокий теневой пропил
-        strokePaint.color = Color.parseColor("#050608")
-        strokePaint.strokeWidth = 1.3f * scale
-        canvas.drawLine(cx - dx, cy - dy, cx + dx, cy + dy, strokePaint)
+    override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
+        super.onSizeChanged(w, h, oldw, oldh)
+        updateCachedShadersAndBounds(w.toFloat(), h.toFloat())
     }
 
-    override fun onDraw(canvas: Canvas) {
-        super.onDraw(canvas)
-        val w = width.toFloat()
-        val h = height.toFloat()
+    private fun updateCachedShadersAndBounds(w: Float, h: Float) {
         if (w <= 0f || h <= 0f) return
+        if (w == cachedW && h == cachedH && bodyGrad != null) return
 
-        // Референсный размер в презентации — 176x176px.
-        // Масштабируем все элементы строго пропорционально.
+        cachedW = w
+        cachedH = h
         val scale = w / 176f
-
+        cachedScale = scale
         val pad = 2f * scale
-        val caseRadius = 24f * scale
 
-        // Гарантируем сброс прозрачности и шейдеров перед каждым кадром отрисовки
-        fillPaint.shader = null
-        fillPaint.alpha = 255
-        strokePaint.shader = null
-        strokePaint.alpha = 255
+        caseRect.set(pad, pad, w - pad, h - pad)
 
-        // =====================================================================
-        // 1. Корпус прибора (тёмный градиент #262832 -> #0B0C10)
-        // =====================================================================
-        val bodyGrad = LinearGradient(
+        bodyGrad = LinearGradient(
             0f, 0f, w, h,
             intArrayOf(
                 Color.parseColor("#262832"),
@@ -210,8 +192,157 @@ class GaugeView @JvmOverloads constructor(
             floatArrayOf(0.0f, 0.30f, 0.70f, 1.0f),
             Shader.TileMode.CLAMP
         )
+
+        val screwR = 5.0f * scale
+        screwHeadGrad = RadialGradient(
+            -screwR * 0.35f, -screwR * 0.35f, screwR,
+            intArrayOf(
+                Color.parseColor("#989BA8"),
+                Color.parseColor("#565A68"),
+                Color.parseColor("#282A34"),
+                Color.parseColor("#15161C")
+            ),
+            floatArrayOf(0.0f, 0.35f, 0.75f, 1.0f),
+            Shader.TileMode.CLAMP
+        )
+
+        val dialCenterX = w / 2f
+        val dialCenterY = h * 0.46f
+        val dialRadius = min(w, h) * 0.36f
+
+        bezelGrad = LinearGradient(
+            dialCenterX - dialRadius, dialCenterY - dialRadius,
+            dialCenterX + dialRadius, dialCenterY + dialRadius,
+            intArrayOf(
+                Color.parseColor("#5A5E70"),
+                Color.parseColor("#2A2C38"),
+                Color.parseColor("#161720"),
+                Color.parseColor("#0C0D12")
+            ),
+            floatArrayOf(0.0f, 0.30f, 0.70f, 1.0f),
+            Shader.TileMode.CLAMP
+        )
+
+        dialFaceGrad = RadialGradient(
+            dialCenterX, dialCenterY, dialRadius,
+            intArrayOf(
+                Color.parseColor("#191B22"),
+                Color.parseColor("#101116"),
+                Color.parseColor("#08080B")
+            ),
+            floatArrayOf(0.10f, 0.80f, 1.0f),
+            Shader.TileMode.CLAMP
+        )
+
+        val scaleRadiusOuter = dialRadius * 0.85f
+        val scaleRadiusInner = dialRadius * 0.70f
+        rectOuter.set(
+            dialCenterX - scaleRadiusOuter, dialCenterY - scaleRadiusOuter,
+            dialCenterX + scaleRadiusOuter, dialCenterY + scaleRadiusOuter
+        )
+        rectInner.set(
+            dialCenterX - scaleRadiusInner, dialCenterY - scaleRadiusInner,
+            dialCenterX + scaleRadiusInner, dialCenterY + scaleRadiusInner
+        )
+
+        val maskY = dialCenterY + dialRadius * 0.30f
+        maskRect.set(
+            dialCenterX - dialRadius, maskY,
+            dialCenterX + dialRadius, dialCenterY + dialRadius
+        )
+        maskGrad = LinearGradient(
+            0f, maskY, 0f, dialCenterY + dialRadius,
+            intArrayOf(
+                Color.parseColor("#1B1D26"),
+                Color.parseColor("#101117"),
+                Color.parseColor("#08080C")
+            ),
+            floatArrayOf(0.0f, 0.30f, 1.0f),
+            Shader.TileMode.CLAMP
+        )
+
+        capRect.set(
+            dialCenterX - 6.5f * scale, maskY - 6.5f * scale,
+            dialCenterX + 6.5f * scale, maskY + 6.5f * scale
+        )
+
+        val lampX = w - pad - 32f * scale
+        val lampY = pad + 15f * scale
+        dangerGlowGrad = RadialGradient(
+            lampX, lampY, 11f * scale,
+            intArrayOf(
+                Color.argb((0.85f * 255).toInt(), 255, 36, 36),
+                Color.argb((0.35f * 255).toInt(), 224, 32, 32),
+                Color.argb(0, 224, 32, 32)
+            ),
+            floatArrayOf(0.1f, 0.5f, 1.0f),
+            Shader.TileMode.CLAMP
+        )
+    }
+
+    /**
+     * Отрисовка кокпитного винта со шлицем под отвертку (без аллокаций)
+     */
+    private fun drawCockpitScrew(canvas: Canvas, cx: Float, cy: Float, r: Float, angleDeg: Float, scale: Float) {
+        // 1. Теневое углубление винта (гнездо)
+        fillPaint.shader = null
+        fillPaint.color = Color.parseColor("#06070A")
+        canvas.drawCircle(cx, cy + 0.8f * scale, r + 1.2f * scale, fillPaint)
+
+        // 2. Радиальный градиент головки винта
+        canvas.save()
+        canvas.translate(cx, cy)
+        fillPaint.shader = screwHeadGrad
+        canvas.drawCircle(0f, 0f, r, fillPaint)
+        fillPaint.shader = null
+
+        // 3. Ободок головки винта
+        strokePaint.shader = null
+        strokePaint.color = Color.parseColor("#484B5A")
+        strokePaint.strokeWidth = 0.8f * scale
+        canvas.drawCircle(0f, 0f, r, strokePaint)
+
+        // 4. Шлиц винта с фаской
+        val rad = Math.toRadians(angleDeg.toDouble())
+        val dx = r * 0.72f * cos(rad).toFloat()
+        val dy = r * 0.72f * sin(rad).toFloat()
+
+        // Светлая фаска шлица
+        strokePaint.color = Color.parseColor("#747788")
+        strokePaint.strokeWidth = 1.6f * scale
+        canvas.drawLine(-dx, -dy + 0.6f * scale, dx, dy + 0.6f * scale, strokePaint)
+
+        // Глубокий теневой пропил
+        strokePaint.color = Color.parseColor("#050608")
+        strokePaint.strokeWidth = 1.3f * scale
+        canvas.drawLine(-dx, -dy, dx, dy, strokePaint)
+        canvas.restore()
+    }
+
+    override fun onDraw(canvas: Canvas) {
+        super.onDraw(canvas)
+        val w = width.toFloat()
+        val h = height.toFloat()
+        if (w <= 0f || h <= 0f) return
+
+        if (w != cachedW || h != cachedH || bodyGrad == null) {
+            updateCachedShadersAndBounds(w, h)
+        }
+
+        val scale = cachedScale
+        val pad = 2f * scale
+        val caseRadius = 24f * scale
+
+        // Гарантируем сброс прозрачности и шейдеров перед каждым кадром отрисовки
+        fillPaint.shader = null
+        fillPaint.alpha = 255
+        strokePaint.shader = null
+        strokePaint.alpha = 255
+
+        // =====================================================================
+        // 1. Корпус прибора (кэшированный градиент)
+        // =====================================================================
         fillPaint.shader = bodyGrad
-        val caseRect = RectF(pad, pad, w - pad, h - pad)
         canvas.drawRoundRect(caseRect, caseRadius, caseRadius, fillPaint)
         fillPaint.shader = null
 
@@ -252,18 +383,6 @@ class GaugeView @JvmOverloads constructor(
         val dialCenterY = h * 0.46f
         val dialRadius = min(w, h) * 0.36f
 
-        val bezelGrad = LinearGradient(
-            dialCenterX - dialRadius, dialCenterY - dialRadius,
-            dialCenterX + dialRadius, dialCenterY + dialRadius,
-            intArrayOf(
-                Color.parseColor("#5A5E70"),
-                Color.parseColor("#2A2C38"),
-                Color.parseColor("#161720"),
-                Color.parseColor("#0C0D12")
-            ),
-            floatArrayOf(0.0f, 0.30f, 0.70f, 1.0f),
-            Shader.TileMode.CLAMP
-        )
         fillPaint.shader = bezelGrad
         canvas.drawCircle(dialCenterX, dialCenterY, dialRadius + 5.5f * scale, fillPaint)
         fillPaint.shader = null
@@ -285,16 +404,6 @@ class GaugeView @JvmOverloads constructor(
         dialClipPath.addCircle(dialCenterX, dialCenterY, dialRadius, Path.Direction.CW)
         canvas.clipPath(dialClipPath)
 
-        val dialFaceGrad = RadialGradient(
-            dialCenterX, dialCenterY, dialRadius,
-            intArrayOf(
-                Color.parseColor("#191B22"),
-                Color.parseColor("#101116"),
-                Color.parseColor("#08080B")
-            ),
-            floatArrayOf(0.10f, 0.80f, 1.0f),
-            Shader.TileMode.CLAMP
-        )
         fillPaint.shader = dialFaceGrad
         canvas.drawCircle(dialCenterX, dialCenterY, dialRadius, fillPaint)
         fillPaint.shader = null
@@ -315,15 +424,6 @@ class GaugeView @JvmOverloads constructor(
         val isBattery = title.contains("BATT", ignoreCase = true) || title.contains("АКБ", ignoreCase = true)
         val redThreshold = if (isBattery) 0.20f else 0.80f
         val inDanger = if (isBattery) (needleLevel <= redThreshold) else (needleLevel >= redThreshold)
-
-        val rectOuter = RectF(
-            dialCenterX - scaleRadiusOuter, dialCenterY - scaleRadiusOuter,
-            dialCenterX + scaleRadiusOuter, dialCenterY + scaleRadiusOuter
-        )
-        val rectInner = RectF(
-            dialCenterX - scaleRadiusInner, dialCenterY - scaleRadiusInner,
-            dialCenterX + scaleRadiusInner, dialCenterY + scaleRadiusInner
-        )
 
         val colorIvory = Color.parseColor("#F2E8A6")
         val colorRed = Color.parseColor("#E02020")
@@ -449,23 +549,9 @@ class GaugeView @JvmOverloads constructor(
         canvas.restore()
 
         // =====================================================================
-        // 8. Нижняя шторка механизма
+        // 8. Нижняя шторка механизма (кэшированный Rect и LinearGradient)
         // =====================================================================
         val maskY = dialCenterY + dialRadius * 0.30f
-        val maskRect = RectF(
-            dialCenterX - dialRadius, maskY,
-            dialCenterX + dialRadius, dialCenterY + dialRadius
-        )
-        val maskGrad = LinearGradient(
-            0f, maskY, 0f, dialCenterY + dialRadius,
-            intArrayOf(
-                Color.parseColor("#1B1D26"),
-                Color.parseColor("#101117"),
-                Color.parseColor("#08080C")
-            ),
-            floatArrayOf(0.0f, 0.30f, 1.0f),
-            Shader.TileMode.CLAMP
-        )
         fillPaint.shader = maskGrad
         canvas.drawRect(maskRect, fillPaint)
         fillPaint.shader = null
@@ -476,10 +562,6 @@ class GaugeView @JvmOverloads constructor(
         canvas.drawLine(dialCenterX - dialRadius, maskY, dialCenterX + dialRadius, maskY, strokePaint)
 
         // Полусферический колпачок оси
-        val capRect = RectF(
-            dialCenterX - 6.5f * scale, maskY - 6.5f * scale,
-            dialCenterX + 6.5f * scale, maskY + 6.5f * scale
-        )
         fillPaint.color = Color.parseColor("#0B0C10")
         canvas.drawArc(capRect, 180f, 180f, true, fillPaint)
 
@@ -505,21 +587,11 @@ class GaugeView @JvmOverloads constructor(
         canvas.drawCircle(lampX, lampY, lampR + 1.6f * scale, strokePaint)
 
         if (inDanger) {
-            // Аварийный режим: яркая лампа #FF2424 с ореолом свечения
+            // Аварийный режим: яркая лампа #FF2424 с кэшированным ореолом свечения
             fillPaint.color = Color.parseColor("#FF2424")
             canvas.drawCircle(lampX, lampY, lampR, fillPaint)
 
-            val glow = RadialGradient(
-                lampX, lampY, 11f * scale,
-                intArrayOf(
-                    Color.argb((0.85f * 255).toInt(), 255, 36, 36),
-                    Color.argb((0.35f * 255).toInt(), 224, 32, 32),
-                    Color.argb(0, 224, 32, 32)
-                ),
-                floatArrayOf(0.1f, 0.5f, 1.0f),
-                Shader.TileMode.CLAMP
-            )
-            fillPaint.shader = glow
+            fillPaint.shader = dangerGlowGrad
             canvas.drawCircle(lampX, lampY, 11f * scale, fillPaint)
             fillPaint.shader = null
         } else {

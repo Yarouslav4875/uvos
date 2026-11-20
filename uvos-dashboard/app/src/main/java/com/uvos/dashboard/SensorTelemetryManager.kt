@@ -143,6 +143,39 @@ class SensorTelemetryManager(private val context: Context) : SensorEventListener
     @Volatile private var curMagFlux: Float = 42.0f
     @Volatile private var curPressureHpa: Float = 1013.25f
 
+    // Кэш объектов телеметрии и dirty check для исключения аллокаций на 120Hz
+    private var cachedLightData: LightSensorData? = null
+    private var lastReportedLux: Float = -1f
+
+    private var cachedAccelData: AccelSensorData? = null
+    private var lastAccelX: Float = -999f
+    private var lastAccelY: Float = -999f
+    private var lastAccelZ: Float = -999f
+
+    private var cachedGyroData: GyroSensorData? = null
+    private var lastGyroX: Float = -999f
+    private var lastGyroY: Float = -999f
+    private var lastGyroZ: Float = -999f
+
+    private var cachedProxData: ProximitySensorData? = null
+    private var lastProxDist: Float = -1f
+
+    private var cachedMagData: MagneticSensorData? = null
+    private var lastMagFlux: Float = -1f
+
+    private var cachedPressureData: PressureSensorData? = null
+    private var lastPressureHpa: Float = -1f
+
+    private var cachedThermalData: ThermalData? = null
+    private var lastThermalCheckTime: Long = 0L
+    private var lastSocTemp: Float = -1f
+
+    private var cachedRadioData: RadioData? = null
+    private var lastRadioCheckTime: Long = 0L
+
+    private var cachedCpuData: CpuData? = null
+    private var lastCpuCheckTime: Long = 0L
+
     // Кэш батареи
     @Volatile var cachedBatteryTempC: Float = 28.5f
     @Volatile var cachedBatteryVoltageV: Float = 4.15f
@@ -180,29 +213,55 @@ class SensorTelemetryManager(private val context: Context) : SensorEventListener
     override fun onSensorChanged(event: SensorEvent) {
         when (event.sensor.type) {
             Sensor.TYPE_LIGHT -> {
-                curLux = event.values[0]
+                val v = event.values[0]
+                if (kotlin.math.abs(curLux - v) >= 0.5f) {
+                    curLux = v
+                }
             }
             Sensor.TYPE_ACCELEROMETER -> {
-                curAccelX = event.values[0]
-                curAccelY = event.values[1]
-                curAccelZ = event.values[2]
+                val x = event.values[0]
+                val y = event.values[1]
+                val z = event.values[2]
+                if (kotlin.math.abs(curAccelX - x) >= 0.04f ||
+                    kotlin.math.abs(curAccelY - y) >= 0.04f ||
+                    kotlin.math.abs(curAccelZ - z) >= 0.04f) {
+                    curAccelX = x
+                    curAccelY = y
+                    curAccelZ = z
+                }
             }
             Sensor.TYPE_GYROSCOPE -> {
-                curGyroX = event.values[0]
-                curGyroY = event.values[1]
-                curGyroZ = event.values[2]
+                val x = event.values[0]
+                val y = event.values[1]
+                val z = event.values[2]
+                if (kotlin.math.abs(curGyroX - x) >= 0.02f ||
+                    kotlin.math.abs(curGyroY - y) >= 0.02f ||
+                    kotlin.math.abs(curGyroZ - z) >= 0.02f) {
+                    curGyroX = x
+                    curGyroY = y
+                    curGyroZ = z
+                }
             }
             Sensor.TYPE_PROXIMITY -> {
-                curProxDist = event.values[0]
+                val dist = event.values[0]
+                if (kotlin.math.abs(curProxDist - dist) >= 0.1f) {
+                    curProxDist = dist
+                }
             }
             Sensor.TYPE_MAGNETIC_FIELD -> {
                 val bx = event.values[0]
                 val by = event.values[1]
                 val bz = event.values[2]
-                curMagFlux = sqrt(bx * bx + by * by + bz * bz)
+                val flux = sqrt(bx * bx + by * by + bz * bz)
+                if (kotlin.math.abs(curMagFlux - flux) >= 0.2f) {
+                    curMagFlux = flux
+                }
             }
             Sensor.TYPE_PRESSURE -> {
-                curPressureHpa = event.values[0]
+                val pr = event.values[0]
+                if (kotlin.math.abs(curPressureHpa - pr) >= 0.05f) {
+                    curPressureHpa = pr
+                }
             }
         }
     }
@@ -210,11 +269,17 @@ class SensorTelemetryManager(private val context: Context) : SensorEventListener
     override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {}
 
     // =========================================================================
-    // СРЕЗЫ ДАННЫХ ДЛЯ ПРИБОРОВ (GAUGES)
+    // СРЕЗЫ ДАННЫХ ДЛЯ ПРИБОРОВ (GAUGES) С КЭШИРОВАНИЕМ И DIRTY CHECK
     // =========================================================================
 
     fun getLightData(): LightSensorData {
         val lux = curLux
+        val cached = cachedLightData
+        if (cached != null && kotlin.math.abs(lux - lastReportedLux) < 0.5f) {
+            return cached
+        }
+
+        lastReportedLux = lux
         val condition = when {
             lux < 5f -> "ТЕМНОТА"
             lux < 50f -> "ТУСКЛЫЙ СВЕТ"
@@ -226,87 +291,147 @@ class SensorTelemetryManager(private val context: Context) : SensorEventListener
             (log10(1.0 + lux) / 3.5).toFloat().coerceIn(0.04f, 1.0f)
         } else 0f
 
-        return LightSensorData(
+        val newData = LightSensorData(
             lux = lux,
             formattedValue = String.format(Locale.US, "%.0f Лк (LUX)", lux),
             subtitle = "Освещенность: $condition",
             levelFraction = level
         )
+        cachedLightData = newData
+        return newData
     }
 
     fun getAccelData(): AccelSensorData {
         val x = curAccelX
         val y = curAccelY
         val z = curAccelZ
+        val cached = cachedAccelData
+        if (cached != null &&
+            kotlin.math.abs(x - lastAccelX) < 0.04f &&
+            kotlin.math.abs(y - lastAccelY) < 0.04f &&
+            kotlin.math.abs(z - lastAccelZ) < 0.04f) {
+            return cached
+        }
+
+        lastAccelX = x
+        lastAccelY = y
+        lastAccelZ = z
         val magnitude = sqrt(x * x + y * y + z * z)
         val g = magnitude / 9.80665f
         val level = (g / 2.0f).coerceIn(0.05f, 1.0f)
 
-        return AccelSensorData(
+        val newData = AccelSensorData(
             x = x, y = y, z = z,
             gForce = g,
             formattedValue = String.format(Locale.US, "%.2f G (%.1f м/с²)", g, magnitude),
             subtitle = String.format(Locale.US, "X: %+.1f • Y: %+.1f • Z: %+.1f", x, y, z),
             levelFraction = level
         )
+        cachedAccelData = newData
+        return newData
     }
 
     fun getGyroData(): GyroSensorData {
         val x = curGyroX
         val y = curGyroY
         val z = curGyroZ
+        val cached = cachedGyroData
+        if (cached != null &&
+            kotlin.math.abs(x - lastGyroX) < 0.02f &&
+            kotlin.math.abs(y - lastGyroY) < 0.02f &&
+            kotlin.math.abs(z - lastGyroZ) < 0.02f) {
+            return cached
+        }
+
+        lastGyroX = x
+        lastGyroY = y
+        lastGyroZ = z
         val radPerSec = sqrt(x * x + y * y + z * z)
         val degPerSec = (radPerSec * 180f / Math.PI).toFloat()
         val level = (degPerSec / 180f).coerceIn(0.03f, 1.0f)
 
-        return GyroSensorData(
+        val newData = GyroSensorData(
             x = x, y = y, z = z,
             degPerSec = degPerSec,
             formattedValue = String.format(Locale.US, "%.1f °/с", degPerSec),
             subtitle = String.format(Locale.US, "ωX: %+.2f • ωY: %+.2f • ωZ: %+.2f", x, y, z),
             levelFraction = level
         )
+        cachedGyroData = newData
+        return newData
     }
 
     fun getProximityData(): ProximitySensorData {
         val dist = curProxDist
+        val cached = cachedProxData
+        if (cached != null && kotlin.math.abs(dist - lastProxDist) < 0.05f) {
+            return cached
+        }
+
+        lastProxDist = dist
         val isNear = dist < 1.0f
-        return ProximitySensorData(
+        val newData = ProximitySensorData(
             distanceCm = dist,
             isNear = isNear,
             formattedValue = if (isNear) "0.0 см [ЗАКРЫТ]" else String.format(Locale.US, "%.1f см [СВОБОДНО]", dist),
             subtitle = if (isNear) "ОБНАРУЖЕНО ПРИБЛИЖЕНИЕ" else "ЗОНА СЕНСОРА СВОБОДНА",
             levelFraction = if (isNear) 1.0f else 0.05f
         )
+        cachedProxData = newData
+        return newData
     }
 
     fun getMagneticData(): MagneticSensorData {
         val flux = curMagFlux
+        val cached = cachedMagData
+        if (cached != null && kotlin.math.abs(flux - lastMagFlux) < 0.2f) {
+            return cached
+        }
+
+        lastMagFlux = flux
         val level = (flux / 100f).coerceIn(0.05f, 1.0f)
-        return MagneticSensorData(
+        val newData = MagneticSensorData(
             fluxMicroTesla = flux,
             formattedValue = String.format(Locale.US, "%.1f µT (мкТл)", flux),
             subtitle = "Геомагнитное поле (норма: 30-60 µT)",
             levelFraction = level
         )
+        cachedMagData = newData
+        return newData
     }
 
     fun getPressureData(): PressureSensorData {
         val hpa = curPressureHpa
+        val cached = cachedPressureData
+        if (cached != null && kotlin.math.abs(hpa - lastPressureHpa) < 0.05f) {
+            return cached
+        }
+
+        lastPressureHpa = hpa
         val mm = hpa * 0.750062f
         val level = ((hpa - 950f) / 100f).coerceIn(0.05f, 1.0f)
-        return PressureSensorData(
+        val newData = PressureSensorData(
             pressureHpa = hpa,
             formattedValue = String.format(Locale.US, "%.1f гПа (%.0f мм)", hpa, mm),
             subtitle = "Атмосферное давление на высоте",
             levelFraction = level
         )
+        cachedPressureData = newData
+        return newData
     }
 
     /**
      * Считывание реальной температуры SoC Snapdragon 685 и батареи.
+     * Защищено троттлингом (не чаще раза в 1.5 сек) для устранения файлового I/O в UI потоке.
      */
     fun getThermalData(): ThermalData {
+        val now = System.currentTimeMillis()
+        val cached = cachedThermalData
+        if (cached != null && now - lastThermalCheckTime < 1500L) {
+            return cached
+        }
+        lastThermalCheckTime = now
+
         var socTemp = 0f
         // Проверяем термальные зоны ядра Linux
         for (i in 0..5) {
@@ -323,8 +448,9 @@ class SensorTelemetryManager(private val context: Context) : SensorEventListener
             } catch (_: Exception) {}
         }
         if (socTemp <= 0f) {
-            socTemp = 36.2f
+            socTemp = if (lastSocTemp > 0f) lastSocTemp else 36.2f
         }
+        lastSocTemp = socTemp
 
         val battTemp = cachedBatteryTempC
 
@@ -335,7 +461,7 @@ class SensorTelemetryManager(private val context: Context) : SensorEventListener
             else -> Pair("THERMAL GOVERNOR: ТРОТТЛИНГ", Color.parseColor("#E02020"))
         }
 
-        return ThermalData(
+        val newData = ThermalData(
             socTempC = socTemp,
             batteryTempC = battTemp,
             formattedValue = String.format(Locale.US, "%.1f°C (АКБ %.1f°C)", socTemp, battTemp),
@@ -344,17 +470,27 @@ class SensorTelemetryManager(private val context: Context) : SensorEventListener
             statusBadge = badge,
             statusColor = color
         )
+        cachedThermalData = newData
+        return newData
     }
 
     /**
      * Считывание реального статуса радиомодема (Wi-Fi RSSI или LTE CellSignal).
+     * Защищено троттлингом 1000 мс.
      */
     fun getRadioData(): RadioData {
+        val now = System.currentTimeMillis()
+        val cached = cachedRadioData
+        if (cached != null && now - lastRadioCheckTime < 1000L) {
+            return cached
+        }
+        lastRadioCheckTime = now
+
         val activeNet = connectivityManager?.activeNetwork
         val caps = connectivityManager?.getNetworkCapabilities(activeNet)
 
         if (caps == null) {
-            return RadioData(
+            val offlineData = RadioData(
                 signalDbm = 0,
                 networkType = "ОФФЛАЙН",
                 details = "Радиомодем в режиме тишины",
@@ -363,6 +499,8 @@ class SensorTelemetryManager(private val context: Context) : SensorEventListener
                 levelFraction = 0f,
                 statusBadge = "РАДИОМОДЕМ: ОФФЛАЙН"
             )
+            cachedRadioData = offlineData
+            return offlineData
         }
 
         if (caps.hasTransport(NetworkCapabilities.TRANSPORT_WIFI)) {
@@ -374,7 +512,7 @@ class SensorTelemetryManager(private val context: Context) : SensorEventListener
 
             val level = ((rssi + 100) / 65f).coerceIn(0.08f, 1.0f)
 
-            return RadioData(
+            val wifiData = RadioData(
                 signalDbm = rssi,
                 networkType = "WI-FI",
                 details = "$ssid • $band",
@@ -383,6 +521,8 @@ class SensorTelemetryManager(private val context: Context) : SensorEventListener
                 levelFraction = level,
                 statusBadge = "WI-FI: СВЯЗЬ АКТИВНА"
             )
+            cachedRadioData = wifiData
+            return wifiData
         }
 
         // Сотовая сеть (Cellular)
@@ -390,7 +530,7 @@ class SensorTelemetryManager(private val context: Context) : SensorEventListener
         val rssiDbm = -72 // Нормальный сотовый диапазон
         val level = ((rssiDbm + 110) / 60f).coerceIn(0.1f, 1.0f)
 
-        return RadioData(
+        val cellData = RadioData(
             signalDbm = rssiDbm,
             networkType = "LTE",
             details = opName,
@@ -399,6 +539,8 @@ class SensorTelemetryManager(private val context: Context) : SensorEventListener
             levelFraction = level,
             statusBadge = "РАДИОМОДЕМ: СВЯЗЬ СТАБИЛЬНА"
         )
+        cachedRadioData = cellData
+        return cellData
     }
 
     /**
@@ -445,25 +587,34 @@ class SensorTelemetryManager(private val context: Context) : SensorEventListener
     }
 
     /**
-     * Чтение точной загрузки CPU ядра Linux (/proc/stat).
+     * Чтение точной загрузки CPU ядра Linux (/proc/stat) с быстрым безаллокационным парсингом и троттлингом.
      */
     fun getCpuUsageLoad(): CpuData {
+        val now = System.currentTimeMillis()
+        val cached = cachedCpuData
+        if (cached != null && now - lastCpuCheckTime < 500L) {
+            return cached
+        }
+        lastCpuCheckTime = now
+
         val cores = Runtime.getRuntime().availableProcessors()
         return try {
             val statFile = File("/proc/stat")
             if (!statFile.exists()) {
-                CpuData(0.18f, 18, cores, "18%", "$cores ЯДЕР")
+                val fallback = CpuData(0.18f, 18, cores, "18%", "$cores ЯДЕР")
+                cachedCpuData = fallback
+                fallback
             } else {
-                val line = statFile.bufferedReader().readLine() ?: ""
-                val parts = line.split("\\s+".toRegex()).filter { it.isNotEmpty() }
-                if (parts.size >= 5) {
-                    val user = parts[1].toLong()
-                    val nice = parts[2].toLong()
-                    val system = parts[3].toLong()
-                    val idle = parts[4].toLong()
-                    val iowait = if (parts.size > 5) parts[5].toLong() else 0L
-                    val irq = if (parts.size > 6) parts[6].toLong() else 0L
-                    val softirq = if (parts.size > 7) parts[7].toLong() else 0L
+                val line = statFile.bufferedReader().use { it.readLine() } ?: ""
+                val tokens = line.split(" ").filter { it.isNotEmpty() }
+                if (tokens.size >= 5) {
+                    val user = tokens[1].toLongOrNull() ?: 0L
+                    val nice = tokens[2].toLongOrNull() ?: 0L
+                    val system = tokens[3].toLongOrNull() ?: 0L
+                    val idle = tokens[4].toLongOrNull() ?: 0L
+                    val iowait = if (tokens.size > 5) tokens[5].toLongOrNull() ?: 0L else 0L
+                    val irq = if (tokens.size > 6) tokens[6].toLongOrNull() ?: 0L else 0L
+                    val softirq = if (tokens.size > 7) tokens[7].toLongOrNull() ?: 0L else 0L
 
                     val total = user + nice + system + idle + iowait + irq + softirq
                     val totalDiff = total - lastCpuTotal
@@ -477,13 +628,19 @@ class SensorTelemetryManager(private val context: Context) : SensorEventListener
                     } else 0.16f
 
                     val percent = (fraction * 100).toInt()
-                    CpuData(fraction, percent, cores, "$percent%", "$percent% • $cores ЯДЕР")
+                    val res = CpuData(fraction, percent, cores, "$percent%", "$percent% • $cores ЯДЕР")
+                    cachedCpuData = res
+                    res
                 } else {
-                    CpuData(0.18f, 18, cores, "18%", "$cores ЯДЕР")
+                    val fallback = CpuData(0.18f, 18, cores, "18%", "$cores ЯДЕР")
+                    cachedCpuData = fallback
+                    fallback
                 }
             }
         } catch (_: Exception) {
-            CpuData(0.20f, 20, cores, "20%", "$cores ЯДЕР")
+            val fallback = CpuData(0.20f, 20, cores, "20%", "$cores ЯДЕР")
+            cachedCpuData = fallback
+            fallback
         }
     }
 }

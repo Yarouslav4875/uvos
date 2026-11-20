@@ -121,6 +121,7 @@ class MainActivity : Activity() {
     // Кастомизация рабочего стола (Обои, Наборы иконок, SAF)
     private lateinit var wallpaperManager: WallpaperManager
     private lateinit var iconPackManager: IconPackManager
+    private lateinit var appLauncher: AppLauncher
     private var customizationDialog: DesktopCustomizationDialog? = null
     private lateinit var wallpaperImageView: ImageView
     private lateinit var wallpaperDimOverlay: View
@@ -220,6 +221,7 @@ class MainActivity : Activity() {
 
         wallpaperManager = WallpaperManager(this)
         iconPackManager = IconPackManager(this)
+        appLauncher = AppLauncher(this)
 
         wallpaperManager.onWallpaperChanged = {
             wallpaperManager.applyTo(wallpaperImageView, wallpaperDimOverlay, mainContentContainer)
@@ -288,6 +290,7 @@ class MainActivity : Activity() {
     override fun onDestroy() {
         super.onDestroy()
         telemetryExecutor.shutdownNow()
+        wallpaperManager.recycleAllBitmaps()
     }
 
     override fun onNewIntent(intent: Intent?) {
@@ -864,25 +867,36 @@ class MainActivity : Activity() {
                     labelView.text = if (count > 0) "${slot.title} ($count)" else slot.title
                     iconPackManager.applySlotStyling(iconView, labelView, isSystemOrFolder = true, isAppIcon = false)
                 } else if (slot.actionType == "APP" && slot.packageName != null) {
-                    try {
-                        val icon = pm.getApplicationIcon(slot.packageName!!)
-                        iconView.setImageDrawable(icon)
-                    } catch (_: Exception) {
-                        iconView.setImageResource(android.R.drawable.sym_def_app_icon)
+                    val uvosGlassRes = if (iconPackManager.getIconPack() == IconPackManager.IconPackType.DARK_GLASS) {
+                        iconPackManager.getGlassIconRes(slot.packageName)
+                    } else null
+
+                    if (uvosGlassRes != null) {
+                        iconView.setImageResource(uvosGlassRes)
+                        iconPackManager.applySlotStyling(iconView, labelView, isSystemOrFolder = true, isAppIcon = false)
+                    } else {
+                        try {
+                            val icon = pm.getApplicationIcon(slot.packageName!!)
+                            iconView.setImageDrawable(icon)
+                        } catch (_: Exception) {
+                            iconView.setImageResource(android.R.drawable.sym_def_app_icon)
+                        }
+                        iconPackManager.applySlotStyling(iconView, labelView, isSystemOrFolder = false, isAppIcon = true)
                     }
-                    iconPackManager.applySlotStyling(iconView, labelView, isSystemOrFolder = false, isAppIcon = true)
                 } else {
                     val resId = getSystemIconRes(slot.iconResName)
                     iconView.setImageResource(resId)
                     iconPackManager.applySlotStyling(iconView, labelView, isSystemOrFolder = true, isAppIcon = false)
                 }
 
-                // Клик - запуск приложения или открытие папки
+                // Клик - запуск приложения или открытие папки с 120Hz аппаратным масштабированием
                 itemView.setOnClickListener {
                     if (slot.actionType == "FOLDER") {
                         showFolderDialog(slot)
                     } else {
-                        handleSlotClick(slot)
+                        animateSlotLaunch(itemView) {
+                            handleSlotClick(slot, itemView)
+                        }
                     }
                 }
 
@@ -950,18 +964,8 @@ class MainActivity : Activity() {
                 }
             }
 
-            // Тактильный пружинный отклик
-            itemView.setOnTouchListener { v, event ->
-                when (event.actionMasked) {
-                    android.view.MotionEvent.ACTION_DOWN -> {
-                        v.animate().scaleX(0.93f).scaleY(0.93f).setDuration(110).start()
-                    }
-                    android.view.MotionEvent.ACTION_UP, android.view.MotionEvent.ACTION_CANCEL -> {
-                        v.animate().scaleX(1.0f).scaleY(1.0f).setDuration(220).setInterpolator(android.view.animation.OvershootInterpolator(1.2f)).start()
-                    }
-                }
-                false
-            }
+            // Тактильный пружинный отклик с альфой и аппаратным слоем (120Hz Fluid Motion)
+            attach120HzTouchFeedback(itemView)
 
             targetRow.addView(itemView)
         }
@@ -971,32 +975,82 @@ class MainActivity : Activity() {
         return iconPackManager.resolveSystemIconRes(iconName)
     }
 
-    private fun handleSlotClick(slot: HomeSlotItem) {
-        val pm = packageManager
+    /**
+     * Плавная 120Hz анимация нажатия на иконку: микро-масштабирование и альфа без выпадения кадров
+     */
+    private fun animateSlotLaunch(v: View, onLaunch: () -> Unit) {
+        v.performHapticFeedback(HapticFeedbackConstants.CONFIRM)
+        v.animate()
+            .scaleX(0.90f)
+            .scaleY(0.90f)
+            .alpha(0.82f)
+            .setDuration(85)
+            .setInterpolator(android.view.animation.DecelerateInterpolator())
+            .withLayer()
+            .withEndAction {
+                v.animate()
+                    .scaleX(1.0f)
+                    .scaleY(1.0f)
+                    .alpha(1.0f)
+                    .setDuration(165)
+                    .setInterpolator(android.view.animation.OvershootInterpolator(1.15f))
+                    .withLayer()
+                    .start()
+                onLaunch()
+            }
+            .start()
+    }
+
+    /**
+     * Подключение тактильного пружинного отклика на касания с альфа-блендингом и аппаратным слоем для 120Hz
+     */
+    private fun attach120HzTouchFeedback(view: View) {
+        view.setOnTouchListener { v, event ->
+            when (event.actionMasked) {
+                android.view.MotionEvent.ACTION_DOWN -> {
+                    v.animate()
+                        .scaleX(0.92f)
+                        .scaleY(0.92f)
+                        .alpha(0.85f)
+                        .setDuration(90)
+                        .setInterpolator(android.view.animation.DecelerateInterpolator())
+                        .withLayer()
+                        .start()
+                }
+                android.view.MotionEvent.ACTION_UP, android.view.MotionEvent.ACTION_CANCEL -> {
+                    v.animate()
+                        .scaleX(1.0f)
+                        .scaleY(1.0f)
+                        .alpha(1.0f)
+                        .setDuration(170)
+                        .setInterpolator(android.view.animation.OvershootInterpolator(1.15f))
+                        .withLayer()
+                        .start()
+                }
+            }
+            false
+        }
+    }
+
+    private fun handleSlotClick(slot: HomeSlotItem, sourceView: View? = null) {
         when (slot.actionType) {
             "APP" -> {
                 if (slot.packageName != null) {
-                    val intent = pm.getLaunchIntentForPackage(slot.packageName!!)
-                    if (intent != null) {
-                        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                        startActivity(intent)
-                    } else {
-                        Toast.makeText(this, "Приложение не найдено", Toast.LENGTH_SHORT).show()
-                    }
+                    appLauncher.launchPackage(slot.packageName!!, sourceView)
                 }
             }
-            "SYSTEM_PHONE" -> safeStartIntent(Intent(Intent.ACTION_DIAL))
-            "SYSTEM_MESSAGES" -> launchOrFallback("com.uvos.messages", Intent(Intent.ACTION_MAIN).apply { addCategory(Intent.CATEGORY_APP_MESSAGING) })
-            "SYSTEM_RADAR" -> safeStartIntent(Intent(Intent.ACTION_VIEW, Uri.parse("https://google.com")))
-            "SYSTEM_CAMERA" -> launchOrFallback("com.uvos.camera", Intent(MediaStore.INTENT_ACTION_STILL_IMAGE_CAMERA))
-            "SYSTEM_FILES" -> launchOrFallback("com.uvos.files", Intent(Intent.ACTION_GET_CONTENT).apply { type = "*/*" })
-            "SYSTEM_PLAYER" -> launchOrFallback("com.uvos.music", Intent(Intent.ACTION_MAIN).apply { addCategory(Intent.CATEGORY_APP_MUSIC) })
-            "SYSTEM_CALC" -> safeStartIntent(Intent(Intent.ACTION_MAIN).apply { addCategory(Intent.CATEGORY_APP_CALCULATOR) })
+            "SYSTEM_PHONE" -> safeStartIntent(Intent(Intent.ACTION_DIAL), sourceView)
+            "SYSTEM_MESSAGES" -> launchOrFallback("com.uvos.messages", Intent(Intent.ACTION_MAIN).apply { addCategory(Intent.CATEGORY_APP_MESSAGING) }, sourceView)
+            "SYSTEM_RADAR" -> safeStartIntent(Intent(Intent.ACTION_VIEW, Uri.parse("https://google.com")), sourceView)
+            "SYSTEM_CAMERA" -> launchOrFallback("com.uvos.camera", Intent(MediaStore.INTENT_ACTION_STILL_IMAGE_CAMERA), sourceView)
+            "SYSTEM_FILES" -> launchOrFallback("com.uvos.files", Intent(Intent.ACTION_GET_CONTENT).apply { type = "*/*" }, sourceView)
+            "SYSTEM_PLAYER" -> launchOrFallback("com.uvos.music", Intent(Intent.ACTION_MAIN).apply { addCategory(Intent.CATEGORY_APP_MUSIC) }, sourceView)
+            "SYSTEM_CALC" -> safeStartIntent(Intent(Intent.ACTION_MAIN).apply { addCategory(Intent.CATEGORY_APP_CALCULATOR) }, sourceView)
             "SYSTEM_SETTINGS" -> showSettingsChooserDialog()
-            "SYSTEM_SHIELD" -> startActivity(Intent(this, ShieldActivity::class.java))
-            "SYSTEM_LOG" -> startActivity(Intent(this, LogActivity::class.java))
+            "SYSTEM_SHIELD" -> safeStartIntent(Intent(this, ShieldActivity::class.java), sourceView)
+            "SYSTEM_LOG" -> safeStartIntent(Intent(this, LogActivity::class.java), sourceView)
             "SYSTEM_OSC" -> {}
-            "SYSTEM_TERM" -> launchOrFallback("com.uvos.terminal", null)
+            "SYSTEM_TERM" -> launchOrFallback("com.uvos.terminal", null, sourceView)
             "SYSTEM_PACKAGES" -> desktopPager.scrollToPage(2, smooth = true)
         }
     }
@@ -1160,14 +1214,8 @@ class MainActivity : Activity() {
 
                     // Клик по приложению внутри папки - запуск
                     appView.setOnClickListener {
-                        val launchIntent = pm.getLaunchIntentForPackage(appItem.packageName)
-                        if (launchIntent != null) {
-                            launchIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                            dialog.dismiss()
-                            startActivity(launchIntent)
-                        } else {
-                            Toast.makeText(this@MainActivity, "Приложение не найдено", Toast.LENGTH_SHORT).show()
-                        }
+                        dialog.dismiss()
+                        appLauncher.launchPackage(appItem.packageName)
                     }
 
                     // Долгий тап по приложению внутри папки - действия
@@ -1185,8 +1233,7 @@ class MainActivity : Activity() {
                                 when (which) {
                                     0 -> {
                                         dialog.dismiss()
-                                        val li = pm.getLaunchIntentForPackage(appItem.packageName)
-                                        if (li != null) startActivity(li)
+                                        appLauncher.launchPackage(appItem.packageName)
                                     }
                                     1 -> {
                                         val freeIdx = homeManager.addAppToFirstFreeSlot(appItem.packageName, appItem.title)
@@ -1645,14 +1692,13 @@ class MainActivity : Activity() {
                 }
             }
 
-            // Нажатие - запуск приложения
+            // Нажатие - запуск приложения с 120Hz аппаратным переходом
+            attach120HzTouchFeedback(row)
             row.setOnClickListener {
-                val launchIntent = pm.getLaunchIntentForPackage(app.packageName)
-                if (launchIntent != null) {
-                    launchIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                    startActivity(launchIntent)
-                } else {
-                    openAppShield(app.packageName)
+                animateSlotLaunch(row) {
+                    if (!appLauncher.launchPackage(app.packageName, row)) {
+                        openAppShield(app.packageName, row)
+                    }
                 }
             }
 
@@ -1879,8 +1925,16 @@ class MainActivity : Activity() {
         val dockRadar = findViewById<View>(R.id.dock_radar)
         val dockShield = findViewById<View>(R.id.dock_shield)
 
+        // 120Hz тактильный пружинный отклик для иконок дока
+        attach120HzTouchFeedback(dockPhone)
+        attach120HzTouchFeedback(dockMessages)
+        attach120HzTouchFeedback(dockRadar)
+        attach120HzTouchFeedback(dockShield)
+
         dockPhone.setOnClickListener {
-            safeStartIntent(Intent(Intent.ACTION_DIAL))
+            animateSlotLaunch(dockPhone) {
+                safeStartIntent(Intent(Intent.ACTION_DIAL), dockPhone)
+            }
         }
         dockPhone.setOnLongClickListener {
             it.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
@@ -1889,10 +1943,12 @@ class MainActivity : Activity() {
         }
 
         dockMessages.setOnClickListener {
-            val intent = Intent(Intent.ACTION_MAIN).apply {
-                addCategory(Intent.CATEGORY_APP_MESSAGING)
+            animateSlotLaunch(dockMessages) {
+                val intent = Intent(Intent.ACTION_MAIN).apply {
+                    addCategory(Intent.CATEGORY_APP_MESSAGING)
+                }
+                safeStartIntent(intent, dockMessages)
             }
-            safeStartIntent(intent)
         }
         dockMessages.setOnLongClickListener {
             it.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
@@ -1901,8 +1957,10 @@ class MainActivity : Activity() {
         }
 
         dockRadar.setOnClickListener {
-            val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://google.com"))
-            safeStartIntent(intent)
+            animateSlotLaunch(dockRadar) {
+                val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://google.com"))
+                safeStartIntent(intent, dockRadar)
+            }
         }
         dockRadar.setOnLongClickListener {
             it.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
@@ -1911,11 +1969,13 @@ class MainActivity : Activity() {
         }
 
         dockShield.setOnClickListener {
-            desktopPager.scrollToPage(0, smooth = true)
+            animateSlotLaunch(dockShield) {
+                desktopPager.scrollToPage(0, smooth = true)
+            }
         }
         dockShield.setOnLongClickListener {
             it.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
-            startActivity(Intent(this, ShieldActivity::class.java))
+            safeStartIntent(Intent(this, ShieldActivity::class.java), dockShield)
             true
         }
     }
@@ -2034,35 +2094,19 @@ class MainActivity : Activity() {
         }
     }
 
-    private fun launchOrFallback(preferredPackage: String, fallbackIntent: Intent?) {
-        try {
-            val launchIntent = packageManager.getLaunchIntentForPackage(preferredPackage)
-            if (launchIntent != null) {
-                launchIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                startActivity(launchIntent)
-            } else if (fallbackIntent != null) {
-                safeStartIntent(fallbackIntent)
-            } else {
-                Toast.makeText(this, "Приложение $preferredPackage не установлено", Toast.LENGTH_SHORT).show()
-            }
-        } catch (_: Exception) {
-            if (fallbackIntent != null) safeStartIntent(fallbackIntent)
-        }
+    private fun launchOrFallback(preferredPackage: String, fallbackIntent: Intent?, sourceView: View? = null) {
+        appLauncher.launchPackage(preferredPackage, fallbackIntent, sourceView)
     }
 
-    private fun safeStartIntent(intent: Intent) {
-        try {
-            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-            startActivity(intent)
-        } catch (_: Exception) {
-        }
+    private fun safeStartIntent(intent: Intent, sourceView: View? = null) {
+        appLauncher.safeStartIntent(intent, sourceView)
     }
 
-    private fun openAppShield(packageName: String) {
+    private fun openAppShield(packageName: String, sourceView: View? = null) {
         val intent = Intent(this, AppChannelsActivity::class.java).apply {
             putExtra(AppChannelsActivity.EXTRA_PACKAGE_NAME, packageName)
         }
-        startActivity(intent)
+        safeStartIntent(intent, sourceView)
     }
 
     private fun updateProfileDescription(profile: ProfileType) {

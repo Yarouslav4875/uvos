@@ -1,0 +1,79 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="48dp"
+    android:height="48dp"
+    android:viewportWidth="48"
+    android:viewportHeight="48">
+
+    <!-- Задний азимутальный диск: сочный алый неон N-сектора (#FF3B30 строго по референсу) -->
+    <path
+        android:fillColor="#FF3B30"
+        android:pathData="M24,24 L21,24 L24,10 L27,24 Z" />
+
+    <!-- Блик на острие магнитной стрелки -->
+    <path
+        android:strokeColor="#80FFFFFF"
+        android:strokeWidth="1.2"
+        android:strokeLineCap="round"
+        android:pathData="M24,11 L26,20" />
+
+    <!-- Южная половина стрелки (полированная сталь со стеклянным отблеском) -->
+    <path
+        android:fillColor="#80FFFFFF"
+        android:pathData="M24,24 L21,24 L24,38 L27,24 Z" />
+
+    <path
+        android:fillColor="#40FFFFFF"
+        android:pathData="M24,24 L21,24 L24,38 Z" />
+
+    <!-- Корпус компаса / азимутальное кольцо: темное матовое стекло (Frosted Glass rgba(26,28,36,0.70)) -->
+    <path
+        android:fillColor="#B31A1C24"
+        android:strokeColor="#75FFFFFF"
+        android:strokeWidth="1.6"
+        android:pathData="M24,8 A16,16 0 1,1 23.9,8 Z" />
+
+    <!-- Зеркальная фаска по северо-западному контуру кольца (Specular Rim Highlight) -->
+    <path
+        android:strokeColor="#E6FFFFFF"
+        android:strokeWidth="1.8"
+        android:strokeLineCap="round"
+        android:pathData="M12,16 C15,10 21,8 24,8 C27,8 33,10 36,16" />
+
+    <path
+        android:strokeColor="#99FFFFFF"
+        android:strokeWidth="1.2"
+        android:strokeLineCap="round"
+        android:pathData="M8,24 C8,32 15,39 23,40" />
+
+    <!-- Азимутальная градуировочная шкала (внутренний лимб) -->
+    <path
+        android:strokeColor="#30FFFFFF"
+        android:strokeWidth="1.0"
+        android:pathData="M24,13 A11,11 0 1,1 23.9,13 Z" />
+
+    <!-- Кардинальные азимутальные риски (N, S, W, E) -->
+    <path
+        android:strokeColor="#80FFFFFF"
+        android:strokeWidth="1.4"
+        android:strokeLineCap="round"
+        android:pathData="M10,24 L13,24 M35,24 L38,24 M24,35 L24,38" />
+
+    <!-- Северная маркерная риска (Cardinal North Index) - алый неон -->
+    <path
+        android:strokeColor="#FF3B30"
+        android:strokeWidth="2.0"
+        android:strokeLineCap="round"
+        android:pathData="M24,7 L24,11" />
+
+    <!-- Сапфировый центральный керн / ось подвеса стрелки -->
+    <path
+        android:fillColor="#1A1C24"
+        android:strokeColor="#E6FFFFFF"
+        android:strokeWidth="1.2"
+        android:pathData="M24,24 M20.5,24 A3.5,3.5 0 1,1 27.5,24 A3.5,3.5 0 1,1 20.5,24" />
+
+    <!-- Рубиновый центральный подпятник стрелки -->
+    <path
+        android:fillColor="#FF3B30"
+        android:pathData="M24,24 M22.5,24 A1.5,1.5 0 1,1 25.5,24 A1.5,1.5 0 1,1 22.5,24" />
+</vector>

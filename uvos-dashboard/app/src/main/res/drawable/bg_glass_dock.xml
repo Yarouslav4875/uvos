@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Слой 1: Внешняя рассеянная тень и легкий алый неон подложки (Ambient Glow) -->
+    <item>
+        <shape android:shape="rectangle">
+            <corners android:radius="26dp" />
+            <solid android:color="#20FF3B30" />
+        </shape>
+    </item>
+
+    <!-- Слой 2: Тело тёмного матового стекла (Dark Frosted Glass rgba(26,28,36,0.70)) -->
+    <item
+        android:bottom="1dp"
+        android:left="1dp"
+        android:right="1dp"
+        android:top="1dp">
+        <shape android:shape="rectangle">
+            <corners android:radius="25dp" />
+            <gradient
+                android:angle="270"
+                android:startColor="#DB1F2332"
+                android:centerColor="#D4141620"
+                android:endColor="#E80A0B0F"
+                android:type="linear" />
+            <!-- Зеркальная фаска (Specular Bevel Rim) -->
+            <stroke
+                android:width="1.3dp"
+                android:color="#4AFFFFFF" />
+        </shape>
+    </item>
+
+    <!-- Слой 3: Верхний световой рефлекс физического стекла (Specular Glass Shelf) -->
+    <item
+        android:bottom="56dp"
+        android:left="28dp"
+        android:right="28dp"
+        android:top="2.5dp">
+        <shape android:shape="rectangle">
+            <corners android:radius="2dp" />
+            <gradient
+                android:angle="0"
+                android:startColor="#00FFFFFF"
+                android:centerColor="#45FFFFFF"
+                android:endColor="#00FFFFFF" />
+            <size android:height="1.2dp" />
+        </shape>
+    </item>
+
+    <!-- Слой 4: Нижний тактический неон-рефлекс горизонта M4200 -->
+    <item
+        android:bottom="1.5dp"
+        android:left="64dp"
+        android:right="64dp"
+        android:top="58dp">
+        <shape android:shape="rectangle">
+            <corners android:radius="1dp" />
+            <gradient
+                android:angle="0"
+                android:startColor="#00FF3B30"
+                android:centerColor="#55FF3B30"
+                android:endColor="#00FF3B30" />
+            <size android:height="1dp" />
+        </shape>
+    </item>
+</layer-list>

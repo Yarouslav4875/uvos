@@ -1,0 +1,60 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="48dp"
+    android:height="48dp"
+    android:viewportWidth="48"
+    android:viewportHeight="48">
+
+    <!-- Задний неоновый круг-индикатор циферблата (#FF3B30) -->
+    <path
+        android:strokeColor="#FF3B30"
+        android:strokeWidth="1.2"
+        android:pathData="M24,24 M10,24 A14,14 0 1,1 38,24 A14,14 0 1,1 10,24" />
+
+    <!-- Корпус хронометра / часов: темное матовое стекло (Frosted Glass rgba(26,28,36,0.70)) -->
+    <path
+        android:fillColor="#B31A1C24"
+        android:strokeColor="#75FFFFFF"
+        android:strokeWidth="1.6"
+        android:strokeLineJoin="round"
+        android:pathData="M24,7 C33.389,7 41,14.611 41,24 C41,33.389 33.389,41 24,41 C14.611,41 7,33.389 7,24 C7,14.611 14.611,7 24,7 Z" />
+
+    <!-- Зеркальная фаска по контуру стекла (Specular Rim Highlight) -->
+    <path
+        android:strokeColor="#E6FFFFFF"
+        android:strokeWidth="1.8"
+        android:strokeLineCap="round"
+        android:pathData="M11,16 C13.8,11.2 18.5,8 24,8 C29.5,8 34.2,11.2 37,16" />
+
+    <!-- Метки циферблата (12, 3, 6, 9 часов) -->
+    <path
+        android:strokeColor="#90FFFFFF"
+        android:strokeWidth="1.6"
+        android:strokeLineCap="round"
+        android:pathData="M24,11 L24,14 M37,24 L34,24 M24,37 L24,34 M11,24 L14,24" />
+
+    <!-- Центральная втулка стрелок -->
+    <path
+        android:fillColor="#FF10121A"
+        android:strokeColor="#60FFFFFF"
+        android:strokeWidth="1.2"
+        android:pathData="M24,24 M21.5,24 A2.5,2.5 0 1,1 26.5,24 A2.5,2.5 0 1,1 21.5,24" />
+
+    <!-- Часовая стрелка: сочный алый неон (#FF3B30) -->
+    <path
+        android:strokeColor="#FF3B30"
+        android:strokeWidth="2.4"
+        android:strokeLineCap="round"
+        android:pathData="M24,24 L24,16" />
+
+    <!-- Минутная стрелка: сочный алый неон (#FF3B30) -->
+    <path
+        android:strokeColor="#FF3B30"
+        android:strokeWidth="2.0"
+        android:strokeLineCap="round"
+        android:pathData="M24,24 L32,24" />
+
+    <!-- Центральная алая точка керна -->
+    <path
+        android:fillColor="#FF3B30"
+        android:pathData="M24,24 M22.8,24 A1.2,1.2 0 1,1 25.2,24 A1.2,1.2 0 1,1 22.8,24" />
+</vector>

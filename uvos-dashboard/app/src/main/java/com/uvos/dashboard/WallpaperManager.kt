@@ -104,6 +104,16 @@ class WallpaperManager(private val context: Context) {
                     this.inSampleSize = inSampleSize
                     inPreferredConfig = Bitmap.Config.ARGB_8888
                 }
+
+                // DEV-06: Явный вызов bitmap.recycle() для предыдущего Bitmap перед декодированием
+                // и установкой новых пользовательских обоев для исключения утечек в Native Memory
+                cachedCustomBitmap?.let { prevBitmap ->
+                    if (!prevBitmap.isRecycled) {
+                        prevBitmap.recycle()
+                    }
+                }
+                cachedCustomBitmap = null
+
                 val bitmap = BitmapFactory.decodeFile(tempFile.absolutePath, decodeOptions)
                 tempFile.delete()
 
@@ -112,7 +122,6 @@ class WallpaperManager(private val context: Context) {
                     FileOutputStream(targetFile).use { fos ->
                         bitmap.compress(Bitmap.CompressFormat.PNG, 95, fos)
                     }
-                    cachedCustomBitmap?.recycle()
                     cachedCustomBitmap = bitmap
                     setWallpaperMode(WallpaperMode.CUSTOM_PHOTO)
                     true
@@ -125,6 +134,33 @@ class WallpaperManager(private val context: Context) {
         }
     }
 
+    /**
+     * Явное освобождение памяти Native Bitmap для пользовательских обоев (DEV-06)
+     */
+    fun recycleCustomWallpaper() {
+        cachedCustomBitmap?.let {
+            if (!it.isRecycled) {
+                it.recycle()
+            }
+        }
+        cachedCustomBitmap = null
+    }
+
+    /**
+     * Полная очистка и освобождение всех кэшированных Bitmap (пресетов и пользовательских)
+     */
+    fun recycleAllBitmaps() {
+        cachedPresetBitmap?.let {
+            if (!it.isRecycled) {
+                it.recycle()
+            }
+        }
+        cachedPresetBitmap = null
+        cachedPresetMode = null
+
+        recycleCustomWallpaper()
+    }
+
     fun getWallpaperBitmap(targetWidth: Int = 1080, targetHeight: Int = 2400): Bitmap? {
         val mode = getWallpaperMode()
         return when (mode) {
@@ -133,6 +169,11 @@ class WallpaperManager(private val context: Context) {
                 if (cachedCustomBitmap == null || cachedCustomBitmap?.isRecycled == true) {
                     val file = File(context.filesDir, customFileName)
                     if (file.exists()) {
+                        cachedCustomBitmap?.let { prevBitmap ->
+                            if (!prevBitmap.isRecycled) {
+                                prevBitmap.recycle()
+                            }
+                        }
                         cachedCustomBitmap = BitmapFactory.decodeFile(file.absolutePath)
                     }
                 }

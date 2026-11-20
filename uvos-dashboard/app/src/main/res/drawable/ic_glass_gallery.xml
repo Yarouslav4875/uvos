@@ -1,0 +1,42 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="48dp"
+    android:height="48dp"
+    android:viewportWidth="48"
+    android:viewportHeight="48">
+
+    <!-- Заднее неоновое солнце / диафрагма фотоснимка (#FF3B30 строго по референсу) -->
+    <path
+        android:fillColor="#FF3B30"
+        android:pathData="M33,18 M29,18 A4,4 0 1,1 37,18 A4,4 0 1,1 29,18" />
+
+    <!-- Корпус рамки галереи: темное матовое стекло (Frosted Glass rgba(26,28,36,0.70)) -->
+    <path
+        android:fillColor="#B31A1C24"
+        android:strokeColor="#75FFFFFF"
+        android:strokeWidth="1.6"
+        android:strokeLineJoin="round"
+        android:pathData="M8,10 L40,10 C42.2,10 44,11.8 44,14 L44,36 C44,38.2 42.2,40 40,40 L8,40 C5.8,40 4,38.2 4,36 L4,14 C4,11.8 5.8,10 8,10 Z" />
+
+    <!-- Зеркальная фаска по контуру стекла (Specular Rim Highlight) -->
+    <path
+        android:strokeColor="#E6FFFFFF"
+        android:strokeWidth="1.8"
+        android:strokeLineCap="round"
+        android:pathData="M6,26 L6,14 C6,12.2 7.8,11 10,11 L38,11" />
+
+    <!-- Горный пейзаж на заднем плане (полупрозрачное стекло) -->
+    <path
+        android:fillColor="#40FFFFFF"
+        android:strokeColor="#60FFFFFF"
+        android:strokeWidth="1.2"
+        android:strokeLineJoin="round"
+        android:pathData="M5,38 L16,24 L25,33 L32,26 L43,38 Z" />
+
+    <!-- Передний хребет с алой неоновой вершиной (#FF3B30) -->
+    <path
+        android:strokeColor="#FF3B30"
+        android:strokeWidth="2.0"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:pathData="M11,38 L19,29 L26,36" />
+</vector>

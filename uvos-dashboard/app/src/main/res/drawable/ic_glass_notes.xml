@@ -1,0 +1,84 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="48dp"
+    android:height="48dp"
+    android:viewportWidth="48"
+    android:viewportHeight="48">
+
+    <!-- Задняя закладка / акцентный ярлык документа: сочный алый неон (#FF3B30 строго по референсу) -->
+    <path
+        android:fillColor="#FF3B30"
+        android:pathData="M29,7 L35,7 C36.1,7 37,7.9 37,9 L37,21 L33,18.5 L29,21 Z" />
+
+    <!-- Блик на верхней кромке неоновой закладки -->
+    <path
+        android:strokeColor="#80FFFFFF"
+        android:strokeWidth="1.2"
+        android:strokeLineCap="round"
+        android:pathData="M30,8 L36,8" />
+
+    <!-- Корпус блокнота: темное матовое стекло (Frosted Glass rgba(26,28,36,0.70)) -->
+    <path
+        android:fillColor="#B31A1C24"
+        android:strokeColor="#75FFFFFF"
+        android:strokeWidth="1.6"
+        android:strokeLineJoin="round"
+        android:pathData="M13,9 L35,9 C37.2,9 39,10.8 39,13 L39,37 C39,39.2 37.2,41 35,41 L13,41 C10.8,41 9,39.2 9,37 L9,13 C9,10.8 10.8,9 13,9 Z" />
+
+    <!-- Зеркальная фаска по левой и верхней кромке блокнота (Specular Rim Highlight) -->
+    <path
+        android:strokeColor="#E6FFFFFF"
+        android:strokeWidth="1.8"
+        android:strokeLineCap="round"
+        android:pathData="M9.5,36 L9.5,13 C9.5,11.2 10.8,9.8 13,9.8 L35,9.8" />
+
+    <path
+        android:strokeColor="#99FFFFFF"
+        android:strokeWidth="1.2"
+        android:strokeLineCap="round"
+        android:pathData="M9.5,37 C9.5,39.5 11,40.5 13.5,40.5 L35,40.5" />
+
+    <!-- Верхние крепежные заклепки / пружинный переплет блокнота (3 кольца) -->
+    <path
+        android:strokeColor="#FF3B30"
+        android:strokeWidth="2.0"
+        android:strokeLineCap="round"
+        android:pathData="M15,7 L15,11 M22,7 L22,11" />
+
+    <!-- Блики на переплетных заклепках -->
+    <path
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="0.9"
+        android:strokeLineCap="round"
+        android:pathData="M15,7.5 L15,9 M22,7.5 L22,9" />
+
+    <!-- Стилизованная строка заголовка заметки (акцентная жирная линия) -->
+    <path
+        android:strokeColor="#E6FFFFFF"
+        android:strokeWidth="2.0"
+        android:strokeLineCap="round"
+        android:pathData="M15,17 L25,17" />
+
+    <!-- Неоновая контрольная точка верификации чек-листа -->
+    <path
+        android:fillColor="#FF3B30"
+        android:pathData="M15,23 M13.5,23 A1.5,1.5 0 1,1 16.5,23 A1.5,1.5 0 1,1 13.5,23" />
+
+    <!-- Стилизованные строки текста записи -->
+    <path
+        android:strokeColor="#90FFFFFF"
+        android:strokeWidth="1.5"
+        android:strokeLineCap="round"
+        android:pathData="M19,23 L33,23" />
+
+    <path
+        android:strokeColor="#70FFFFFF"
+        android:strokeWidth="1.5"
+        android:strokeLineCap="round"
+        android:pathData="M15,28 L33,28" />
+
+    <path
+        android:strokeColor="#50FFFFFF"
+        android:strokeWidth="1.5"
+        android:strokeLineCap="round"
+        android:pathData="M15,33 L27,33" />
+</vector>
