@@ -199,6 +199,84 @@
 3. Проверь изоляцию приватных файлов в context.filesDir во всех 15 приложениях (Linux DAC права 0600, UID изоляция) и сформируй отчёт в coordinator/REPORTS/SECURITY_ECOSYSTEM_REPORT.md.
 ```
 
+---
 
+## 8. Спринт 4: Подключение интерактивных кнопок и триггеров к реальным аппаратным действиям
 
+### 📋 Таблица задач Спринта 4
+
+| ID задачи | Ответственный агент | Роль | Модуль / Компоненты | Задача и декомпозиция | Критерий приёмки (Done) |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **DEV-07** | `ecd50c90-7bc9-4aed-afc1-f66b718f9c81` | **Lead Developer** | `SystemShadeManager.kt`, `TorchController.kt` | **Аппаратный контроллер фонарика (Torch):** Подключить `tileTorch` к `CameraManager.setTorchMode()`. Реализовать синхронизацию с `TorchCallback` и переключение фонарика на устройстве. | ✅ **Выполнено:** Реализован `TorchController.kt`, регистрация `TorchCallback`, синхронизация с лампой и статусом шторки. |
+| **DEV-08** | `ecd50c90-7bc9-4aed-afc1-f66b718f9c81` | **Lead Developer** | `SystemShadeManager.kt` | **Реальный аудио-контроллер громкости (Volume):** Подключить `sliderVolume` к `AudioManager.setStreamVolume(STREAM_MUSIC)`. Синхронизация громкости при открытии шторки. | ✅ **Выполнено:** Подключен `AudioManager.setStreamVolume` с чтением текущей громкости при открытии шторки. |
+| **DEV-09** | `ecd50c90-7bc9-4aed-afc1-f66b718f9c81` | **Lead Developer** | `SystemShadeManager.kt` | **Реальный контроллер яркости экрана (Brightness):** Связать `sliderBrightness` с регулировкой яркости окна (`window.attributes.screenBrightness`) и системной яркости. | ✅ **Выполнено:** Подключена регулировка `screenBrightness` и чтение `Settings.System.SCREEN_BRIGHTNESS`. |
+| **DEV-10** | `ecd50c90-7bc9-4aed-afc1-f66b718f9c81` | **Lead Developer** | `MainActivity.kt` | **Интерактивные триггеры часов, батареи и приборов:** Клик по часам `homeClockTime` открывает будильник/часы, клик по дате `homeClockDate` открывает календарь, клик по батарее `topBarBattery` и `gaugeBattery` открывает сведения об энергопотреблении, клик по `gaugeNet` открывает передачу данных. | ✅ **Выполнено:** Все информеры подключены к профильным экранам часов, календаря, батареи и сети. |
+| **PERF-07** | `ff2b50cf-15ae-4192-959b-38a87446c3cb` | **120Hz Fluid Motion Optimizer** | `MainActivity.kt` | **Реальная остановка фоновых процессов:** Подключить кнопки "STOP" и "ОСТАНОВИТЬ ВСЕ" в Столе 04 (Process Manager) к реальному `ActivityManager.killBackgroundProcesses(pkg)` с пересчетом свободной RAM. | ✅ **Выполнено:** Реализована пакетная и точечная выгрузка фоновых процессов с каскадной анимацией и расчетом RAM. |
+| **PERF-08** | `ff2b50cf-15ae-4192-959b-38a87446c3cb` | **120Hz Fluid Motion Optimizer** | `SystemShadeManager.kt` | **Троттлинг слайдеров на 120 Гц:** Добавить временной фильтр (не чаще 1 вызова IPC в 16 мс) для исключения перегрузки Binder IPC аудио/яркости при быстром ведении пальцем. | ✅ **Выполнено:** Внедрен `IpcThrottler` с квантом 16 мс и выносом в `ipcExecutor`. |
+| **SEC-05** | `75271c78-7409-4035-85d4-c1b832e933ac` | **Security Engineer** | `SystemShadeManager.kt` | **Быстрые переключатели сети (Wi-Fi, BT, Data, Isolation):** Подключить клики и долгие тапы по тумблерам к открытию быстрых панелей Android (`Settings.ACTION_WIFI_SETTINGS`, `ACTION_BLUETOOTH_SETTINGS`, `ACTION_DATA_ROAMING_SETTINGS`) без падений от отсутствия прав. | ✅ **Выполнено:** Подключены быстрые панели настроек Android с безопасным перехватом `SecurityException`. |
+| **SEC-06** | `75271c78-7409-4035-85d4-c1b832e933ac` | **Security Engineer** | `AndroidManifest.xml` | **Аудит разрешений оборудования:** Проверить и добавить `android.permission.CAMERA` (для Flashlight), `MODIFY_AUDIO_SETTINGS` в манифест лаунчера. | ✅ **Выполнено:** Добавлены разрешения `CAMERA`, `FLASHLIGHT` и `MODIFY_AUDIO_SETTINGS`. |
+| **UI-07** | `0c547d7b-340f-47db-ae40-a3d3649e75c1` | **UI/UX Designer** | `SystemShadeManager.kt`, `LampView.kt` | **Индикация активных состояний ламп:** Настроить цвета ламп `LampView`: зеленый (Wi-Fi/BT активны), янтарный (фонарик включен), алый (Стерильно/Изоляция). | ✅ **Выполнено:** Настроены цвета `LampView` (`#10B981`, `#F59E0B`, `#FF3B30`, `#71768E`). |
+| **UI-08** | `0c547d7b-340f-47db-ae40-a3d3649e75c1` | **UI/UX Designer** | `MainActivity.kt` | **Тактильный виброотклик (Haptic Feedback):** Добавить тактильный щелчок при нажатии на часы, дату, приборы телеметрии и тумблеры шторки. | ✅ **Выполнено:** Добавлен всеобъемлющий Haptic-отклик (`CLOCK_TICK`, `CONTEXT_CLICK`, `CONFIRM`). |
+
+---
+
+## 9. Готовые копируемые директивы Спринта 4 (Ready-to-Copy Prompts)
+
+### 📌 Директива для Агента 1 — Lead Developer (`ecd50c90-7bc9-4aed-afc1-f66b718f9c81`):
+```text
+Задача DEV-07..10 (Спринт 4): Подключение фонарика, громкости, яркости и кликов приборов к реальным действиям.
+Рабочая директория: uvos-dashboard/app/src/main/java/com/uvos/dashboard/
+
+1. Реализуй TorchController: включение/выключение фонарика через CameraManager.setTorchMode() с регистрацией TorchCallback. Подключи tileTorch в SystemShadeManager.
+2. В SystemShadeManager подключи sliderVolume к AudioManager (STREAM_MUSIC): считывай текущий уровень при открытии шторки и устанавливай громкость при движении ползунка.
+3. В SystemShadeManager подключи sliderBrightness: управляй яркостью текущего окна через activity.window.attributes.screenBrightness.
+4. В MainActivity подключи клики по информерам:
+   - homeClockTime -> запуск часов/будильника (AlarmClock.ACTION_SHOW_ALARMS / uvos-clock)
+   - homeClockDate -> запуск календаря (Intent.CATEGORY_APP_CALENDAR / uvos-calendar)
+   - topBarBattery и gaugeBattery -> сведения о батарее (Intent.ACTION_POWER_USAGE_SUMMARY)
+   - gaugeNet -> настройки передачи данных (Settings.ACTION_DATA_USAGE_SETTINGS)
+   - batteryQuadWidget (слоты) -> настройки Bluetooth (Settings.ACTION_BLUETOOTH_SETTINGS)
+Собери APK через ./gradlew assembleDebug и предоставь отчёт.
+```
+
+### 📌 Директива для Агента 4 — 120Hz Fluid Motion Optimizer (`ff2b50cf-15ae-4192-959b-38a87446c3cb`):
+```text
+Задача PERF-07..08 (Спринт 4): Реальная выгрузка процессов и троттлинг слайдеров на 120 Гц.
+Рабочая директория: uvos-dashboard/app/src/main/java/com/uvos/dashboard/
+
+1. В MainActivity (Стол 04, Process Manager):
+   - При клике на кнопку "STOP" у процесса вызывай activityManager.killBackgroundProcesses(proc.pkg) с пересчетом свободной RAM и анимацией удаления.
+   - Для кнопки btnKillAllServices реализуй пакетную выгрузку фоновых сторонних процессов с отображением высвобожденной памяти.
+2. В SystemShadeManager для слайдеров громкости и яркости внедрить временной троттлинг (не чаще 1 IPC вызова в 16 мс), чтобы при непрерывном ведении пальцем на 120Hz экране не блокировать главный UI-поток.
+Сформируй отчёт coordinator/REPORTS/PERF_SPRINT4_REPORT.md.
+```
+
+### 📌 Директива для Агента 3 — Security Engineer (`75271c78-7409-4035-85d4-c1b832e933ac`):
+```text
+Задача SEC-05..06 (Спринт 4): Быстрые системные переключатели и аудит разрешений.
+Рабочая директория: uvos-dashboard/
+
+1. В SystemShadeManager подключи тумблеры сети:
+   - tileWifi -> открытие панели Settings.ACTION_WIFI_SETTINGS (а по долгому тапу - полные настройки Wi-Fi)
+   - tileBt -> открытие Settings.ACTION_BLUETOOTH_SETTINGS
+   - tileData -> открытие настроек мобильной сети
+   - tileIsolation -> переключение локального режима изоляции с уведомлением пользователя
+   Все вызовы обернуть в try-catch для предотвращения SecurityException.
+2. В AndroidManifest.xml лаунчера добавить необходимые разрешения: android.permission.CAMERA (для фонарика без доступа к съемке) и android.permission.MODIFY_AUDIO_SETTINGS.
+Сформируй отчёт coordinator/REPORTS/SECURITY_INTERACTIVE_REPORT.md.
+```
+
+### 📌 Директива для Агента 2 — UI/UX Designer (`0c547d7b-340f-47db-ae40-a3d3649e75c1`):
+```text
+Задача UI-07..08 (Спринт 4): Цветовая индикация тумблеров и тактильный виброотклик.
+Рабочая директория: uvos-dashboard/app/src/main/
+
+1. В SystemShadeManager настрой цвета для LampView:
+   - Wi-Fi и Bluetooth активны -> чистый изумрудный (#10B981)
+   - Фонарик активен -> тёплый янтарный (#F59E0B)
+   - Режим "Стерильно" / "Изоляция" активен -> сочный алый (#FF3B30 / #E02020)
+   - В выключенном состоянии -> приглушённый графит (#71768E / выключенная лампа)
+2. В MainActivity и SystemShadeManager убедись, что на всех интерактивных триггерах (часы, дата, приборы, тумблеры, карточки логов) срабатывает performHapticFeedback(HapticFeedbackConstants.CONTEXT_CLICK / CLOCK_TICK).
+Сформируй отчёт coordinator/REPORTS/UI_INTERACTIVE_REPORT.md.
+```
 

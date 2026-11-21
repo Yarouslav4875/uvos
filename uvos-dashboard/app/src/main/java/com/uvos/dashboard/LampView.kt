@@ -12,8 +12,8 @@ import android.view.View
  *
  * Размер по спецификации: строго круг 12dp.
  * Статичный индикатор:
- * - ВКЛ: яркий красный #E02020
- * - ВЫКЛ: тусклый дежурный #7A1010
+ * - ВКЛ: цвет в соответствии с типом прибора (изумруд #10B981, янтарь #F59E0B, алый #FF3B30 / #E02020)
+ * - ВЫКЛ: выключенная лампа и приглушенный цвет (#71768E / дежурный)
  * Никогда не мигает и не пульсирует (правило DESIGN.md §4).
  */
 class LampView @JvmOverloads constructor(
@@ -24,8 +24,18 @@ class LampView @JvmOverloads constructor(
 
     private val density = context.resources.displayMetrics.density
 
-    private val lampOnColor = Color.parseColor("#E02020")
-    private val lampOffColor = Color.parseColor("#7A1010")
+    var lampOnColor: Int = Color.parseColor("#E02020")
+        set(value) {
+            field = value
+            invalidate()
+        }
+
+    var lampOffColor: Int = Color.parseColor("#71768E")
+        set(value) {
+            field = value
+            invalidate()
+        }
+
     private val bezelColor = Color.parseColor("#2A2C36")
 
     private val fillPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
@@ -43,10 +53,26 @@ class LampView @JvmOverloads constructor(
         context.theme.obtainStyledAttributes(attrs, R.styleable.LampView, 0, 0).apply {
             try {
                 isOn = getBoolean(R.styleable.LampView_isLampOn, false)
+                if (hasValue(R.styleable.LampView_lampOnColor)) {
+                    lampOnColor = getColor(R.styleable.LampView_lampOnColor, lampOnColor)
+                }
+                if (hasValue(R.styleable.LampView_lampOffColor)) {
+                    lampOffColor = getColor(R.styleable.LampView_lampOffColor, lampOffColor)
+                }
             } finally {
                 recycle()
             }
         }
+    }
+
+    fun setLampColors(onColor: Int, offColor: Int = Color.parseColor("#71768E")) {
+        this.lampOnColor = onColor
+        this.lampOffColor = offColor
+        invalidate()
+    }
+
+    fun setLampColors(onColorHex: String, offColorHex: String = "#71768E") {
+        setLampColors(Color.parseColor(onColorHex), Color.parseColor(offColorHex))
     }
 
     fun setOn(on: Boolean) {

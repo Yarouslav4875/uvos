@@ -63,7 +63,7 @@ class ToggleView @JvmOverloads constructor(
     override fun performClick(): Boolean {
         super.performClick()
         isChecked = !isChecked
-        performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
+        performHapticFeedback(HapticFeedbackConstants.CONTEXT_CLICK)
         playSoundEffect(SoundEffectConstants.CLICK)
         invalidate()
         onToggleChanged?.invoke(isChecked)

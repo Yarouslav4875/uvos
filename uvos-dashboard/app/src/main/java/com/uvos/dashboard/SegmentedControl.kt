@@ -7,6 +7,7 @@ import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.Typeface
 import android.util.AttributeSet
+import android.view.HapticFeedbackConstants
 import android.view.MotionEvent
 import android.view.SoundEffectConstants
 import android.view.View
@@ -119,6 +120,7 @@ class SegmentedControl @JvmOverloads constructor(
             val pad = 3f * density
             val segW = (width - pad * 2) / items.size
             val clickedIndex = ((event.x - pad) / segW).toInt().coerceIn(0, items.size - 1)
+            performHapticFeedback(HapticFeedbackConstants.CONTEXT_CLICK)
             setSelectedIndex(clickedIndex, animate = true, notify = true)
             playSoundEffect(SoundEffectConstants.CLICK)
         }

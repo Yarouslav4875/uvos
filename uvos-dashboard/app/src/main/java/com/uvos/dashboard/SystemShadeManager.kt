@@ -3,8 +3,18 @@ package com.uvos.dashboard
 import android.animation.Animator
 import android.animation.AnimatorListenerAdapter
 import android.animation.ValueAnimator
+import android.app.Activity
+import android.content.ActivityNotFoundException
 import android.content.Context
+import android.content.Intent
+import android.widget.Toast
+import android.os.Handler
+import android.os.Looper
+import android.os.SystemClock
+import java.util.concurrent.Executors
 import android.graphics.Color
+import android.media.AudioManager
+import android.provider.Settings
 import android.view.HapticFeedbackConstants
 import android.view.MotionEvent
 import android.view.View
@@ -18,15 +28,17 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 import kotlin.math.abs
+import kotlin.math.roundToInt
 
 /**
  * UVOS SystemShadeManager - контроллер приборной шторки параметров и уведомлений UnderVoltOS.
  *
  * Архитектура и принципы:
  * - Плавная анимация раскрытия и закрытия на базе сплайна Apple Spring (0.20, 1.0, 0.32, 1.0).
- * - Сетка быстрых приборных тумблеров (Сеть, Wi-Fi, Bluetooth, Изоляция, Фонарик, Радиотишина).
+ * - Сетка быстрых приборных тумблеров (Сеть, Wi-Fi, Bluetooth, Изоляция, Фонарик, Радиотишина) с тактильным откликом.
+ * - Цветовая индикация физических ламп LampView (Изумруд #10B981, Янтарь #F59E0B, Алый #FF3B30 / #E02020, Выкл #71768E).
  * - Селектор профилей UVOS («СТЕРИЛЬНО» / «СВЯЗЬ» / «СВОЙ») с двухсторонней синхронизацией.
- * - Приборные линейные слайдеры яркости экрана и громкости акустики (SliderView).
+ * - Приборные линейные слайдеры яркости экрана и громкости акустики (SliderView) с пошаговым тиканьем.
  * - Центр уведомлений и тревожный журнал безопасности с мгновенной очисткой.
  */
 class SystemShadeManager(
@@ -95,6 +107,17 @@ class SystemShadeManager(
     private val btnDismissNetwork: View = rootContainer.findViewById(R.id.btn_dismiss_notif_network)
     private val btnDismissPrivacy: View = rootContainer.findViewById(R.id.btn_dismiss_notif_privacy)
 
+    // Палитра приборных индикаторов UnderVoltOS
+    companion object {
+        private const val COLOR_EMERALD = "#10B981"  // Изумрудный индикатор (Wi-Fi, BT, Мобильная сеть)
+        private const val COLOR_AMBER = "#F59E0B"    // Тёплый янтарный индикатор (Фонарик)
+        private const val COLOR_SCARLET = "#FF3B30"  // Алый сигнал тревоги / блокировки (Стерильно, Изоляция)
+        private const val COLOR_MUTED = "#71768E"    // Выключенное состояние (приглушенный дежурный цвет)
+    }
+
+    private val torchController = TorchController(context)
+    private val audioManager = context.getSystemService(Context.AUDIO_SERVICE) as? AudioManager
+
     // Состояния тумблеров
     private var isDataOn = true
     private var isWifiOn = true
@@ -112,11 +135,21 @@ class SystemShadeManager(
 
     init {
         setupClock()
+        setupTorch()
         setupToggles()
         setupProfileSelector()
         setupSliders()
         setupNotifications()
         setupGestures()
+    }
+
+    private fun setupTorch() {
+        torchController.onTorchStateChanged = { enabled ->
+            isTorchOn = enabled
+            updateTorchToggleUI()
+        }
+        isTorchOn = torchController.isTorchActive()
+        updateTorchToggleUI()
     }
 
     fun isShadeOpen(): Boolean = isOpen
@@ -127,6 +160,17 @@ class SystemShadeManager(
         val dateFmt = SimpleDateFormat("EEE, d MMMM", Locale("ru"))
         clockTimeText.text = timeFmt.format(now)
         clockDateText.text = "${dateFmt.format(now).uppercase()} • UVOS-CORE 2.0"
+
+        // Тактильный отклик часов и даты
+        clockTimeText.setOnClickListener {
+            it.performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK)
+        }
+        clockDateText.setOnClickListener {
+            it.performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK)
+        }
+        batteryStatusText.setOnClickListener {
+            it.performHapticFeedback(HapticFeedbackConstants.CONTEXT_CLICK)
+        }
     }
 
     fun updateTime(now: Date = Date()) {
@@ -141,62 +185,176 @@ class SystemShadeManager(
     }
 
     private fun setupToggles() {
-        // Тумблер 1: Мобильная сеть
+        // Конфигурация цветовых схем ламп LampView
+        lampData.setLampColors(COLOR_EMERALD, COLOR_MUTED)
+        lampWifi.setLampColors(COLOR_EMERALD, COLOR_MUTED)
+        lampBt.setLampColors(COLOR_EMERALD, COLOR_MUTED)
+        lampIsolation.setLampColors(COLOR_SCARLET, COLOR_MUTED)
+        lampTorch.setLampColors(COLOR_AMBER, COLOR_MUTED)
+        lampSterile.setLampColors(COLOR_SCARLET, COLOR_MUTED)
+
+        // Синхронизация начального состояния изоляции с профилем
+        isIsolationOn = (repository.getActiveProfile() == ProfileType.STERILE)
+
+        // Применение исходных состояний индикаторов
+        updateDataToggleUI()
+        updateWifiToggleUI()
+        updateBtToggleUI()
+        updateIsolationToggleUI()
+        updateTorchToggleUI()
+        updateSterileToggleUI()
+
+        // Тумблер 1: Мобильная сеть (Изумрудный индикатор при включении)
         tileData.setOnClickListener {
             it.performHapticFeedback(HapticFeedbackConstants.CONTEXT_CLICK)
             isDataOn = !isDataOn
-            lampData.setOn(isDataOn)
-            txtDataStatus.text = if (isDataOn) "4G LTE" else "ВЫКЛ"
-            txtDataStatus.setTextColor(if (isDataOn) Color.parseColor("#E2E4EC") else Color.parseColor("#71768E"))
+            updateDataToggleUI()
+            try {
+                val intent = Intent(Settings.ACTION_DATA_ROAMING_SETTINGS).apply {
+                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                }
+                context.startActivity(intent)
+            } catch (e: Exception) {
+                if (e is ActivityNotFoundException || e is SecurityException) {
+                    try {
+                        val fallbackIntent = Intent(Settings.ACTION_NETWORK_OPERATOR_SETTINGS).apply {
+                            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                        }
+                        context.startActivity(fallbackIntent)
+                    } catch (_: ActivityNotFoundException) {
+                        Toast.makeText(context, "Настройки сети недоступны", Toast.LENGTH_SHORT).show()
+                    } catch (_: SecurityException) {
+                        Toast.makeText(context, "Ошибка доступа к настройкам сети", Toast.LENGTH_SHORT).show()
+                    } catch (_: Exception) {
+                    }
+                }
+            }
         }
 
-        // Тумблер 2: Wi-Fi
+        // Тумблер 2: Wi-Fi (Изумрудный индикатор #10B981)
         tileWifi.setOnClickListener {
             it.performHapticFeedback(HapticFeedbackConstants.CONTEXT_CLICK)
             isWifiOn = !isWifiOn
-            lampWifi.setOn(isWifiOn)
-            txtWifiStatus.text = if (isWifiOn) "5 ГГЦ" else "ВЫКЛ"
-            txtWifiStatus.setTextColor(if (isWifiOn) Color.parseColor("#E2E4EC") else Color.parseColor("#71768E"))
+            updateWifiToggleUI()
+            try {
+                val intent = Intent(Settings.ACTION_WIFI_SETTINGS).apply {
+                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                }
+                context.startActivity(intent)
+            } catch (_: ActivityNotFoundException) {
+                Toast.makeText(context, "Настройки Wi-Fi недоступны", Toast.LENGTH_SHORT).show()
+            } catch (_: SecurityException) {
+                Toast.makeText(context, "Ошибка доступа к настройкам Wi-Fi", Toast.LENGTH_SHORT).show()
+            } catch (_: Exception) {
+            }
         }
 
-        // Тумблер 3: Bluetooth
+        tileWifi.setOnLongClickListener {
+            it.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
+            try {
+                val intent = Intent(Settings.ACTION_WIFI_SETTINGS).apply {
+                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                }
+                context.startActivity(intent)
+            } catch (_: ActivityNotFoundException) {
+                Toast.makeText(context, "Настройки Wi-Fi недоступны", Toast.LENGTH_SHORT).show()
+            } catch (_: SecurityException) {
+                Toast.makeText(context, "Ошибка доступа к настройкам Wi-Fi", Toast.LENGTH_SHORT).show()
+            } catch (_: Exception) {
+            }
+            true
+        }
+
+        // Тумблер 3: Bluetooth (Изумрудный индикатор #10B981)
         tileBt.setOnClickListener {
             it.performHapticFeedback(HapticFeedbackConstants.CONTEXT_CLICK)
             isBtOn = !isBtOn
-            lampBt.setOn(isBtOn)
-            txtBtStatus.text = if (isBtOn) "АКТИВЕН" else "ВЫКЛ"
-            txtBtStatus.setTextColor(if (isBtOn) Color.parseColor("#E2E4EC") else Color.parseColor("#71768E"))
+            updateBtToggleUI()
+            try {
+                val intent = Intent(Settings.ACTION_BLUETOOTH_SETTINGS).apply {
+                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                }
+                context.startActivity(intent)
+            } catch (_: ActivityNotFoundException) {
+                Toast.makeText(context, "Настройки Bluetooth недоступны", Toast.LENGTH_SHORT).show()
+            } catch (_: SecurityException) {
+                Toast.makeText(context, "Ошибка доступа к настройкам Bluetooth", Toast.LENGTH_SHORT).show()
+            } catch (_: Exception) {
+            }
         }
 
-        // Тумблер 4: Щит изоляции («Закрытая территория»)
+        // Тумблер 4: Щит изоляции («Закрытая территория» -> Алый сигнал #FF3B30)
         tileIsolation.setOnClickListener {
             it.performHapticFeedback(HapticFeedbackConstants.CONFIRM)
-            isIsolationOn = !isIsolationOn
-            lampIsolation.setOn(isIsolationOn)
-            txtIsolationStatus.text = if (isIsolationOn) "АКТИВЕН" else "ОБЫЧНЫЙ"
-            txtIsolationStatus.setTextColor(if (isIsolationOn) Color.parseColor("#E02020") else Color.parseColor("#71768E"))
+            try {
+                isIsolationOn = !isIsolationOn
+                updateIsolationToggleUI()
+
+                val targetProfile = if (isIsolationOn) ProfileType.STERILE else ProfileType.COMM
+                repository.setActiveProfile(targetProfile)
+                syncProfile(targetProfile)
+                onProfileChangedListener?.invoke(targetProfile)
+
+                val msg = if (isIsolationOn) "Режим изоляции АКТИВИРОВАН (СТЕРИЛЬНО)" else "Режим изоляции ДЕАКТИВИРОВАН (СВЯЗЬ)"
+                Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
+            } catch (_: SecurityException) {
+                Toast.makeText(context, "Ошибка безопасности при переключении изоляции", Toast.LENGTH_SHORT).show()
+            } catch (e: Exception) {
+                Toast.makeText(context, "Ошибка переключения режима изоляции: ", Toast.LENGTH_SHORT).show()
+            }
         }
 
-        // Тумблер 5: Фонарик
+        // Тумблер 5: Фонарик (Тёплый янтарный индикатор #F59E0B)
         tileTorch.setOnClickListener {
             it.performHapticFeedback(HapticFeedbackConstants.CONTEXT_CLICK)
-            isTorchOn = !isTorchOn
-            lampTorch.setOn(isTorchOn)
-            txtTorchStatus.text = if (isTorchOn) "ВКЛ" else "ВЫКЛ"
-            txtTorchStatus.setTextColor(if (isTorchOn) Color.parseColor("#F59E0B") else Color.parseColor("#71768E"))
+            torchController.toggleTorch()
         }
 
-        // Тумблер 6: Радиотишина (Стерильно)
+        // Тумблер 6: Радиотишина (Стерильно -> Алый сигнал #FF3B30)
         tileSterile.setOnClickListener {
             it.performHapticFeedback(HapticFeedbackConstants.CONFIRM)
             isSterileOn = !isSterileOn
-            lampSterile.setOn(isSterileOn)
-            txtSterileStatus.text = if (isSterileOn) "ТИШИНА" else "ДЕЖУРНЫЙ"
-            txtSterileStatus.setTextColor(if (isSterileOn) Color.parseColor("#E02020") else Color.parseColor("#71768E"))
+            updateSterileToggleUI()
             if (isSterileOn) {
                 syncProfile(ProfileType.STERILE)
             }
         }
+    }
+
+    private fun updateDataToggleUI() {
+        lampData.setOn(isDataOn)
+        txtDataStatus.text = if (isDataOn) "4G LTE" else "ВЫКЛ"
+        txtDataStatus.setTextColor(Color.parseColor(if (isDataOn) COLOR_EMERALD else COLOR_MUTED))
+    }
+
+    private fun updateWifiToggleUI() {
+        lampWifi.setOn(isWifiOn)
+        txtWifiStatus.text = if (isWifiOn) "5 ГГЦ" else "ВЫКЛ"
+        txtWifiStatus.setTextColor(Color.parseColor(if (isWifiOn) COLOR_EMERALD else COLOR_MUTED))
+    }
+
+    private fun updateBtToggleUI() {
+        lampBt.setOn(isBtOn)
+        txtBtStatus.text = if (isBtOn) "АКТИВЕН" else "ВЫКЛ"
+        txtBtStatus.setTextColor(Color.parseColor(if (isBtOn) COLOR_EMERALD else COLOR_MUTED))
+    }
+
+    private fun updateIsolationToggleUI() {
+        lampIsolation.setOn(isIsolationOn)
+        txtIsolationStatus.text = if (isIsolationOn) "АКТИВЕН" else "ОБЫЧНЫЙ"
+        txtIsolationStatus.setTextColor(Color.parseColor(if (isIsolationOn) COLOR_SCARLET else COLOR_MUTED))
+    }
+
+    private fun updateTorchToggleUI() {
+        lampTorch.setOn(isTorchOn)
+        txtTorchStatus.text = if (isTorchOn) "ВКЛ" else "ВЫКЛ"
+        txtTorchStatus.setTextColor(Color.parseColor(if (isTorchOn) COLOR_AMBER else COLOR_MUTED))
+    }
+
+    private fun updateSterileToggleUI() {
+        lampSterile.setOn(isSterileOn)
+        txtSterileStatus.text = if (isSterileOn) "ТИШИНА" else "ДЕЖУРНЫЙ"
+        txtSterileStatus.setTextColor(Color.parseColor(if (isSterileOn) COLOR_SCARLET else COLOR_MUTED))
     }
 
     private fun setupProfileSelector() {
@@ -211,6 +369,7 @@ class SystemShadeManager(
         updateProfileLabels(currentProfile)
 
         profileSelector.onSegmentSelected = { idx ->
+            profileSelector.performHapticFeedback(HapticFeedbackConstants.CONTEXT_CLICK)
             val selected = when (idx) {
                 0 -> ProfileType.STERILE
                 1 -> ProfileType.COMM
@@ -230,6 +389,10 @@ class SystemShadeManager(
         }
         profileSelector.setSelectedIndex(idx, animate = true, notify = false)
         updateProfileLabels(profile)
+
+        // Синхронизация тумблера изоляции со статусом профиля
+        isIsolationOn = (profile == ProfileType.STERILE)
+        updateIsolationToggleUI()
     }
 
     private fun updateProfileLabels(profile: ProfileType) {
@@ -241,30 +404,150 @@ class SystemShadeManager(
         activeProfileLabel.text = "РЕЖИМ: $name"
     }
 
-    private fun setupSliders() {
-        sliderBrightness.valueFormatter = { p -> "${(p * 100).toInt()}%" }
-        sliderBrightness.onProgressChanged = { p ->
-            valBrightness.text = "${(p * 100).toInt()}%"
+    /**
+     * Троттлер IPC вызовов для 120Hz экрана.
+     * Ограничивает частоту обращений к Binder (WindowManager/AudioService) не чаще 1 раза в 16 мс,
+     * предотвращая перегрузку очередей IPC и просадки fps UI-потока при быстром скролле ползунка.
+     * Гарантирует доставку последнего актуального значения (trailing edge) после завершения жеста.
+     */
+    private class IpcThrottler(
+        private val minIntervalMs: Long = 16L,
+        private val onDispatch: (Float) -> Unit
+    ) {
+        private val handler = Handler(Looper.getMainLooper())
+        private var lastDispatchTime = 0L
+        private var pendingValue: Float? = null
+        private var hasScheduledTrailing = false
+
+        private val trailingRunnable = Runnable {
+            hasScheduledTrailing = false
+            pendingValue?.let { value ->
+                lastDispatchTime = SystemClock.elapsedRealtime()
+                onDispatch(value)
+                pendingValue = null
+            }
         }
 
+        fun post(value: Float) {
+            val now = SystemClock.elapsedRealtime()
+            val elapsed = now - lastDispatchTime
+
+            if (elapsed >= minIntervalMs) {
+                handler.removeCallbacks(trailingRunnable)
+                hasScheduledTrailing = false
+                lastDispatchTime = now
+                pendingValue = null
+                onDispatch(value)
+            } else {
+                pendingValue = value
+                if (!hasScheduledTrailing) {
+                    hasScheduledTrailing = true
+                    val delay = minIntervalMs - elapsed
+                    handler.postDelayed(trailingRunnable, delay)
+                }
+            }
+        }
+    }
+
+    private val ipcExecutor = Executors.newSingleThreadExecutor()
+
+    private val brightnessIpcThrottler = IpcThrottler(minIntervalMs = 16L) { p ->
+        val activity = context as? Activity
+        activity?.window?.let { win ->
+            try {
+                val lp = win.attributes
+                lp.screenBrightness = p.coerceIn(0.01f, 1.0f)
+                win.attributes = lp
+            } catch (_: Exception) {}
+        }
+    }
+
+    private val volumeIpcThrottler = IpcThrottler(minIntervalMs = 16L) { p ->
+        ipcExecutor.execute {
+            audioManager?.let { am ->
+                val maxVol = am.getStreamMaxVolume(AudioManager.STREAM_MUSIC)
+                if (maxVol > 0) {
+                    val targetVolume = (p * maxVol).roundToInt().coerceIn(0, maxVol)
+                    try {
+                        am.setStreamVolume(AudioManager.STREAM_MUSIC, targetVolume, 0)
+                    } catch (_: Exception) {}
+                }
+            }
+        }
+    }
+
+    private fun setupSliders() {
+        var lastBrightnessStep = -1
+        sliderBrightness.valueFormatter = { p -> "${(p * 100).toInt()}%" }
+        sliderBrightness.onProgressChanged = { p ->
+            val pct = (p * 100).toInt()
+            valBrightness.text = "$pct%"
+            val step = pct / 5
+            if (step != lastBrightnessStep) {
+                lastBrightnessStep = step
+                sliderBrightness.performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK)
+            }
+            brightnessIpcThrottler.post(p)
+        }
+
+        var lastVolumeStep = -1
         sliderVolume.valueFormatter = { p -> "${(p * 100).toInt()}%" }
         sliderVolume.onProgressChanged = { p ->
-            valVolume.text = "${(p * 100).toInt()}%"
+            val pct = (p * 100).toInt()
+            valVolume.text = "$pct%"
+            val step = pct / 5
+            if (step != lastVolumeStep) {
+                lastVolumeStep = step
+                sliderVolume.performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK)
+            }
+            volumeIpcThrottler.post(p)
+        }
+
+        syncBrightnessAndVolume()
+    }
+
+    fun syncBrightnessAndVolume() {
+        // 1. Яркость окна / системы
+        val activity = context as? Activity
+        val currentWinBrightness = activity?.window?.attributes?.screenBrightness ?: -1f
+        val brightnessFraction = if (currentWinBrightness in 0f..1f) {
+            currentWinBrightness
+        } else {
+            try {
+                val sysBrightness = Settings.System.getInt(context.contentResolver, Settings.System.SCREEN_BRIGHTNESS)
+                (sysBrightness / 255f).coerceIn(0.01f, 1f)
+            } catch (_: Exception) {
+                0.5f
+            }
+        }
+        sliderBrightness.setProgress(brightnessFraction)
+        valBrightness.text = "${(brightnessFraction * 100).toInt()}%"
+
+        // 2. Громкость мультимедиа STREAM_MUSIC
+        audioManager?.let { am ->
+            val maxVol = am.getStreamMaxVolume(AudioManager.STREAM_MUSIC)
+            val curVol = am.getStreamVolume(AudioManager.STREAM_MUSIC)
+            val volFraction = if (maxVol > 0) (curVol.toFloat() / maxVol.toFloat()).coerceIn(0f, 1f) else 0f
+            sliderVolume.setProgress(volFraction)
+            valVolume.text = "${(volFraction * 100).toInt()}%"
         }
     }
 
     private fun setupNotifications() {
         btnDismissSecurity.setOnClickListener {
+            it.performHapticFeedback(HapticFeedbackConstants.CONTEXT_CLICK)
             notifCardSecurity.visibility = View.GONE
             checkEmptyNotifications()
         }
 
         btnDismissNetwork.setOnClickListener {
+            it.performHapticFeedback(HapticFeedbackConstants.CONTEXT_CLICK)
             notifCardNetwork.visibility = View.GONE
             checkEmptyNotifications()
         }
 
         btnDismissPrivacy.setOnClickListener {
+            it.performHapticFeedback(HapticFeedbackConstants.CONTEXT_CLICK)
             notifCardPrivacy.visibility = View.GONE
             checkEmptyNotifications()
         }
@@ -288,24 +571,28 @@ class SystemShadeManager(
 
     private fun setupGestures() {
         btnCloseShade.setOnClickListener {
+            it.performHapticFeedback(HapticFeedbackConstants.CONTEXT_CLICK)
             closeShade(animate = true)
         }
 
         btnShadeCustomization?.setOnClickListener {
+            it.performHapticFeedback(HapticFeedbackConstants.CONTEXT_CLICK)
             closeShade(animate = true)
             onCustomizationRequested?.invoke()
         }
 
         dragHandleBar.setOnClickListener {
+            it.performHapticFeedback(HapticFeedbackConstants.CONTEXT_CLICK)
             closeShade(animate = true)
         }
 
-        // Свайп вверх по полоске закрытия
+        // Свайп вверх по полоске закрытия с тактильной отдачей
         var downY = 0f
         dragHandleBar.setOnTouchListener { v, event ->
             when (event.action) {
                 MotionEvent.ACTION_DOWN -> {
                     downY = event.rawY
+                    v.performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK)
                     true
                 }
                 MotionEvent.ACTION_UP -> {
@@ -326,6 +613,7 @@ class SystemShadeManager(
         isOpen = true
         setupClock()
         syncProfile(repository.getActiveProfile())
+        syncBrightnessAndVolume()
 
         currentAnimator?.cancel()
         shadeRoot.visibility = View.VISIBLE
@@ -393,5 +681,9 @@ class SystemShadeManager(
             })
             start()
         }
+    }
+
+    fun onDestroy() {
+        torchController.release()
     }
 }

@@ -27,6 +27,7 @@ import android.os.SystemClock
 import java.io.File
 import android.view.HapticFeedbackConstants
 import android.view.View
+import android.view.animation.PathInterpolator
 import android.content.ClipData
 import android.content.ClipDescription
 import android.view.DragEvent
@@ -321,9 +322,11 @@ class MainActivity : Activity() {
         desktopPager = findViewById(R.id.desktop_pager)
 
         topBarCenter.setOnClickListener {
+            it.performHapticFeedback(HapticFeedbackConstants.CONTEXT_CLICK)
             systemShadeManager.openShade(animate = true)
         }
         findViewById<View>(R.id.desktop_top_bar)?.setOnClickListener {
+            it.performHapticFeedback(HapticFeedbackConstants.CONTEXT_CLICK)
             systemShadeManager.openShade(animate = true)
         }
 
@@ -356,6 +359,7 @@ class MainActivity : Activity() {
         }
 
         desktopPager.onPageSelectedListener = { page ->
+            desktopPager.performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK)
             updatePageIndicators(page)
             if (page == 2) ensureDesktop3Initialized()
             if (page == 3) ensureDesktop4Initialized()
@@ -368,13 +372,21 @@ class MainActivity : Activity() {
             if (progress >= 2.2f) ensureDesktop4Initialized()
         }
 
-        dotPage1.setOnClickListener { desktopPager.scrollToPage(0) }
-        dotPage2.setOnClickListener { desktopPager.scrollToPage(1) }
+        dotPage1.setOnClickListener {
+            it.performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK)
+            desktopPager.scrollToPage(0)
+        }
+        dotPage2.setOnClickListener {
+            it.performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK)
+            desktopPager.scrollToPage(1)
+        }
         dotPage3.setOnClickListener {
+            it.performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK)
             ensureDesktop3Initialized()
             desktopPager.scrollToPage(2)
         }
         dotPage4.setOnClickListener {
+            it.performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK)
             ensureDesktop4Initialized()
             desktopPager.scrollToPage(3)
         }
@@ -420,23 +432,35 @@ class MainActivity : Activity() {
             }
         }
 
-
         btnAddGaugeWidget.setOnClickListener {
+            it.performHapticFeedback(HapticFeedbackConstants.CONTEXT_CLICK)
             showAddGaugeDialog()
         }
 
+        val onGaugeClick = View.OnClickListener { v ->
+            v.performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK)
+        }
         val onGaugeLongClick = View.OnLongClickListener { v ->
             v.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
             true
         }
+        gaugeCpu.setOnClickListener(onGaugeClick)
+        gaugeMem.setOnClickListener(onGaugeClick)
+        gaugeBattery.setOnClickListener(onGaugeClick)
+        gaugeNet.setOnClickListener(onGaugeClick)
+
         gaugeCpu.setOnLongClickListener(onGaugeLongClick)
         gaugeMem.setOnLongClickListener(onGaugeLongClick)
         gaugeBattery.setOnLongClickListener(onGaugeLongClick)
         gaugeNet.setOnLongClickListener(onGaugeLongClick)
 
+        batteryQuadWidget?.setOnClickListener {
+            it.performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK)
+        }
+
         renderCustomGauges()
 
-                // Первичный сбор реальных системных данных
+        // Первичный сбор реальных системных данных
         updateLiveIndicators()
 
         val profileNames = listOf(
@@ -454,6 +478,7 @@ class MainActivity : Activity() {
         updateProfileDescription(currentProfile)
 
         profileSelector.onSegmentSelected = { index ->
+            profileSelector.performHapticFeedback(HapticFeedbackConstants.CONTEXT_CLICK)
             val selectedProfile = when (index) {
                 0 -> ProfileType.STERILE
                 1 -> ProfileType.COMM
@@ -468,15 +493,18 @@ class MainActivity : Activity() {
         }
 
         logCard.setOnClickListener {
+            it.performHapticFeedback(HapticFeedbackConstants.CONTEXT_CLICK)
             startActivity(Intent(this, LogActivity::class.java))
         }
 
         findViewById<Button>(R.id.open_shield).setOnClickListener {
+            it.performHapticFeedback(HapticFeedbackConstants.CONTEXT_CLICK)
             startActivity(Intent(this, ShieldActivity::class.java))
         }
 
         // Аналоговый сейф UVOS
         findViewById<Button>(R.id.btn_open_vault).setOnClickListener {
+            it.performHapticFeedback(HapticFeedbackConstants.CONFIRM)
             startActivity(Intent(this, VaultActivity::class.java))
         }
     }
@@ -533,11 +561,16 @@ class MainActivity : Activity() {
             titleView.text = item.title
             gaugeView.setTitle(item.gaugeTitle)
 
+            gaugeView.setOnClickListener {
+                it.performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK)
+            }
+
             val holder = CustomGaugeViewHolder(item, gaugeView, valueView, subtitleView, badgeView)
             customGaugeHolders.add(holder)
             updateCustomGaugeView(holder)
 
             btnRemove.setOnClickListener {
+                it.performHapticFeedback(HapticFeedbackConstants.CONTEXT_CLICK)
                 AlertDialog.Builder(this)
                     .setTitle("Удалить датчик?")
                     .setMessage("Убрать «${item.title}» с панели приборов?")
@@ -678,14 +711,23 @@ class MainActivity : Activity() {
             true
         }
         homeClockTime.setOnLongClickListener(openHomeSettings)
+        homeClockTime.setOnClickListener {
+            it.performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK)
+        }
         homeClockDate.setOnLongClickListener(openHomeSettings)
-        homeClockDate.setOnClickListener { showHomeSettingsDialog() }
+        homeClockDate.setOnClickListener {
+            it.performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK)
+            showHomeSettingsDialog()
+        }
         findViewById<View>(R.id.desktop_2_home)?.setOnLongClickListener(openHomeSettings)
         findViewById<View>(R.id.desktop_2_content_container)?.setOnLongClickListener(openHomeSettings)
         findViewById<View>(R.id.home_grid_container)?.setOnLongClickListener(openHomeSettings)
         findViewById<View>(R.id.pagination_dots)?.setOnLongClickListener(openHomeSettings)
         findViewById<View>(R.id.home_dock)?.setOnLongClickListener(openHomeSettings)
-        findViewById<View>(R.id.top_bar_left)?.setOnClickListener { showHomeSettingsDialog() }
+        findViewById<View>(R.id.top_bar_left)?.setOnClickListener {
+            it.performHapticFeedback(HapticFeedbackConstants.CONTEXT_CLICK)
+            showHomeSettingsDialog()
+        }
         findViewById<View>(R.id.top_bar_left)?.setOnLongClickListener(openHomeSettings)
 
         renderHomeGrid()
@@ -848,6 +890,7 @@ class MainActivity : Activity() {
                 labelView.setTextColor(Color.parseColor("#71768E"))
 
                 itemView.setOnClickListener {
+                    it.performHapticFeedback(HapticFeedbackConstants.CONTEXT_CLICK)
                     showAppChooserForSlot(slot.slotIndex)
                 }
                 itemView.setOnLongClickListener {
@@ -1156,7 +1199,6 @@ class MainActivity : Activity() {
         dialog.show()
     }
 
-
     /**
      * Диалоговое окно просмотра и управления содержимым папки
      */
@@ -1346,7 +1388,6 @@ class MainActivity : Activity() {
 
         dialog.show()
     }
-
 
     private fun promptCreateFolder(slot: HomeSlotItem) {
         val pm = packageManager
@@ -1711,6 +1752,7 @@ class MainActivity : Activity() {
 
             // Щиток каналов приложения
             shieldBtn.setOnClickListener {
+                it.performHapticFeedback(HapticFeedbackConstants.CONTEXT_CLICK)
                 openAppShield(app.packageName)
             }
 
@@ -1730,7 +1772,8 @@ class MainActivity : Activity() {
         val cpuText: String,
         val hasNet: Boolean,
         val hasGeo: Boolean,
-        val isIsolated: Boolean
+        val isIsolated: Boolean,
+        val ramMb: Long = 0L
     )
 
     private val processList = mutableListOf(
@@ -1824,6 +1867,8 @@ class MainActivity : Activity() {
         dialog.show()
     }
 
+    private var currentProcessFilter: (ProcessItem) -> Boolean = { true }
+
     private fun initDesktop4ProcessManager() {
         managerProcessContainer = findViewById(R.id.manager_process_container)
         managerSummaryActiveCount = findViewById(R.id.manager_summary_active_count)
@@ -1836,35 +1881,103 @@ class MainActivity : Activity() {
         managerFilterIsolated = findViewById(R.id.manager_filter_isolated)
         btnKillAllServices = findViewById(R.id.btn_kill_all_services)
 
-        fun selectFilter(activeView: TextView) {
+        fun selectFilter(activeView: TextView, predicate: (ProcessItem) -> Boolean) {
             listOf(managerFilterActive, managerFilterAccess, managerFilterIsolated).forEach {
                 it.setBackgroundColor(Color.TRANSPARENT)
                 it.setTextColor(Color.parseColor("#71768E"))
             }
             activeView.setBackgroundResource(R.drawable.bg_button_primary)
             activeView.setTextColor(Color.WHITE)
+            currentProcessFilter = predicate
+            renderProcessList(predicate)
         }
 
         managerFilterActive.setOnClickListener {
-            selectFilter(managerFilterActive)
-            renderProcessList { true }
+            it.performHapticFeedback(HapticFeedbackConstants.CONTEXT_CLICK)
+            selectFilter(managerFilterActive) { true }
         }
         managerFilterAccess.setOnClickListener {
-            selectFilter(managerFilterAccess)
-            renderProcessList { it.hasNet || it.hasGeo }
+            it.performHapticFeedback(HapticFeedbackConstants.CONTEXT_CLICK)
+            selectFilter(managerFilterAccess) { it.hasNet || it.hasGeo }
         }
         managerFilterIsolated.setOnClickListener {
-            selectFilter(managerFilterIsolated)
-            renderProcessList { it.isIsolated }
+            it.performHapticFeedback(HapticFeedbackConstants.CONTEXT_CLICK)
+            selectFilter(managerFilterIsolated) { it.isIsolated }
         }
 
         btnKillAllServices.setOnClickListener {
-            processList.removeAll { !it.pkg.contains("uvos.system") }
-            renderProcessList { true }
+            it.performHapticFeedback(HapticFeedbackConstants.CONFIRM)
+            val am = getSystemService(Context.ACTIVITY_SERVICE) as? ActivityManager
+            val toKill = processList.filter { proc ->
+                !isSystemApp(proc.pkg) && proc.pkg != packageName && !proc.pkg.contains("uvos.system")
+            }
+
+            if (toKill.isEmpty()) {
+                Toast.makeText(this, "Все сторонние процессы уже выгружены", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+
+            var freedRamMb = 0L
+            for (proc in toKill) {
+                try {
+                    am?.killBackgroundProcesses(proc.pkg)
+                } catch (_: Exception) {}
+                val mb = if (proc.ramMb > 0) proc.ramMb else {
+                    Regex("""\d+""").find(proc.ramText)?.value?.toLongOrNull() ?: 120L
+                }
+                freedRamMb += mb
+            }
+
+            // Плавная каскадная 120Hz анимация выгрузки процессов
+            val viewsToRemove = mutableListOf<View>()
+            for (i in 0 until managerProcessContainer.childCount) {
+                val child = managerProcessContainer.getChildAt(i)
+                val childProc = child.tag as? ProcessItem
+                if (childProc != null && toKill.contains(childProc)) {
+                    viewsToRemove.add(child)
+                }
+            }
+
+            if (viewsToRemove.isNotEmpty()) {
+                var finishedCount = 0
+                viewsToRemove.forEachIndexed { index, view ->
+                    view.animate()
+                        .alpha(0f)
+                        .translationX(view.width.toFloat().coerceAtLeast(300f))
+                        .setStartDelay(index * 25L)
+                        .setDuration(200)
+                        .setInterpolator(PathInterpolator(0.20f, 1.0f, 0.32f, 1.0f))
+                        .withEndAction {
+                            managerProcessContainer.removeView(view)
+                            finishedCount++
+                            if (finishedCount == viewsToRemove.size) {
+                                processList.removeAll(toKill)
+                                updateProcessSummaryCounters()
+                                updateLiveIndicators()
+                                Toast.makeText(
+                                    this,
+                                    "Выгружено фоновых процессов: ${toKill.size} • Высвобождено ~$freedRamMb МБ ОЗУ",
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                            }
+                        }
+                        .start()
+                }
+            } else {
+                processList.removeAll(toKill)
+                renderProcessList(currentProcessFilter)
+                updateProcessSummaryCounters()
+                updateLiveIndicators()
+                Toast.makeText(
+                    this,
+                    "Выгружено фоновых процессов: ${toKill.size} • Высвобождено ~$freedRamMb МБ ОЗУ",
+                    Toast.LENGTH_SHORT
+                ).show()
+            }
         }
 
         loadRealProcessList()
-        renderProcessList { true }
+        renderProcessList(currentProcessFilter)
     }
 
     private fun renderProcessList(predicate: (ProcessItem) -> Boolean) {
@@ -1875,6 +1988,7 @@ class MainActivity : Activity() {
         val filtered = processList.filter(predicate)
         filtered.forEach { proc ->
             val row = layoutInflater.inflate(R.layout.item_process_app, managerProcessContainer, false)
+            row.tag = proc
             val iconView = row.findViewById<ImageView>(R.id.process_item_icon)
             val titleView = row.findViewById<TextView>(R.id.process_item_title)
             val pidView = row.findViewById<TextView>(R.id.process_item_pid)
@@ -1903,12 +2017,33 @@ class MainActivity : Activity() {
             }
 
             shieldBtn.setOnClickListener {
+                it.performHapticFeedback(HapticFeedbackConstants.CONTEXT_CLICK)
                 openAppShield(proc.pkg)
             }
 
             stopBtn.setOnClickListener {
-                processList.remove(proc)
-                renderProcessList(predicate)
+                stopBtn.isEnabled = false
+                it.performHapticFeedback(HapticFeedbackConstants.CONTEXT_CLICK)
+
+                // 1. Вызов ActivityManager для выгрузки процесса
+                val am = getSystemService(Context.ACTIVITY_SERVICE) as? ActivityManager
+                try {
+                    am?.killBackgroundProcesses(proc.pkg)
+                } catch (_: Exception) {}
+
+                // 2. Плавная 120Hz Fast-out Slow-in анимация удаления строки процесса
+                row.animate()
+                    .alpha(0f)
+                    .translationX(row.width.toFloat().coerceAtLeast(300f))
+                    .setDuration(220)
+                    .setInterpolator(PathInterpolator(0.20f, 1.0f, 0.32f, 1.0f))
+                    .withEndAction {
+                        managerProcessContainer.removeView(row)
+                        processList.remove(proc)
+                        updateProcessSummaryCounters()
+                        updateLiveIndicators()
+                    }
+                    .start()
             }
 
             managerProcessContainer.addView(row)
@@ -2388,6 +2523,10 @@ class MainActivity : Activity() {
 
         processList.clear()
         processList.addAll(list)
+        updateProcessSummaryCounters()
+    }
+
+    private fun updateProcessSummaryCounters() {
         managerSummaryActiveCount?.text = "${processList.size} СЛУЖБ"
         managerFilterActive?.text = "АКТИВНЫЕ (${processList.size})"
         managerFilterAccess?.text = "СЕТЬ/ДАННЫЕ (${processList.count { it.hasNet || it.hasGeo }})"

@@ -12,6 +12,8 @@
     <!-- Атрибуты индикаторной лампы LampView (DESIGN.md §3.6) -->
     <declare-styleable name="LampView">
         <attr name="isLampOn" format="boolean" />
+        <attr name="lampOnColor" format="color" />
+        <attr name="lampOffColor" format="color" />
     </declare-styleable>
 
     <!-- Атрибуты линейного ползунка SliderView (DESIGN.md §3.5) -->
